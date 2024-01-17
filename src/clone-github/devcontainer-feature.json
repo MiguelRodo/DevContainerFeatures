@@ -1,0 +1,6 @@
+{
+    "name": "Clone repos from GitHub",
+    "id": "clone-github",
+    "version": "0.0.1",
+    "description": "Clone repos from GitHub"
+}

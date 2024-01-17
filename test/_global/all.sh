@@ -20,6 +20,9 @@ source dev-container-features-test-lib
 # The 'check' command comes from the dev-container-features-test-lib.
 check "that git xet --version works" bash -c "git xet --version"
 check "that apptainer --version works" bash -c "apptainer --version"
+check "that clone-github is found when fully specifying path" bash -c "/usr/local/bin/clone-github"
+check "that clone-github is found" bash -c "clone-repos"
+
 
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.
