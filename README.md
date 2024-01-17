@@ -15,9 +15,7 @@ Install Git Xet CLI (see [here](https://xethub.com/assets/docs/getting-started/i
 {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/git-xet": {
-            "version": "latest"
-        }
+        "ghcr.io/MiguelRodo/DevContainerFeatures/git-xet": {}
     }
 }
 ```
@@ -39,9 +37,7 @@ Install Apptainer.
 {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/apptainer": {
-            "version": "latest"
-        }
+        "ghcr.io/MiguelRodo/DevContainerFeatures/apptainer": {}
     }
 }
 ```

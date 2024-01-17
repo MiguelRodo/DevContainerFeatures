@@ -7,8 +7,6 @@ Install Git Xet CLI (see [here](https://xethub.com/assets/docs/getting-started/i
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/git-xet": {
-        "version": "latest"
-    }
+    "ghcr.io/MiguelRodo/DevContainerFeatures/git-xet": {}
 }
 ```
