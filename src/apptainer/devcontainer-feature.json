@@ -1,6 +1,6 @@
 {
     "name": "Install Apptainer",
-    "id": "install-apptainer",
+    "id": "apptainer",
     "version": "0.0.1",
     "description": "Install Apptainer"
 }
