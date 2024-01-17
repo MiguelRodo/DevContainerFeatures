@@ -1,0 +1,7 @@
+{
+    "name": "Add commands to work with multiple repos",
+    "id": "mult-repos",
+    "version": "0.0.1",
+    "description": "Add commands to work with multiple repos",
+    "postStartCommand": "repos_clone_xethub"
+}

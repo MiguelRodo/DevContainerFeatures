@@ -4,7 +4,8 @@
         "features": {
             "git-xet": {},
             "apptainer": {},
-            "clone-github": {}
+            "mult-repos": {},
+            "config-r": {}
         }
     }
 }
