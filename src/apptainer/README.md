@@ -7,7 +7,7 @@ Install Apptainer.
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/apptainer": {
         "version": "latest"
     }
 }
