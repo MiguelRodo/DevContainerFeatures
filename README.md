@@ -4,7 +4,8 @@ We provide several devcontainer features.
 
 ## Example Contents
 
-This repository contains a _collection_ of two Features - `hello` and `color`. These Features serve as simple feature implementations.  Each sub-section below shows a sample `devcontainer.json` alongside example usage of the Feature.
+This repository contains a _collection_ of several Features - `git-xet` and `apptainer`.
+Each sub-section below shows a sample `devcontainer.json` alongside example usage of the Feature.
 
 ### `git-xet`
 
