@@ -20,10 +20,10 @@ source dev-container-features-test-lib
 # The 'check' command comes from the dev-container-features-test-lib.
 check "that git xet --version works" bash -c "git xet --version"
 check "that apptainer --version works" bash -c "apptainer --version"
-check "that repos_clone_github is found" bash -c "repos_clone_github"
-check "that repos_clone_xethub is found" bash -c "repos_clone_xethub"
-check "that repos_add_workspace is found" bash -c "repos_add_workspace"
-check "that repos_add_workspace creates the workspace file" bash -c "test -f EntireProject.code-workspace"
+check "that repos-clone-github is found" bash -c "repos-clone-github"
+check "that repos-clone-xethub is found" bash -c "repos-clone-xethub"
+check "that repos-add-workspace is found" bash -c "repos-add-workspace"
+check "that repos-add-workspace creates the workspace file" bash -c "test -f EntireProject.code-workspace"
 
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.

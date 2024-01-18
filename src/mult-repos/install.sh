@@ -4,7 +4,7 @@ set -e
 
 ## XetHub
 
-cat > /usr/local/bin/repos_clone_xethub \
+cat > /usr/local/bin/repos-clone-xethub \
 << 'EOF'
 #!/usr/bin/env bash
 # Clones all repos in repos-to-clone-xethub.list
@@ -57,11 +57,11 @@ if [ -f "./repos-to-clone-xethub.list" ]; then
 fi
 EOF
 
-chmod +x /usr/local/bin/repos_clone_xethub
+chmod +x /usr/local/bin/repos-clone-xethub
 
 ## GitHub
 
-cat > /usr/local/bin/repos_clone_github \
+cat > /usr/local/bin/repos-clone-github \
 << 'EOF'
 #!/usr/bin/env bash
 
@@ -109,11 +109,11 @@ if [ -f "./repos-to-clone.list" ]; then
 fi
 EOF
 
-chmod +x /usr/local/bin/repos_clone_github
+chmod +x /usr/local/bin/repos-clone-github
 
 ## Add to workspace
 
-cat > /usr/local/bin/repos_add_workspace \
+cat > /usr/local/bin/repos-add-workspace \
 << 'EOF'
 #!/usr/bin/env bash
 
@@ -165,4 +165,4 @@ if [ -f "./repos-to-clone-xethub.list" ]; then
 fi
 EOF
 
-chmod +x /usr/local/bin/repos_add_workspace
+chmod +x /usr/local/bin/repos-add-workspace

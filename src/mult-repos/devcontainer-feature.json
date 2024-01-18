@@ -3,5 +3,5 @@
     "id": "mult-repos",
     "version": "0.0.1",
     "description": "Add commands to work with multiple repos",
-    "postStartCommand": "repos_clone_xethub"
+    "postStartCommand": "repos-add-workspace && repos-clone-github && repos-clone-xethub"
 }

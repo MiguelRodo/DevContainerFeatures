@@ -1,6 +1,7 @@
 {
-    "name": "Install Git-Xet",
-    "id": "git-xet",
+    "name": "Configure R",
+    "id": "config-r",
     "version": "0.0.1",
-    "description": "Install Git-Xet"
+    "description": "Configure R",
+    "postStartCommand": "config-r-vscode"
 }
