@@ -5,7 +5,7 @@ set -e
 ## XetHub
 
 ### login
-cat > /usr/local/bin/login-xethub \
+cat > /usr/local/bin/xethub-login \
 << 'EOF'
 #!/usr/bin/env bash
 
@@ -28,11 +28,11 @@ fi
 
 EOF
 
-chmod +x /usr/local/bin/login-xethub
+chmod +x /usr/local/bin/xethub-login
 
 ### clone
 
-cat > /usr/local/bin/repos-clone-xethub \
+cat > /usr/local/bin/xethub-clone \
 << 'EOF'
 #!/usr/bin/env bash
 # Clones all repos in repos-to-clone-xethub.list
@@ -64,7 +64,7 @@ then
     if grep -qvE '^\s*(#|$)' "${current_dir}/repos-to-clone-xethub.list"
     then
     # The file is not empty, proceed with login
-    login-xethub
+    xethub-login
     fi
 fi
 
@@ -81,11 +81,11 @@ if [ -f "./repos-to-clone-xethub.list" ]; then
 fi
 EOF
 
-chmod +x /usr/local/bin/repos-clone-xethub
+chmod +x /usr/local/bin/xethub-clone
 
 ## GitHub
 
-cat > /usr/local/bin/repos-clone-github \
+cat > /usr/local/bin/github-clone \
 << 'EOF'
 #!/usr/bin/env bash
 
@@ -135,10 +135,10 @@ if [ -f "./repos-to-clone.list" ]; then
 fi
 EOF
 
-chmod +x /usr/local/bin/repos-clone-github
+chmod +x /usr/local/bin/github-clone
 
 ### log in using the store to GitHub
-cat > /usr/local/bin/login-github-store \
+cat > /usr/local/bin/github-login-store \
 << 'EOF'
 #!/usr/bin/env bash
 
@@ -190,11 +190,11 @@ rm $temp_file
 
 EOF
 
-chmod +x /usr/local/bin/login-github-store
+chmod +x /usr/local/bin/github-login-store
 
 ## Add to workspace
 
-cat > /usr/local/bin/repos-add-workspace \
+cat > /usr/local/bin/workspace-add \
 << 'EOF'
 #!/usr/bin/env bash
 
@@ -248,4 +248,4 @@ if [ -f "./repos-to-clone-xethub.list" ]; then
 fi
 EOF
 
-chmod +x /usr/local/bin/repos-add-workspace
+chmod +x /usr/local/bin/workspace-add

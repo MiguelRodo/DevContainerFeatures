@@ -4,7 +4,7 @@ We provide several devcontainer features.
 
 ## Description
 
-This repository contains a _collection_ of several Features - `git-xet`, `mult-repos`, `config-r` and `apptainer`.
+This repository contains a _collection_ of several Features - `git-xet`, `repos`, `config-r` and `apptainer`.
 Each sub-section below shows a sample `devcontainer.json` alongside example usage of the Feature.
 
 ### `git-xet`
@@ -48,7 +48,7 @@ Provides features to work with multiple repositories.
 
 ```jsonc
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/mult-repos": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/repos": {}
 }
 ```
 
