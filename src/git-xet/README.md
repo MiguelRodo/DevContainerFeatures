@@ -7,7 +7,7 @@ Install Git-Xet
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/git-xet:0": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/git-xet:1": {}
 }
 ```
 

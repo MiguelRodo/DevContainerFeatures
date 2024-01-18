@@ -7,7 +7,7 @@ Configure R
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:0": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:1": {}
 }
 ```
 

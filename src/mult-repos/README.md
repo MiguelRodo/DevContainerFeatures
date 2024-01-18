@@ -7,7 +7,7 @@ Add commands to work with multiple repos
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/mult-repos:0": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/mult-repos:1": {}
 }
 ```
 
