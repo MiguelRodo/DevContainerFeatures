@@ -1,7 +1,7 @@
 
-# Add commands to work with multiple repos (repos)
+# Add commands to work with repos (repos)
 
-Add commands to work with multiple repos
+Add commands to work with repos, esp. multiple repos
 
 ## Example Usage
 
