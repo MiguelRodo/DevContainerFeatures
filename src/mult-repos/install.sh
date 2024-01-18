@@ -4,12 +4,42 @@ set -e
 
 ## XetHub
 
+### login
+cat > /usr/local/bin/login-xethub \
+<< 'EOF'
+#!/usr/bin/env bash
+
+set -e
+
+if [ -z "$XETHUB_TOKEN" ]
+then
+    # If not set, assign the value of XETHUB_PAT to XETHUB_TOKEN
+    XETHUB_TOKEN="$XETHUB_PAT"
+fi
+
+# Check if the environment variables are set and not empty
+if [ -z "$XETHUB_USERNAME" ] || [ -z "$XETHUB_EMAIL" ] || [ -z "$XETHUB_TOKEN" ]
+then
+    echo "Error: One or more environment variables are not set. Please set XETHUB_USERNAME, XETHUB_EMAIL, and XETHUB_TOKEN."
+    exit 1
+else
+    git xet login -u "$XETHUB_USERNAME" -e "$XETHUB_EMAIL" -p "$XETHUB_TOKEN"
+fi
+
+EOF
+
+chmod +x /usr/local/bin/login-xethub
+
+### clone
+
 cat > /usr/local/bin/repos-clone-xethub \
 << 'EOF'
 #!/usr/bin/env bash
 # Clones all repos in repos-to-clone-xethub.list
 # into the parent directory of the current
 # working directory.
+
+set -e
 
 # Get the absolute path of the current working directory
 current_dir="$(pwd)"
@@ -33,17 +63,11 @@ then
     # The file exists, now check if it's empty or not
     if grep -qvE '^\s*(#|$)' "${current_dir}/repos-to-clone-xethub.list"
     then
-      # The file is not empty, proceed with login
-        # Check if the environment variables are set and not empty
-       if [ -z "$XETHUB_USERNAME" ] || [ -z "$XETHUB_EMAIL" ] || [ -z "$XETHUB_PAT" ]
-       then
-           echo "Error: One or more environment variables are not set. Please set XETHUB_USERNAME, XETHUB_EMAIL, and XETHUB_PAT."
-           exit 1
-       else
-           git xet login -u "$XETHUB_USERNAME" -e "$XETHUB_EMAIL" -p "$XETHUB_PAT"
-       fi
+    # The file is not empty, proceed with login
+    login-xethub
     fi
 fi
+
 
 # If there is a list of repositories to clone, clone them
 if [ -f "./repos-to-clone-xethub.list" ]; then
@@ -64,6 +88,8 @@ chmod +x /usr/local/bin/repos-clone-xethub
 cat > /usr/local/bin/repos-clone-github \
 << 'EOF'
 #!/usr/bin/env bash
+
+set -e
 
 # Clones all repos in repos-to-clone.list
 # into the parent directory of the current
@@ -111,11 +137,68 @@ EOF
 
 chmod +x /usr/local/bin/repos-clone-github
 
+### log in using the store to GitHub
+cat > /usr/local/bin/login-github-store \
+<< 'EOF'
+#!/usr/bin/env bash
+
+set -e
+
+#!/usr/bin/env bash
+
+# Use plain-text credential store
+git config --global credential.helper 'store'
+
+# Get GitHub username
+# username=$(gh api user | jq -r '.login')
+username=$GITHUB_USERNAME
+
+# Get GitHub PAT from environment variable
+PAT=$GITHUB_PAT
+
+if [ -z "$PAT" ]
+then
+    PAT=$GH_TOKEN
+fi
+
+if [ -z "$PAT" ]
+then
+    PAT=$GITHUB_TOKEN
+fi
+
+if [ -z "$PAT" ] || [ -z "$username" ]
+then
+    echo "Error: One or more environment variables are not set. Please set GITHUB_USERNAME and GITHUB_PAT."
+    exit 1
+fi
+
+# Create a credential string
+credential_string="protocol=https
+host=github.com
+username=$username
+password=$PAT"
+
+# Write the credential string to a temporary file
+temp_file=$(mktemp)
+echo "$credential_string" > $temp_file
+
+# Use the temporary file as the input for 'git credential approve'
+git credential approve < $temp_file
+
+# Delete the temporary file
+rm $temp_file
+
+EOF
+
+chmod +x /usr/local/bin/login-github-store
+
 ## Add to workspace
 
 cat > /usr/local/bin/repos-add-workspace \
 << 'EOF'
 #!/usr/bin/env bash
+
+set -e
 
 # Get the absolute path of the current working directory
 current_dir="$(pwd)"
