@@ -1,30 +1,20 @@
 
-# Work with multiple repositories
+# Add commands to work with multiple repos (mult-repos)
 
-Provides features to work with multiple repositories.
+Add commands to work with multiple repos
 
-```jsonc
+## Example Usage
+
+```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/mult-repos": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/mult-repos:0": {}
 }
 ```
 
-## Clone GitHub repositories
-
-Adds the command `repos-clone-github` to clone all repositories listed in `repos-to-clone.list`.
-
-This command is run each time the container starts.
-
-## Clone XetHub repositories
-
-Adds the command `repos-clone-xethub` to clone all repositories listed in `repos-to-clone-xethub.list`.
-These repositories are lazily cloned.
-
-This command is also run each time the container starts.
-If `git-xet` is not installed, then it's not run.
-
-## Create `EntireProject.code-workspace` file
-
-All repositories listed in `repos-to-clone.list` and `repos-to-clone-xethub.list` are added to the `EntireProject.code-workspace` file.
 
 
+
+
+---
+
+_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/MiguelRodo/DevContainerFeatures/blob/main/src/mult-repos/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
