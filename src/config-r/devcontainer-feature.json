@@ -1,7 +1,7 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "Configure R",
     "postStartCommand": "config-r-vscode"
 }
