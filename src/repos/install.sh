@@ -23,7 +23,7 @@ then
     echo "Error: One or more environment variables are not set. Please set XETHUB_USERNAME, XETHUB_EMAIL, and XETHUB_TOKEN."
     exit 1
 else
-    git xet login -u "$XETHUB_USERNAME" -e "$XETHUB_EMAIL" -p "$XETHUB_TOKEN"
+    git xet login -u "$XETHUB_USERNAME" -e "$XETHUB_EMAIL" -p "$XETHUB_TOKEN" --force
 fi
 
 EOF
@@ -191,6 +191,22 @@ rm $temp_file
 EOF
 
 chmod +x /usr/local/bin/repos-github-login-store
+
+## Push, pull, fetch
+
+### log in using the store to GitHub
+cat > /usr/local/bin/repos-github-push \
+<< 'EOF'
+#!/usr/bin/env bash
+
+IFS=""
+all_args="$*"
+git 
+IFS=" "
+
+EOF
+
+
 
 ## Add to workspace
 
