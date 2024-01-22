@@ -23,7 +23,7 @@ then
     echo "Error: One or more environment variables are not set. Please set XETHUB_USERNAME, XETHUB_EMAIL, and XETHUB_TOKEN."
     exit 1
 else
-    git xet login -u "$XETHUB_USERNAME" -e "$XETHUB_EMAIL" -p "$XETHUB_TOKEN" --force
+    git xet login -u "$XETHUB_USERNAME" -e "$XETHUB_EMAIL" -p "$XETHUB_TOKEN"
 fi
 
 EOF
