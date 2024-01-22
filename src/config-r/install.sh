@@ -194,12 +194,13 @@ cat > /usr/local/bin/config-r-pkg \
 # 1. ensure that key VS Code packages are up to date.
 # and does not take long to install.
 
-project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)" 
-
-pushd "$HOME"
+mkdir -p "/tmp/r-packages"
+pushd "/tmp/r-packages"
 Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
   -e 'install.packages(c("jsonlite", "languageserver", "pak", "renv"))'
 popd
+
+rm -rf "/tmp/r-packages"
 
 EOF
 
@@ -207,4 +208,38 @@ chmod +x /usr/local/bin/config-r-pkg
 
 /usr/local/bin/config-r-pkg
 
+# ------------------------
+# Ensure typically-required R packages are installed into renv direcotry
+# ------------------------
+
+cat > /usr/local/bin/config-r-pkg-renv \
+<< 'EOF'
+#!/usr/bin/env bash
+# Last modified: 2024 January 10
+
+# 1. ensure that key VS Code packages are up to date.
+# and does not take long to install.
+
+# install renv
+mkdir -p "/tmp/r-packages"
+pushd "/tmp/r-packages"
+Rscript -e 'install.packages("renv")'
+popd
+
+rm -rf "/tmp/r-packages"
+
+# install pak and BiocManager into renv cache
+mkdir -p "/tmp/renv"
+pushd "/tmp/renv"
+Rscript -e 'renv::init(bioconductor = TRUE)'
+Rscript -e 'renv::install("pak")'
+popd
+
+rm -rf "/tmp/renv"
+
+EOF
+
+chmod +x /usr/local/bin/config-r-pkg-renv
+
+/usr/local/bin/config-r-pkg-renv
 
