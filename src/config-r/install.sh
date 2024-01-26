@@ -25,9 +25,17 @@ cat > /usr/local/bin/config-r \
 # - Ensure key R packages up to date
 
 # github token
-if [ -n "$GH_TOKEN" ]; then 
-  export GITHUB_PAT="${GITHUB_PAT:-"$GH_TOKEN"}"
-  export GITHUB_TOKEN="${GITHUB_PAT:-"$GH_TOKEN"}"
+if [ -n "$GH_TOKEN" ]; then
+  # necessarily override GITHUB_TOKEN
+  # with GH_TOKEN if set and if in a codespace
+  # as that token is scoped to only the
+  # creating repo, which is not great.
+  if [ "${CODESPACES}" = "true" ]; then
+    export GITHUB_TOKEN="$GH_TOKEN"
+  else
+    export GITHUB_TOKEN="${GITHUB_PAT:-"$GH_TOKEN"}"
+  fi
+  export GITHUB_PAT="${GITHUB_PAT:-"$GH_TOKEN"}"  
 elif [ -n "$GITHUB_PAT" ]; then 
   export GH_TOKEN="${GH_TOKEN:-"$GITHUB_PAT"}"
   export GITHUB_TOKEN="${GITHUB_TOKEN:-"$GITHUB_PAT"}"
