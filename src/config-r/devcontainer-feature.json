@@ -3,5 +3,26 @@
     "id": "config-r",
     "version": "1.3.4",
     "description": "Configure R",
-    "postCreateCommand": "config-r"
+    "postCreateCommand": "config-r",
+    "options": {
+        "set_lib_paths": {
+            "type": "string",
+            "description": "Whether to set default paths for R libraries (including for `renv`).",
+            "proposals": [
+                "true",
+                "false"
+            ],
+            "default": "true"
+        },
+        "config_radian": {
+            "type": "string",
+            "description": "Whether to configure Radian.",
+            "proposals": [
+                "true",
+                "false"
+            ],
+            "default": "true"
+        }
+    }
+
 }

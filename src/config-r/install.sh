@@ -14,26 +14,20 @@ cat > "/bashrc-d-config-r/config-r-env-lib" \
 # Avoids having to reinstall R packages after 
 # every container start for GitPod, and
 # after image rebuilds for VS Code.
-if [ -n "$(env | grep -E "^GITPOD|^CODESPACE")" ]; then
-    if [ -n "$(env | grep -E "^GITPOD")" ]; then
-      workspace_dir="/workspace"
-    else
-      workspace_dir="/workspaces"
-    fi
+if [ "$SET_LIB_PATHS" = "true" ]; then
+    workspace_dir="/workspaces"
     export R_LIBS=${R_LIBS:="$workspace_dir/.local/lib/R"}
     export RENV_PATHS_CACHE=${RENV_PATHS_CACHE:="$workspace_dir/.local/R/lib/renv"}
     export RENV_PATHS_LIBRARY_ROOT=${RENV_PATHS_LIBRARY_ROOT:="$workspace_dir/.local/.cache/R/renv"}
     export RENV_PATHS_LIBRARY=${RENV_PATHS_LIBRARY:="$workspace_dir/.local/.cache/R/renv"}
     export RENV_PREFIX_AUTO=${RENV_PREFIX_AUTO:=TRUE}
     export RENV_CONFIG_PAK_ENABLED=${RENV_CONFIG_PAK_ENABLED:=TRUE}
-else
-    export R_LIBS=${R_LIBS:="$HOME/.local/lib/R"}
+    # ensure R_LIBS is created (so
+    # that one never tries to install packages
+    # into a singularity/apptainer container)
+    mkdir -p "$R_LIBS"
 fi
 
-# ensure R_LIBS is created (so
-# that one never tries to install packages
-# into a singularity/apptainer container)
-mkdir -p "$R_LIBS"
 
 EOF
 
@@ -157,21 +151,18 @@ echo " "
 echo "---------------------"
 echo "---------------------"
 
-echo "done printing all environment variables
+echo "done printing all environment variables"
 config_radian() {
   echo "Configuring radian"
   # ensure that radian works (at least on ephemeral dev
   # environments)
-  if [ -n "$(env | grep -E "^GITPOD|^CODESPACE")" ]; then
-    echo "In a GitPod or Codespace environment, so configuring radian"
+  if [ "$CONFIG_RADIAN" = "true" ]; then
     if ! [ -e "$HOME/.radian_profile" ]; then touch "$HOME/.radian_profile"; fi
     if [ -z "$(cat "$HOME/.radian_profile" | grep -E 'options\(\s*radian\.auto_match')" ]; then 
       echo 'options(radian.auto_match = FALSE)' >> "$HOME/.radian_profile"
     fi
-  else
-    "Not in a GitPod or Codespace environment, so not configuring radian"
+    echo "Completed configuring radian"
   fi
-  echo "Completed configuring radian"
 }
 
 config_linting() {
@@ -193,11 +184,7 @@ get_path_file_json() {
   echo "Getting path to settings.json"
   # Define the path to your JSON file
   path_rel=".vscode-remote/data/Machine/settings.json"
-  if [ -n "$(env | grep -E "^GITPOD")" ]; then
-      path_file_json="/workspace/$path_rel"
-  else 
-      path_file_json="/home/$USER/$path_rel"
-  fi
+  path_file_json="/home/$USER/$path_rel"
   if ! [ -f "$path_file_json" ]; then
       path_file_json=""
   fi

@@ -4,5 +4,16 @@
     "version": "1.1.0",
     "description": "Add commands to work with repos, esp. multiple repos",
     "postCreateCommand": "repos-workspace-add; repos-github-clone; repos-xethub-clone",
-    "postStartCommand": "repos-workspace-add; repos-github-clone; repos-xethub-clone"
+    "postStartCommand": "repos-workspace-add; repos-github-clone; repos-xethub-clone",
+    "options": {
+        "force_gh_token": {
+            "type": "string",
+            "description": "Whether to override GITHUB_PAT and GITHUB_TOKEN with GH_TOKEN (if set).",
+            "proposals": [
+                "true",
+                "false"
+            ],
+            "default": "true"
+        }
+    }
 }
