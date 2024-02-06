@@ -260,7 +260,8 @@ fi
 
 mkdir -p "/tmp/r-packages"
 pushd "/tmp/r-packages"
-Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
+Rscript -e "print(.libPaths())" \
+  -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
   -e 'install.packages(c("jsonlite", "languageserver", "pak", "renv", "BiocManager", "yaml"))'
 popd
 
@@ -296,7 +297,8 @@ fi
 # install renv
 mkdir -p "/tmp/r-packages"
 pushd "/tmp/r-packages"
-Rscript -e 'install.packages("renv")'
+Rscript -e "print(.libPaths())" \
+  -e 'install.packages("renv")'
 popd
 
 rm -rf "/tmp/r-packages"
@@ -304,7 +306,8 @@ rm -rf "/tmp/r-packages"
 # install pak and BiocManager into renv cache
 mkdir -p "/tmp/renv"
 pushd "/tmp/renv"
-Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)' \
+Rscript -e "print(.libPaths())" \
+  -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)' \
   -e 'renv::install("pak")' \
   -e 'renv::install("BiocManager")'
 Rscript -e "Sys.setenv('RENV_CONFIG_PAK_ENABLED' = 'true'); renv::install('tinytest')"
