@@ -43,10 +43,12 @@ source /bashrc-d-config-r/config-r-env-lib
 update_r_pkg() {
   mkdir -p "/tmp/r-packages"
   pushd "/tmp/r-packages"
+  echo "Updating R packages"
   Rscript -e "print(.libPaths())" \
     -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
     -e 'try(install.packages(c("jsonlite", "languageserver", "pak", "renv", "BiocManager", "yaml")))'
   popd
+  echo "Completed updating R packages"
 
   rm -rf "/tmp/r-packages"
 }
@@ -55,17 +57,10 @@ update_r_pkg() {
 install_pkg_for_renv() {
   # installs packages needed by renv
   # with pak to try avoid subprocess error
-
-  # install renv
-  mkdir -p "/tmp/r-packages"
-  pushd "/tmp/r-packages"
-  Rscript -e "print(.libPaths())" \
-    -e 'try(install.packages("renv"))'
-  popd
-
-  rm -rf "/tmp/r-packages"
+  echo "Installing pak and BiocManager into renv cache"
 
   # install pak and BiocManager into renv cache
+  echo "Installing pak and BiocManager into renv cache"
   mkdir -p "/tmp/renv"
   pushd "/tmp/renv"
   Rscript -e "print(.libPaths())" \
@@ -75,6 +70,7 @@ install_pkg_for_renv() {
   Rscript -e "Sys.setenv('RENV_CONFIG_PAK_ENABLED' = 'true'); try(renv::install('tinytest'))"
   Rscript -e "Sys.setenv('RENV_CONFIG_PAK_ENABLED' = 'true'); try(renv::install('tinytest'))"
   popd
+  echo "Completed installing pak and BiocManager into renv cache"
 
   rm -rf "/tmp/renv"
 }
@@ -99,6 +95,7 @@ cat > /usr/local/bin/config-r \
 
 # set up bashrc_d
 config_bashrc_d() {
+  echo "Configuring bashrc.d"
   # ensure that `.bashrc.d` files are sourced in
   if [ -e "$HOME/.bashrc" ]; then 
     # we assume that if `.bashrc.d` is mentioned
@@ -117,21 +114,26 @@ config_bashrc_d() {
       > "$HOME/.bashrc"
   fi
   mkdir -p "$HOME/.bashrc.d"
+  echo "Completed configuring bashrc.d"
 }
 
 # copy across any settings from config-r
 # to ~/.bashrc.d
 add_to_bashrc_d() {
+  echo "Adding files from /bashrc-d-$1 to ~/.bashrc.d"
   if [ -d "/bashrc-d-$1" ]; then
     for file in $(ls "/bashrc-d-$1"); do
+      echo "Adding $file"
       cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
     done
     rm -rf "/bashrc-d-$1"
   fi
+  echo "Completed adding files from /bashrc-d-$1 to ~/.bashrc.d"
 }
 
 # ensure key radian setting is set on Codespaces and Git
 config_radian() {
+  echo "Configuring radian"
   # ensure that radian works (at least on ephemeral dev
   # environments)
   if [ -n "$(env | grep -E "^GITPOD|^CODESPACE")" ]; then
@@ -140,9 +142,11 @@ config_radian() {
       echo 'options(radian.auto_match = FALSE)' >> "$HOME/.radian_profile"
     fi
   fi
+  echo "Completed configuring radian"
 }
 
 config_linting() {
+  echo "Configuring linting"
   # set linting settings
   # light: just don't warn about snake case / camel case
   # (which it often gets wrong) and object name
@@ -153,9 +157,11 @@ config_linting() {
     object_name_linter = NULL)
   " > "$HOME/.lintr"
   fi
+  echo "Completed configuring linting"
 }
 
 get_path_file_json() {
+  echo "Getting path to settings.json"
   # Define the path to your JSON file
   path_rel=".vscode-remote/data/Machine/settings.json"
   if [ -n "$(env | grep -E "^GITPOD")" ]; then
@@ -165,10 +171,12 @@ get_path_file_json() {
   fi
   if ! [ -f "$path_file_json" ]; then
       path_file_json=""
-  else
+  fi
+  echo "Completed getting path to settings.json"
 }
 
 config_vscode_r_ext() {
+  echo "Configuring VS Code R extension"
   # This script is used to configure R settings in Visual Studio Code (VSCode) for GitPod or Codespace environments.
   # It sets the `r.libPaths` VS Code settings to the default `.libPaths()` output
   # when not using `renv`, as this is where the R packages
@@ -228,6 +236,7 @@ config_vscode_r_ext() {
       # r.libPaths key doesn't exist, so proceed to add it
       update_json
   fi
+  echo "Completed configuring VS Code R extension"
 }
 
 config_bashrc_d
