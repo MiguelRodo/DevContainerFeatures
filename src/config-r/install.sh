@@ -8,9 +8,9 @@
 
 # R environment vairables
 
-mkdir -p "$HOME/.bashrc.d"
+mkdir -p "/tmp/config-r"
 
-cat > "$HOME/.bashrc.d/config-r-env-gh" \
+cat > "/tmp/config-r/config-r-env-gh" \
 << 'EOF'
 # github token
 if [ -n "$GH_TOKEN" ]; then
@@ -36,9 +36,7 @@ fi
 
 EOF
 
-source "$HOME/.bashrc.d/config-r-env-gh"
-
-cat > "$HOME/.bashrc.d/config-r-env-lib" \
+cat > "/tmp/config-r/config-r-env-lib" \
 << 'EOF'
 # save all R packages to /workspace directories.
 # Especially important on GitPod to avoid having to
@@ -65,8 +63,6 @@ fi
 mkdir -p "$R_LIBS"
 
 EOF
-
-source "$HOME/.bashrc.d/config-r-env-lib"
 
 cat > /usr/local/bin/config-r \
 << 'EOF'
@@ -103,6 +99,15 @@ config_bashrc_d() {
   fi
 }
 
+config_env() {
+  if [ -d "/tmp/config-r" ]; then
+    for file in $(ls /tmp/config-r); do
+      cp "/tmp/config-r/$file" "$HOME/.bashrc.d"
+    done
+    rm -rf "/tmp/config-r"
+  fi
+}
+
 config_radian() {
   # ensure that radian works (at least on ephemeral dev
   # environments)
@@ -133,6 +138,7 @@ config_linting() {
 }
 
 config_bashrc_d
+config_env
 config_radian
 config_linting
 
@@ -243,6 +249,15 @@ cat > /usr/local/bin/config-r-pkg \
 # 1. ensure that key VS Code packages are up to date.
 # and does not take long to install.
 
+# if the directory exists, then
+# we're still building and we source from there.
+# otherwise, we assume it's sourced via ~/.bashrc
+if [ -d /tmp/config-r ]; then
+  for file in $(ls /tmp/config-r); do
+    cp "/tmp/config-r/$file" "$HOME/.bashrc.d"
+  done
+fi
+
 mkdir -p "/tmp/r-packages"
 pushd "/tmp/r-packages"
 Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
@@ -268,6 +283,15 @@ cat > /usr/local/bin/config-r-pkg-renv \
 
 # 1. ensure that key VS Code packages are up to date.
 # and does not take long to install.
+
+# if the directory exists, then
+# we're still building and we source from there.
+# otherwise, we assume it's sourced via ~/.bashrc
+if [ -d /tmp/config-r ]; then
+  for file in $(ls /tmp/config-r); do
+    cp "/tmp/config-r/$file" "$HOME/.bashrc.d"
+  done
+fi
 
 # install renv
 mkdir -p "/tmp/r-packages"
