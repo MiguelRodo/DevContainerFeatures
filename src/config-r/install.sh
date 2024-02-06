@@ -254,7 +254,7 @@ cat > /usr/local/bin/config-r-pkg \
 # otherwise, we assume it's sourced via ~/.bashrc
 if [ -d /tmp/config-r ]; then
   for file in $(ls /tmp/config-r); do
-    cp "/tmp/config-r/$file" "$HOME/.bashrc.d"
+    cp "/tmp/config-r/$file" "$HOME/.bashrc.d/$file"
   done
 fi
 
