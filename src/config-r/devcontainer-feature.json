@@ -1,7 +1,7 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "1.3.3",
+    "version": "1.3.4",
     "description": "Configure R",
     "postCreateCommand": "config-r"
 }

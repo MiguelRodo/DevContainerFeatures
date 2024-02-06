@@ -75,7 +75,7 @@ install_pkg_for_renv() {
   echo "Installing pak and BiocManager into renv cache"
   mkdir -p "/tmp/renv"
   pushd "/tmp/renv"
-  Rscript -e "print(c('.libPaths' = .libPaths())" \
+  Rscript -e "print(c('.libPaths' = .libPaths()))" \
     -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)' \
     -e 'try(renv::install("pak"))' \
     -e 'try(renv::install("BiocManager"))'
@@ -146,15 +146,30 @@ add_to_bashrc_d() {
 }
 
 # ensure key radian setting is set on Codespaces and Git
+echo "---------------------"
+echo "---------------------"
+echo " "
+echo " "
+echo "printing all environment variables"
+printenv
+echo " "
+echo " "
+echo "---------------------"
+echo "---------------------"
+
+echo "done printing all environment variables
 config_radian() {
   echo "Configuring radian"
   # ensure that radian works (at least on ephemeral dev
   # environments)
   if [ -n "$(env | grep -E "^GITPOD|^CODESPACE")" ]; then
+    echo "In a GitPod or Codespace environment, so configuring radian"
     if ! [ -e "$HOME/.radian_profile" ]; then touch "$HOME/.radian_profile"; fi
     if [ -z "$(cat "$HOME/.radian_profile" | grep -E 'options\(\s*radian\.auto_match')" ]; then 
       echo 'options(radian.auto_match = FALSE)' >> "$HOME/.radian_profile"
     fi
+  else
+    "Not in a GitPod or Codespace environment, so not configuring radian"
   fi
   echo "Completed configuring radian"
 }
