@@ -3,8 +3,10 @@
 set -e
 
 ## XetHub
+# ======================
 
-### login
+# login
+# -------------------
 cat > /usr/local/bin/repos-xethub-login \
 << 'EOF'
 #!/usr/bin/env bash
@@ -30,8 +32,8 @@ EOF
 
 chmod +x /usr/local/bin/repos-xethub-login
 
-### clone
-
+# clone
+# -------------------
 cat > /usr/local/bin/repos-xethub-clone \
 << 'EOF'
 #!/usr/bin/env bash
@@ -83,7 +85,43 @@ EOF
 
 chmod +x /usr/local/bin/repos-xethub-clone
 
-## GitHub
+# GitHub
+# ======================
+
+# set up environment variables
+# -------------------
+
+mkdir -p "/bashrc-d-repos"
+
+cat > "/bashrc-d-repos/repos-github-login-env" \
+<< 'EOF'
+
+# github token
+if [ -n "$GH_TOKEN" ]; then
+  # necessarily override GITHUB_TOKEN
+  # with GH_TOKEN if set and if in a codespace
+  # as that token is scoped to only the
+  # creating repo, which is not great.
+  if [ "${CODESPACES}" = "true" ]; then
+    export GITHUB_TOKEN="$GH_TOKEN"
+  else
+    export GITHUB_TOKEN="${GITHUB_PAT:-"$GH_TOKEN"}"
+  fi
+  export GITHUB_PAT="${GITHUB_PAT:-"$GH_TOKEN"}"  
+elif [ -n "$GITHUB_PAT" ]; then 
+  export GH_TOKEN="${GH_TOKEN:-"$GITHUB_PAT"}"
+  export GITHUB_TOKEN="${GITHUB_TOKEN:-"$GITHUB_PAT"}"
+elif [ -n "$GITHUB_TOKEN" ]; then 
+  export GH_TOKEN="${GH_TOKEN:-"$GITHUB_TOKEN"}"
+  export GITHUB_PAT="${GITHUB_PAT:-"$GITHUB_TOKEN"}"
+else 
+  echo "No GitHub token found (none of GH_TOKEN, GITHUB_PAT, GITHUB_TOKEN)"
+fi
+
+EOF
+
+# clone
+# -------------------
 
 cat > /usr/local/bin/repos-github-clone \
 << 'EOF'
@@ -91,53 +129,98 @@ cat > /usr/local/bin/repos-github-clone \
 
 set -e
 
-# Clones all repos in repos-to-clone.list
-# into the parent directory of the current
-# working directory.
+config_bashrc_d() {
+  # ensure that `.bashrc.d` files are sourced in
+  if [ -e "$HOME/.bashrc" ]; then 
+    # we assume that if `.bashrc.d` is mentioned
+    # in `$HOME/.bashrc`, then it's sourced in
+    if [ -z "$(cat "$HOME/.bashrc" | grep -F bashrc.d)" ]; then 
+      # if it can't pick up `.bashrc.d`, tell it to
+      # source all files inside `.bashrc.d`
+      echo 'for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done' \
+        >> "$HOME/.bashrc"
+    fi
+  else
+    # create bashrc if it doesn't exist, and tell it to source
+    # all files in `.bashrc.d`
+    touch "$HOME/.bashrc"
+    echo 'for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done' \
+      > "$HOME/.bashrc"
+  fi
+  mkdir -p "$HOME/.bashrc.d"
+}
 
-# Get the absolute path of the current working directory
-current_dir="$(pwd)"
+add_to_bashrc_d() {
+  if [ -d "/bashrc-d-$1" ]; then
+    for file in $(ls "/bashrc-d-$1"); do
+      cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
+    done
+    rm -rf "/bashrc-d-$1"
+  fi
+}
 
-# Determine the parent directory of the current directory
-parent_dir="$(cd "${current_dir}/.." && pwd)"
+clone_repos() {
+    # Clones all repos in repos-to-clone.list
+    # into the parent directory of the current
+    # working directory.
+
+    # Get the absolute path of the current working directory
+    current_dir="$(pwd)"
+
+    # Determine the parent directory of the current directory
+    parent_dir="$(cd "${current_dir}/.." && pwd)"
 
 
-# Function to clone a repository
-clone_repo()
-{
-    cd "${parent_dir}"
-    if [ ! -d "${1#*/}" ]; then
-        git clone "https://github.com/$1"
-    else 
-        echo "Already cloned $1"
+    # Function to clone a repository
+    clone_repo()
+    {
+        cd "${parent_dir}"
+        if [ ! -d "${1#*/}" ]; then
+            git clone "https://github.com/$1"
+        else 
+            echo "Already cloned $1"
+        fi
+    }
+
+    # If running in a Codespace, set up Git credentials
+    if [ "${CODESPACES}" = "true" ]; then
+        # Remove the default credential helper
+        sudo sed -i -E 's/helper =.*//' /etc/gitconfig
+
+        # Add one that just uses secrets available in the Codespace
+        git config --global credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
+    fi
+
+    # If there is a list of repositories to clone, clone them
+    if [ -f "./repos-to-clone.list" ]; then
+        while IFS= read -r repository || [ -n "$repository" ]; do
+            # Skip lines that are empty or contain only whitespace
+            if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
+                continue
+            fi
+
+            clone_repo "$repository"
+        done < "./repos-to-clone.list"
     fi
 }
 
-# If running in a Codespace, set up Git credentials
-if [ "${CODESPACES}" = "true" ]; then
-    # Remove the default credential helper
-    sudo sed -i -E 's/helper =.*//' /etc/gitconfig
-
-    # Add one that just uses secrets available in the Codespace
-    git config --global credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
+# source if not already in ~/.bashrc.d, and so
+# it will presumably have been sourced otherwise already
+if [ -f /bashrc-d-repos/repos-github-login-env ]; then
+  source /bashrc-d-repos/repos-github-login-env
 fi
 
-# If there is a list of repositories to clone, clone them
-if [ -f "./repos-to-clone.list" ]; then
-    while IFS= read -r repository || [ -n "$repository" ]; do
-        # Skip lines that are empty or contain only whitespace
-        if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
-            continue
-        fi
+config_bashrc_d
+add_to_bashrc_d repos
+clone_repos
 
-        clone_repo "$repository"
-    done < "./repos-to-clone.list"
-fi
 EOF
 
 chmod +x /usr/local/bin/repos-github-clone
 
-### log in using the store to GitHub
+# log in using the store to GitHub
+# -------------------
+
 cat > /usr/local/bin/repos-github-login-store \
 << 'EOF'
 #!/usr/bin/env bash
@@ -206,9 +289,8 @@ IFS=" "
 
 EOF
 
-
-
-## Add to workspace
+# Add to VS Code workspace
+# -------------------
 
 cat > /usr/local/bin/repos-workspace-add \
 << 'EOF'
