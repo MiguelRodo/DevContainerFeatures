@@ -6,9 +6,9 @@ set -e
 # specifying R library paths
 # -------------------------------
 
-mkdir -p "bashrc-d-config-r"
+mkdir -p "/bashrc-d-config-r"
 
-cat > "bashrc-d-config-r/config-r-env-lib" \
+cat > "/bashrc-d-config-r/config-r-env-lib" \
 << 'EOF'
 # save all R packages to /workspace directories.
 # Avoids having to reinstall R packages after 
@@ -37,7 +37,7 @@ mkdir -p "$R_LIBS"
 
 EOF
 
-source bashrc-d-config-r/config-r-env-lib
+source /bashrc-d-config-r/config-r-env-lib
 
 # update typically-required R packages
 update_r_pkg() {
@@ -122,15 +122,13 @@ config_bashrc_d() {
 # copy across any settings from config-r
 # to ~/.bashrc.d
 add_to_bashrc_d() {
-  if [ -d "/bashrc_d/$1" ]; then
-    for file in $(ls /bashrc_d/$1); do
-      cp "/bashrc_d/$1/$file" "$HOME/.bashrc.d/$file"
+  if [ -d "/bashrc-d-$1" ]; then
+    for file in $(ls "/bashrc-d-$1"); do
+      cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
     done
-    rm -rf "/bashrc_d/$1"
+    rm -rf "/bashrc-d-$1"
   fi
 }
-
-
 
 # ensure key radian setting is set on Codespaces and Git
 config_radian() {
