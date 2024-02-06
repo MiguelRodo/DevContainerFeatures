@@ -39,13 +39,25 @@ EOF
 
 source /bashrc-d-config-r/config-r-env-lib
 
+test -f /bashrc-d-config-r/config-r-env-lib && \
+  echo "config-r-env-lib exists" || \
+  echo "config-r-env-lib does not exit"
+
 # update typically-required R packages
 update_r_pkg() {
   mkdir -p "/tmp/r-packages"
   pushd "/tmp/r-packages"
   echo "Updating R packages"
-  Rscript -e "print(.libPaths())" \
-    -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
+  Rscript -e "print(c('R_LIBS' = Sys.getenv('R_LIBS')))" \
+  -e "print(c('RENV_PATHS_CACHE' = Sys.getenv('RENV_PATHS_CACHE')))" \
+  -e "print(c('RENV_PATHS_LIBRARY_ROOT' = Sys.getenv('RENV_PATHS_LIBRARY_ROOT')))" \
+  -e "print(c('RENV_PATHS_LIBRARY' = Sys.getenv('RENV_PATHS_LIBRARY')))" \
+  -e "print(c('RENV_PREFIX_AUTO' = Sys.getenv('RENV_PREFIX_AUTO')))" \
+  -e "print(c('RENV_CONFIG_PAK_ENABLED' = Sys.getenv('RENV_CONFIG_PAK_ENABLED')))" \
+  -e "print(c('USER' = Sys.getenv('USER')))" \
+  -e "print(c('wd' = getwd()))" \
+  -e "print(c('.libPaths' = .libPaths()))"
+  Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
     -e 'try(install.packages(c("jsonlite", "languageserver", "pak", "renv", "BiocManager", "yaml")))'
   popd
   echo "Completed updating R packages"
@@ -63,7 +75,7 @@ install_pkg_for_renv() {
   echo "Installing pak and BiocManager into renv cache"
   mkdir -p "/tmp/renv"
   pushd "/tmp/renv"
-  Rscript -e "print(.libPaths())" \
+  Rscript -e "print(c('.libPaths' = .libPaths())" \
     -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)' \
     -e 'try(renv::install("pak"))' \
     -e 'try(renv::install("BiocManager"))'
@@ -126,9 +138,11 @@ add_to_bashrc_d() {
       echo "Adding $file"
       cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
     done
+    echo "Completed adding files from /bashrc-d-$1 to ~/.bashrc.d"
     rm -rf "/bashrc-d-$1"
-  fi
-  echo "Completed adding files from /bashrc-d-$1 to ~/.bashrc.d"
+  else
+    echo "No /bashrc-d-$1 directory found"
+  fi 
 }
 
 # ensure key radian setting is set on Codespaces and Git
