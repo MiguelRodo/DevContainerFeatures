@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+# set -e
 
 # ------------------------
 # Configure R
@@ -8,7 +8,7 @@ set -e
 
 # R environment vairables
 
-mkdir -p "$HOME/.bashrc.d"`
+mkdir -p "$HOME/.bashrc.d"
 
 cat > "$HOME/.bashrc.d/config-r-env-gh" \
 << 'EOF'
@@ -280,8 +280,8 @@ rm -rf "/tmp/r-packages"
 # install pak and BiocManager into renv cache
 mkdir -p "/tmp/renv"
 pushd "/tmp/renv"
-Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)'
-  -e 'renv::install("pak")'
+Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)' \
+  -e 'renv::install("pak")' \
   -e 'renv::install("BiocManager")'
 Rscript -e "Sys.setenv('RENV_CONFIG_PAK_ENABLED' = 'true'); renv::install('tinytest')"
 Rscript -e "Sys.setenv('RENV_CONFIG_PAK_ENABLED' = 'true'); renv::install('tinytest')"
