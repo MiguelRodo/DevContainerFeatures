@@ -3,5 +3,5 @@
     "id": "config-r",
     "version": "1.2.1",
     "description": "Configure R",
-    "postCreateCommand": "config-r; config-r-vscode; config-r-pkg; config-r-pkg-renv"
+    "postCreateCommand": "config-r; config-r-vscode"
 }
