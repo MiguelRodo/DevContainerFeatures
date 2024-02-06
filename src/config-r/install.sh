@@ -33,7 +33,6 @@ elif [ -n "$GITHUB_TOKEN" ]; then
 else 
   echo "No GitHub token found (none of GH_TOKEN, GITHUB_PAT, GITHUB_TOKEN)"
 fi
-fi
 
 EOF
 
