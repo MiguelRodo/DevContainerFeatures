@@ -6,23 +6,12 @@ set -e
 # Configure R
 # ------------------------
 
-cat > /usr/local/bin/config-r \
+cat > /usr/local/bin/config-r-env \
 << 'EOF'
 #!/usr/bin/env bash
 
-# Script for configuring the R environment in GitHub Codespaces or GitPod
 # - Ensures GH_TOKEN, GITHUB_TOKEN and GITHUB_PAT are all set
 #   for GitHub API access.
-# - In GitPod/Codespace, stores R packages in a workspace directory to
-#   persist them across sessions. Only really necessary for GitPod
-# - Ensures radian works in GitPod/Codespace (without 
-#   turning off auto_match, multiline interactive code does not run
-#   correctly)
-# - Configures R_LIBS directory for package installations
-#   outside of container environments.
-# - Making linting less aggressive
-#   - Ignore object length and snake/camel case
-# - Ensure key R packages up to date
 
 # github token
 if [ -n "$GH_TOKEN" ]; then
@@ -67,6 +56,37 @@ fi
 # that one never tries to install packages
 # into a singularity/apptainer container)
 mkdir -p "$R_LIBS"
+
+EOF
+
+chmod +x /usr/local/bin/config-r-env
+
+
+cat > /usr/local/bin/config-r \
+<< 'EOF'
+#!/usr/bin/env bash
+
+# Script for configuring the R environment in GitHub Codespaces or GitPod
+# - Ensures GH_TOKEN, GITHUB_TOKEN and GITHUB_PAT are all set
+#   for GitHub API access.
+# - In GitPod/Codespace, stores R packages in a workspace directory to
+#   persist them across sessions. Only really necessary for GitPod
+# - Ensures radian works in GitPod/Codespace (without 
+#   turning off auto_match, multiline interactive code does not run
+#   correctly)
+# - Configures R_LIBS directory for package installations
+#   outside of container environments.
+# - Making linting less aggressive
+#   - Ignore object length and snake/camel case
+# - Ensure key R packages up to date
+
+config-r-env
+
+# Check if config-r-env is not in .bashrc
+if ! grep -q "config-r-env" "$HOME/.bashrc"; then
+  # If not, append it
+  echo "config-r-env" >> "$HOME/.bashrc"
+fi
 
 # ensure that radian works (at least on ephemeral dev
 # environments)
