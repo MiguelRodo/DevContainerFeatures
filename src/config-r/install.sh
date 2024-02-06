@@ -102,7 +102,7 @@ config_bashrc_d() {
 config_env() {
   if [ -d "/tmp/config-r" ]; then
     for file in $(ls /tmp/config-r); do
-      cp "/tmp/config-r/$file" "$HOME/.bashrc.d"
+      cp "/tmp/config-r/$file" "$HOME/.bashrc.d/$file"
     done
     rm -rf "/tmp/config-r"
   fi
@@ -253,9 +253,7 @@ cat > /usr/local/bin/config-r-pkg \
 # we're still building and we source from there.
 # otherwise, we assume it's sourced via ~/.bashrc
 if [ -d /tmp/config-r ]; then
-  for file in $(ls /tmp/config-r); do
-    cp "/tmp/config-r/$file" "$HOME/.bashrc.d/$file"
-  done
+  source  "/tmp/config-r/$file"
 fi
 
 mkdir -p "/tmp/r-packages"
@@ -289,9 +287,7 @@ cat > /usr/local/bin/config-r-pkg-renv \
 # we're still building and we source from there.
 # otherwise, we assume it's sourced via ~/.bashrc
 if [ -d /tmp/config-r ]; then
-  for file in $(ls /tmp/config-r); do
-    cp "/tmp/config-r/$file" "$HOME/.bashrc.d"
-  done
+  source "/tmp/config-r/$file"
 fi
 
 # install renv
