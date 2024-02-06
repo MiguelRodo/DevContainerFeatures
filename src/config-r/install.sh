@@ -97,6 +97,7 @@ config_bashrc_d() {
     echo 'for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done' \
       > "$HOME/.bashrc"
   fi
+  mkdir -p "$HOME/.bashrc.d"
 }
 
 config_env() {
