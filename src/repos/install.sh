@@ -105,7 +105,7 @@ if [ -n "$GH_TOKEN" ]; then
   if [ "${CODESPACES}" = "true" ]; then
     export GITHUB_TOKEN="$GH_TOKEN"
   else
-    export GITHUB_TOKEN="${GITHUB_PAT:-"$GH_TOKEN"}"
+    export GITHUB_TOKEN="${GITHUB_TOKEN:-"$GH_TOKEN"}"
   fi
   export GITHUB_PAT="${GITHUB_PAT:-"$GH_TOKEN"}"  
 elif [ -n "$GITHUB_PAT" ]; then 
