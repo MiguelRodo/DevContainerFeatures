@@ -1,8 +1,7 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "1.1.2",
+    "version": "1.2.0",
     "description": "Configure R",
-    "postCreateCommand": "config-r-vscode; config-r-vscode; config-r-pkg; config-r-pkg-renv",
-    "postStartCommand": "config-r-vscode; config-r-vscode"
+    "postCreateCommand": "config-r; config-r-vscode; config-r-pkg; config-r-pkg-renv"
 }

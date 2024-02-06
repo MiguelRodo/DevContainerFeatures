@@ -6,13 +6,12 @@ set -e
 # Configure R
 # ------------------------
 
-cat > /usr/local/bin/config-r-env \
+# R environment vairables
+
+mkdir -p "$HOME/.bashrc.d"`
+
+cat > "$HOME/.bashrc.d/config-r-env-gh" \
 << 'EOF'
-#!/usr/bin/env bash
-
-# - Ensures GH_TOKEN, GITHUB_TOKEN and GITHUB_PAT are all set
-#   for GitHub API access.
-
 # github token
 if [ -n "$GH_TOKEN" ]; then
   # necessarily override GITHUB_TOKEN
@@ -31,8 +30,17 @@ elif [ -n "$GITHUB_PAT" ]; then
 elif [ -n "$GITHUB_TOKEN" ]; then 
   export GH_TOKEN="${GH_TOKEN:-"$GITHUB_TOKEN"}"
   export GITHUB_PAT="${GITHUB_PAT:-"$GITHUB_TOKEN"}"
+else 
+  echo "No GitHub token found (none of GH_TOKEN, GITHUB_PAT, GITHUB_TOKEN)"
+fi
 fi
 
+EOF
+
+source "$HOME/.bashrc.d/config-r-env-gh"
+
+cat > "$HOME/.bashrc.d/config-r-env-lib" \
+<< 'EOF'
 # save all R packages to /workspace directories.
 # Especially important on GitPod to avoid having to
 # reinstall upon container restarts
@@ -59,65 +67,79 @@ mkdir -p "$R_LIBS"
 
 EOF
 
-chmod +x /usr/local/bin/config-r-env
-
+source "$HOME/.bashrc.d/config-r-env-lib"
 
 cat > /usr/local/bin/config-r \
 << 'EOF'
 #!/usr/bin/env bash
 
 # Script for configuring the R environment in GitHub Codespaces or GitPod
-# - Ensures GH_TOKEN, GITHUB_TOKEN and GITHUB_PAT are all set
-#   for GitHub API access.
-# - In GitPod/Codespace, stores R packages in a workspace directory to
-#   persist them across sessions. Only really necessary for GitPod
+# - Ensures that scripts in ~/.bashrc.d are sourced:
+#   - Previously, we have saved scripts to set up environmnent
+#     variables for GitHub and R library paths
 # - Ensures radian works in GitPod/Codespace (without 
 #   turning off auto_match, multiline interactive code does not run
 #   correctly)
-# - Configures R_LIBS directory for package installations
-#   outside of container environments.
 # - Making linting less aggressive
 #   - Ignore object length and snake/camel case
 # - Ensure key R packages up to date
 
-config-r-env
+config_bashrc_d() {
+  # ensure that `.bashrc.d` files are sourced in
+  if [ -e "$HOME/.bashrc" ]; then 
+    # we assume that if `.bashrc.d` is mentioned
+    # in `$HOME/.bashrc`, then it's sourced in
+    if [ -z "$(cat "$HOME/.bashrc" | grep -F bashrc.d)" ]; then 
+      # if it can't pick up `.bashrc.d`, tell it to
+      # source all files inside `.bashrc.d`
+      echo 'for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done' \
+        >> "$HOME/.bashrc"
+    fi
+  else
+    # create bashrc if it doesn't exist, and tell it to source
+    # all files in `.bashrc.d`
+    touch "$HOME/.bashrc"
+    echo 'for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done' \
+      > "$HOME/.bashrc"
+  fi
+}
 
-# Check if config-r-env is not in .bashrc
-if ! grep -q "config-r-env" "$HOME/.bashrc"; then
-  # If not, append it
-  echo "config-r-env" >> "$HOME/.bashrc"
-fi
-
-# ensure that radian works (at least on ephemeral dev
-# environments)
-if [ -n "$(env | grep -E "^GITPOD|^CODESPACE")" ]; then
-  if ! [ -e "$HOME/.radian_profile" ]; then touch "$HOME/.radian_profile"; fi
-  if [ "$GITHUB_USER" = "MiguelRodo" ] || [ "$GITPOD_GIT_USER_NAME" = "Miguel Rodo" ]; then 
-    if [ -z "$(cat "$HOME/.radian_profile" | grep -E 'options\(\s*radian\.editing_mode')" ]; then 
-      echo 'options(radian.editing_mode = "vi")' >> "$HOME/.radian_profile"
+config_radian() {
+  # ensure that radian works (at least on ephemeral dev
+  # environments)
+  if [ -n "$(env | grep -E "^GITPOD|^CODESPACE")" ]; then
+    if ! [ -e "$HOME/.radian_profile" ]; then touch "$HOME/.radian_profile"; fi
+    if [ "$GITHUB_USER" = "MiguelRodo" ] || [ "$GITPOD_GIT_USER_NAME" = "Miguel Rodo" ]; then 
+      if [ -z "$(cat "$HOME/.radian_profile" | grep -E 'options\(\s*radian\.editing_mode')" ]; then 
+        echo 'options(radian.editing_mode = "vi")' >> "$HOME/.radian_profile"
+      fi
+    fi
+    if [ -z "$(cat "$HOME/.radian_profile" | grep -E 'options\(\s*radian\.auto_match')" ]; then 
+      echo 'options(radian.auto_match = FALSE)' >> "$HOME/.radian_profile"
     fi
   fi
-  if [ -z "$(cat "$HOME/.radian_profile" | grep -E 'options\(\s*radian\.auto_match')" ]; then 
-    echo 'options(radian.auto_match = FALSE)' >> "$HOME/.radian_profile"
-  fi
-fi
+}
 
-# set linting settings
-# light: just don't warn about snake case / camel case
-# (which it often gets wrong) and object name
-# length (which I often want to make very long)
-if [ ! -f "$HOME/.lintr" ]; then
-  echo "linters: with_defaults(
-  object_length_linter = NULL,
-  object_name_linter = NULL)
-" > "$HOME/.lintr"
-fi
+config_linting() {
+  # set linting settings
+  # light: just don't warn about snake case / camel case
+  # (which it often gets wrong) and object name
+  # length (which I often want to make very long)
+  if [ ! -f "$HOME/.lintr" ]; then
+    echo "linters: with_defaults(
+    object_length_linter = NULL,
+    object_name_linter = NULL)
+  " > "$HOME/.lintr"
+  fi
+}
+
+config_bashrc_d
+config_radian
+config_linting
 
 EOF
 
 chmod +x /usr/local/bin/config-r
-
-echo "source /usr/local/bin/config-r" >> "$HOME/.bashrc"
 
 /usr/local/bin/config-r
 
@@ -225,7 +247,7 @@ cat > /usr/local/bin/config-r-pkg \
 mkdir -p "/tmp/r-packages"
 pushd "/tmp/r-packages"
 Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")' \
-  -e 'install.packages(c("jsonlite", "languageserver", "pak", "renv"))'
+  -e 'install.packages(c("jsonlite", "languageserver", "pak", "renv", "BiocManager", "yaml"))'
 popd
 
 rm -rf "/tmp/r-packages"
@@ -259,8 +281,11 @@ rm -rf "/tmp/r-packages"
 # install pak and BiocManager into renv cache
 mkdir -p "/tmp/renv"
 pushd "/tmp/renv"
-Rscript -e 'renv::init(bioconductor = TRUE)'
-Rscript -e 'renv::install("pak")'
+Rscript -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)'
+  -e 'renv::install("pak")'
+  -e 'renv::install("BiocManager")'
+Rscript -e "Sys.setenv('RENV_CONFIG_PAK_ENABLED' = 'true'); renv::install('tinytest')"
+Rscript -e "Sys.setenv('RENV_CONFIG_PAK_ENABLED' = 'true'); renv::install('tinytest')"
 popd
 
 rm -rf "/tmp/renv"
@@ -270,4 +295,3 @@ EOF
 chmod +x /usr/local/bin/config-r-pkg-renv
 
 /usr/local/bin/config-r-pkg-renv
-
