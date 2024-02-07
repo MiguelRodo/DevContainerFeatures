@@ -133,7 +133,7 @@ add_to_bashrc_d() {
       cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
     done
     echo "Completed adding files from /bashrc-d-$1 to ~/.bashrc.d"
-    rm -rf "/bashrc-d-$1"
+    sudo rm -rf "/bashrc-d-$1"
   else
     echo "No /bashrc-d-$1 directory found"
   fi 

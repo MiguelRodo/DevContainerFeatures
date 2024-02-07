@@ -156,7 +156,7 @@ add_to_bashrc_d() {
     for file in $(ls "/bashrc-d-$1"); do
       cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
     done
-    rm -rf "/bashrc-d-$1"
+    sudo rm -rf "/bashrc-d-$1"
   fi
 }
 

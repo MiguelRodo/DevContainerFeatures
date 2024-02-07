@@ -24,6 +24,7 @@ check "that repos-github-clone is found" bash -c "repos-github-clone"
 check "that repos-xethub-clone is found" bash -c "repos-xethub-clone"
 check "that repos-workspace-add is found" bash -c "repos-workspace-add"
 check "that repos-workspace-add creates the workspace file" bash -c "test -f EntireProject.code-workspace"
+check "that config-r adds the " bash -c "test -f EntireProject.code-workspace"
 
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.
