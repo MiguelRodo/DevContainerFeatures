@@ -6,9 +6,9 @@ set -e
 # specifying R library paths
 # -------------------------------
 
-mkdir -p "/bashrc-d-config-r"
+mkdir -p "/tmp/config-r"
 
-cat > "/bashrc-d-config-r/config-r-env-lib" \
+cat > "/tmp/config-r/config-r-env-lib" \
 << 'EOF'
 # save all R packages to /workspace directories.
 # Avoids having to reinstall R packages after 
@@ -31,9 +31,9 @@ fi
 
 EOF
 
-source /bashrc-d-config-r/config-r-env-lib
+source /tmp/config-r/config-r-env-lib
 
-test -f /bashrc-d-config-r/config-r-env-lib && \
+test -f /tmp/config-r/config-r-env-lib && \
   echo "config-r-env-lib exists" || \
   echo "config-r-env-lib does not exit"
 
@@ -126,16 +126,16 @@ config_bashrc_d() {
 # copy across any settings from config-r
 # to ~/.bashrc.d
 add_to_bashrc_d() {
-  echo "Adding files from /bashrc-d-$1 to ~/.bashrc.d"
-  if [ -d "/bashrc-d-$1" ]; then
-    for file in $(ls "/bashrc-d-$1"); do
+  echo "Adding files from /tmp/$1 to ~/.bashrc.d"
+  if [ -d "/tmp/$1" ]; then
+    for file in $(ls "/tmp/$1"); do
       echo "Adding $file"
-      cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
+      cp "/tmp/$1/$file" "$HOME/.bashrc.d/$file"
     done
-    echo "Completed adding files from /bashrc-d-$1 to ~/.bashrc.d"
-    sudo rm -rf "/bashrc-d-$1"
+    echo "Completed adding files from /tmp/$1 to ~/.bashrc.d"
+    sudo rm -rf "/tmp/$1"
   else
-    echo "No /bashrc-d-$1 directory found"
+    echo "No /tmp/$1 directory found"
   fi 
 }
 

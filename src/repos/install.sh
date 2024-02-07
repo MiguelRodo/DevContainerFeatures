@@ -91,9 +91,9 @@ chmod +x /usr/local/bin/repos-xethub-clone
 # set up environment variables
 # -------------------
 
-mkdir -p "/bashrc-d-repos"
+mkdir -p "/tmp/repos"
 
-cat > "/bashrc-d-repos/repos-github-login-env" \
+cat > "/tmp/repos/repos-github-login-env" \
 << 'EOF'
 
 # github token
@@ -152,11 +152,11 @@ config_bashrc_d() {
 }
 
 add_to_bashrc_d() {
-  if [ -d "/bashrc-d-$1" ]; then
-    for file in $(ls "/bashrc-d-$1"); do
-      cp "/bashrc-d-$1/$file" "$HOME/.bashrc.d/$file"
+  if [ -d "/tmp/$1" ]; then
+    for file in $(ls "/tmp/$1"); do
+      cp "/tmp/$1/$file" "$HOME/.bashrc.d/$file"
     done
-    sudo rm -rf "/bashrc-d-$1"
+    sudo rm -rf "/tmp/$1"
   fi
 }
 
@@ -207,8 +207,8 @@ clone_repos() {
 
 # source if not already in ~/.bashrc.d, and so
 # it will presumably have been sourced otherwise already
-if [ -f /bashrc-d-repos/repos-github-login-env ]; then
-  source /bashrc-d-repos/repos-github-login-env
+if [ -f /tmp/repos/repos-github-login-env ]; then
+  source /tmp/repos/repos-github-login-env
 fi
 
 config_bashrc_d
