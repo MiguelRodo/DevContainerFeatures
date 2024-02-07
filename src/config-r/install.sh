@@ -139,19 +139,6 @@ add_to_bashrc_d() {
   fi 
 }
 
-# ensure key radian setting is set on Codespaces and Git
-echo "---------------------"
-echo "---------------------"
-echo " "
-echo " "
-echo "printing all environment variables"
-printenv
-echo " "
-echo " "
-echo "---------------------"
-echo "---------------------"
-
-echo "done printing all environment variables"
 config_radian() {
   echo "Configuring radian"
   # ensure that radian works (at least on ephemeral dev
@@ -172,11 +159,14 @@ config_linting() {
   # (which it often gets wrong) and object name
   # length (which I often want to make very long)
   if [ ! -f "$HOME/.lintr" ]; then
-    echo "linters: with_defaults(
-    object_length_linter = NULL,
-    object_name_linter = NULL)
-  " > "$HOME/.lintr"
-  fi
+cat > "$HOME/.lintr" \
+<< 'EOF'
+"linters: with_defaults(
+  object_length_linter = NULL,
+  object_name_linter = NULL)
+"
+fi
+EOF
   echo "Completed configuring linting"
 }
 
