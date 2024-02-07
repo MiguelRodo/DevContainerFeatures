@@ -165,8 +165,8 @@ cat > "$HOME/.lintr" \
   object_length_linter = NULL,
   object_name_linter = NULL)
 "
-fi
 EOF
+  fi
   echo "Completed configuring linting"
 }
 
