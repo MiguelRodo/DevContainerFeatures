@@ -11,7 +11,12 @@ Configure R
 }
 ```
 
+## Options
 
+| Options Id | Description | Type | Default Value |
+|-----|-----|-----|-----|
+| set_lib_paths | Whether to set default paths for R libraries (including for `renv`). | string | true |
+| config_radian | Whether to configure Radian. | string | true |
 
 
 
