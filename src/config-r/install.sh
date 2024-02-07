@@ -205,6 +205,7 @@ config_vscode_r_ext() {
   # Otherwise, it adds the key-value pair to the JSON file using the 'jq' command.
   # Create the JSON file if it does not exist
   if [ ! -f "$path_file_json" ]; then
+      echo "No R settings file found, creating it"
       echo "{}" > "$path_file_json"
   fi
 
@@ -240,6 +241,7 @@ config_vscode_r_ext() {
   }
 
   update_json() {
+      echo "Updating settings JSON file"
       local new_array=$(Rscript --vanilla -e "cat(.libPaths(), sep = '\n')" | sed ':a;N;$!ba;s/\n/", "/g' | sed 's/^/["/' | sed 's/$/"]/')
       jq --arg key "$new_key" --argjson value "$new_array" '. + {($key): $value}' $path_file_json > temp.json && mv temp.json $path_file_json
   }

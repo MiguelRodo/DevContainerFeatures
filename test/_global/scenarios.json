@@ -1,6 +1,6 @@
 {
     "all": {
-        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.2",
         "features": {
             "git-xet": {},
             "apptainer": {},
