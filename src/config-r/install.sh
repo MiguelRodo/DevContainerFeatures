@@ -10,6 +10,7 @@ mkdir -p "/var/tmp/config-r"
 
 cat > "/var/tmp/config-r/config-r-env-lib" \
 << 'EOF'
+SET_LIB_PATHS="${SET_LIB_PATHS:-true}"
 # save all R packages to /workspace directories.
 # Avoids having to reinstall R packages after 
 # every container start for GitPod, and
