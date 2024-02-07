@@ -185,8 +185,10 @@ get_path_file_json() {
   # Define the path to your JSON file
   path_rel=".vscode-remote/data/Machine/settings.json"
   path_file_json="/home/$USER/$path_rel"
-  if ! [ -f "$path_file_json" ]; then
-      path_file_json=""
+  if [ ! -f "$path_file_json" ]; then
+      echo "No R settings file found, creating it"
+      mkdir -p "$(dirname "$path_file_json")"
+      echo "{}" > "$path_file_json"
   fi
   echo "Completed getting path to settings.json"
 }
@@ -206,6 +208,7 @@ config_vscode_r_ext() {
   # Create the JSON file if it does not exist
   if [ ! -f "$path_file_json" ]; then
       echo "No R settings file found, creating it"
+      mkdir -p "$(dirname "$path_file_json")"
       echo "{}" > "$path_file_json"
   fi
 
@@ -220,10 +223,13 @@ config_vscode_r_ext() {
 
   # Function to process and check the JSON file
   update_json_if_needed() {
+      echo "Running update_json_if_needed"
       local has_version_path=false
       local paths=( $(jq -r ".\"$new_key\"[]?" "$path_file_json") )
+      echo "$paths"
 
       for path in "${paths[@]}"; do
+          echo "path"
           if [[ "$path" =~ $version_regex ]]; then
               has_version_path=true
               if [[ "$path" =~ $r_version ]]; then
@@ -243,13 +249,20 @@ config_vscode_r_ext() {
   update_json() {
       echo "Updating settings JSON file"
       local new_array=$(Rscript --vanilla -e "cat(.libPaths(), sep = '\n')" | sed ':a;N;$!ba;s/\n/", "/g' | sed 's/^/["/' | sed 's/$/"]/')
+      echo "$new_array"
+      echo "$new_key"
+      echo "$path_file_json"
+      test -f "$path_file_json" && echo "file exists" || echo "file does not exist"
       jq --arg key "$new_key" --argjson value "$new_array" '. + {($key): $value}' $path_file_json > temp.json && mv temp.json $path_file_json
   }
 
   # Check if r.libPaths exists and if the current R version is not in its values
+  echo "Check if the key exists"
   if jq -e ". | has(\"$new_key\")" "$path_file_json" > /dev/null; then
+      echo "key exists"
       update_json_if_needed
   else
+      echo "key does not exist"
       echo "Add r.libPaths key"
       # r.libPaths key doesn't exist, so proceed to add it
       update_json
