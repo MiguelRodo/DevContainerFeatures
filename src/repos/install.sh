@@ -96,6 +96,8 @@ mkdir -p "/var/tmp/repos"
 cat > "/var/tmp/repos/repos-github-login-env" \
 << 'EOF'
 
+FORCE_GH_TOKEN="${FORCE_GH_TOKEN:-true}"
+
 # github token
 if [ -n "$GH_TOKEN" ]; then
   # necessarily override GITHUB_TOKEN
