@@ -18,7 +18,7 @@ SET_LIB_PATHS="${SET_LIB_PATHS:-true}"
 if [ "$SET_LIB_PATHS" = "true" ]; then
     workspace_dir="/workspaces"
     export R_LIBS=${R_LIBS:="$workspace_dir/.local/lib/R"}
-    export RENV_PATHS_CACHE=${RENV_PATHS_CACHE:="$workspace_dir/.lfocal/R/lib/renv"}
+    export RENV_PATHS_CACHE=${RENV_PATHS_CACHE:="$workspace_dir/.local/R/lib/renv"}
     export RENV_PATHS_LIBRARY_ROOT=${RENV_PATHS_LIBRARY_ROOT:="$workspace_dir/.local/.cache/R/renv"}
     export RENV_PATHS_LIBRARY=${RENV_PATHS_LIBRARY:="$workspace_dir/.local/.cache/R/renv"}
     export RENV_PREFIX_AUTO=${RENV_PREFIX_AUTO:=TRUE}
