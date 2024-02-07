@@ -262,7 +262,7 @@ add_to_bashrc_d config-r
 config_radian
 config_linting
 get_path_file_json
-if [ -n $path_file_json ]; then
+if [ -n "$path_file_json" ]; then
   config_vscode_r_ext
 fi
 
