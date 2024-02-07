@@ -159,13 +159,10 @@ config_linting() {
   # (which it often gets wrong) and object name
   # length (which I often want to make very long)
   if [ ! -f "$HOME/.lintr" ]; then
-cat > "$HOME/.lintr" \
-<< 'EOF'
-"linters: with_defaults(
-  object_length_linter = NULL,
-  object_name_linter = NULL)
-"
-EOF
+    echo "linters: with_defaults(
+    object_length_linter = NULL,
+    object_name_linter = NULL)
+  " > "$HOME/.lintr"
   fi
   echo "Completed configuring linting"
 }
