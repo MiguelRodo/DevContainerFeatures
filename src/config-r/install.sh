@@ -257,7 +257,9 @@ config_vscode_r_ext() {
   echo "Completed configuring VS Code R extension"
 }
 
+echo "configuring bashrc.d"
 config_bashrc_d
+echo "done configuring bashrc.d"
 add_to_bashrc_d config-r
 config_radian
 config_linting
