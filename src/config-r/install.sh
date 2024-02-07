@@ -6,9 +6,9 @@ set -e
 # specifying R library paths
 # -------------------------------
 
-mkdir -p "/tmp/config-r"
+mkdir -p "/var/tmp/config-r"
 
-cat > "/tmp/config-r/config-r-env-lib" \
+cat > "/var/tmp/config-r/config-r-env-lib" \
 << 'EOF'
 # save all R packages to /workspace directories.
 # Avoids having to reinstall R packages after 
@@ -29,16 +29,16 @@ if [ "$SET_LIB_PATHS" = "true" ]; then
 fi
 EOF
 
-source /tmp/config-r/config-r-env-lib
+source /var/tmp/config-r/config-r-env-lib
 
-test -f /tmp/config-r/config-r-env-lib && \
+test -f /var/tmp/config-r/config-r-env-lib && \
   echo "config-r-env-lib exists" || \
   echo "config-r-env-lib does not exit"
 
 # update typically-required R packages
 update_r_pkg() {
-  mkdir -p "/tmp/r-packages"
-  pushd "/tmp/r-packages"
+  mkdir -p "/var/tmp/r-packages"
+  pushd "/var/tmp/r-packages"
   echo "Updating R packages"
   Rscript -e "print(c('R_LIBS' = Sys.getenv('R_LIBS')))" \
   -e "print(c('RENV_PATHS_CACHE' = Sys.getenv('RENV_PATHS_CACHE')))" \
@@ -54,7 +54,7 @@ update_r_pkg() {
   popd
   echo "Completed updating R packages"
 
-  rm -rf "/tmp/r-packages"
+  rm -rf "/var/tmp/r-packages"
 }
 
 # ensure packages available for renc
@@ -65,8 +65,8 @@ install_pkg_for_renv() {
 
   # install pak and BiocManager into renv cache
   echo "Installing pak and BiocManager into renv cache"
-  mkdir -p "/tmp/renv"
-  pushd "/tmp/renv"
+  mkdir -p "/var/tmp/renv"
+  pushd "/var/tmp/renv"
   Rscript -e "print(c('.libPaths' = .libPaths()))" \
     -e 'Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false"); renv::init(bioconductor = TRUE)' \
     -e 'try(renv::install("pak"))' \
@@ -76,7 +76,7 @@ install_pkg_for_renv() {
   popd
   echo "Completed installing pak and BiocManager into renv cache"
 
-  rm -rf "/tmp/renv"
+  rm -rf "/var/tmp/renv"
 }
 
 update_r_pkg
@@ -124,16 +124,16 @@ config_bashrc_d() {
 # copy across any settings from config-r
 # to ~/.bashrc.d
 add_to_bashrc_d() {
-  echo "Adding files from /tmp/$1 to ~/.bashrc.d"
-  if [ -d "/tmp/$1" ]; then
-    for file in $(ls "/tmp/$1"); do
+  echo "Adding files from /var/tmp/$1 to ~/.bashrc.d"
+  if [ -d "/var/tmp/$1" ]; then
+    for file in $(ls "/var/tmp/$1"); do
       echo "Adding $file"
-      cp "/tmp/$1/$file" "$HOME/.bashrc.d/$file"
+      cp "/var/tmp/$1/$file" "$HOME/.bashrc.d/$file"
     done
-    echo "Completed adding files from /tmp/$1 to ~/.bashrc.d"
-    sudo rm -rf "/tmp/$1"
+    echo "Completed adding files from /var/tmp/$1 to ~/.bashrc.d"
+    sudo rm -rf "/var/tmp/$1"
   else
-    echo "No /tmp/$1 directory found"
+    echo "No /var/tmp/$1 directory found"
   fi 
 }
 
