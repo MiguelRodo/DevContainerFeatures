@@ -354,7 +354,8 @@ add_to_workspace() {
     fi
 
     # Extract the repository name and create the path
-    repo_name="${repo##*/}"
+    repo_name="${repo%%@*}" # Remove everything after @
+    repo_name="${repo_name##*/}" # Remove everything before the last /
     repo_path="../$repo_name"
 
     # Check if the path is already in the workspace file
