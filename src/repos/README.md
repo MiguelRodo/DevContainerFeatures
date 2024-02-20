@@ -16,6 +16,7 @@ Add commands to work with repos, esp. multiple repos
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
 | force_gh_token | Whether to override GITHUB_PAT and GITHUB_TOKEN with GH_TOKEN (if set). | string | true |
+| override_credential_helper | Whether to override the default credential helper. | string | true |
 
 
 
