@@ -214,7 +214,7 @@ clone_repos() {
     }
 
     # If running in a Codespace, set up Git credentials
-    if [ "${override_credential_helper}" ]; then
+    if [ "${OVERRIDE_CREDENTIAL_HELPER}" ]; then
         # Remove the default credential helper
         sudo sed -i -E 's/helper =.*//' /etc/gitconfig
 
