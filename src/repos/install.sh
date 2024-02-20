@@ -178,10 +178,18 @@ clone_repos() {
     clone_repo()
     {
         cd "${parent_dir}"
-        if [ ! -d "${1#*/}" ]; then
-            git clone "https://github.com/$1"
+        repo_and_branch=(${1//@/ }) # split input into array using @ as delimiter
+        repo=${repo_and_branch[0]}
+        branch=${repo_and_branch[1]}
+
+        if [ ! -d "${repo#*/}" ]; then
+            if [ -z "$branch" ]; then
+                git clone "https://github.com/$repo"
+            else
+                git clone -b "$branch" "https://github.com/$repo"
+            fi
         else 
-            echo "Already cloned $1"
+            echo "Already cloned $repo"
         fi
     }
 
