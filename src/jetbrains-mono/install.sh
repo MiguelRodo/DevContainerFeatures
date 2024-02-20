@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Install fontconfig, wget and unzip
 apt-get update && apt-get install -y fontconfig wget unzip jq
@@ -6,18 +6,15 @@ apt-get update && apt-get install -y fontconfig wget unzip jq
 # Create a directory for the font
 mkdir -p /tmp/jetbrains-mono
 
-# Change to the new directory
-cd /tmp/jetbrains-mono
-
 # Download JetBrains Mono font
-wget https://download.jetbrains.com/fonts/JetBrainsMono-2.242.zip
+wget -P /tmp/jetbrains-mono https://download.jetbrains.com/fonts/JetBrainsMono-2.242.zip
 
 # Unzip the downloaded file
-unzip JetBrainsMono-2.242.zip
+unzip /tmp/jetbrains-mono/JetBrainsMono-2.242.zip -d /tmp/jetbrains-mono
 
 # Install the font
 mkdir -p /usr/share/fonts/truetype/jetbrains
-mv fonts/ttf/*.ttf /usr/share/fonts/truetype/jetbrains
+mv /tmp/jetbrains-mono/fonts/ttf/*.ttf /usr/share/fonts/truetype/jetbrains
 fc-cache -f -v
 
 # Clean up
