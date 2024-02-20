@@ -265,7 +265,7 @@ git config --global credential.helper 'store'
 
 # Get GitHub username
 # username=$(gh api user | jq -r '.login')
-username=$GITHUB_USERNAME
+username=$GITHUB_USER
 
 # Get GitHub PAT from environment variable
 PAT=$GITHUB_PAT
@@ -282,7 +282,7 @@ fi
 
 if [ -z "$PAT" ] || [ -z "$username" ]
 then
-    echo "Error: One or more environment variables are not set. Please set GITHUB_USERNAME and GITHUB_PAT."
+    echo "Error: One or more environment variables are not set. Please set GITHUB_USER and GITHUB_PAT."
     exit 1
 fi
 
