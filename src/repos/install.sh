@@ -181,14 +181,34 @@ clone_repos() {
         repo_and_branch=(${1//@/ }) # split input into array using @ as delimiter
         repo=${repo_and_branch[0]}
         branch=${repo_and_branch[1]}
+        dir="${repo#*/}"
 
-        if [ ! -d "${repo#*/}" ]; then
+        if [ ! -d "$dir" ]; then
             if [ -z "$branch" ]; then
                 git clone "https://github.com/$repo"
             else
                 git clone -b "$branch" "https://github.com/$repo"
             fi
         else 
+            cd "$dir"
+            if [ ! -d ".git" ]; then
+                echo "Warning: $dir is not a Git repository but exists already"
+            else
+                if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+                    if [ -z "$branch" ]; then
+                        # If no branch is specified, checkout to the default branch
+                        if git remote show origin > /dev/null 2>&1; then
+                            git checkout $(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+                        fi
+                    else
+                        current_branch=$(git rev-parse --abbrev-ref HEAD)
+                        if [ "$current_branch" != "$branch" ]; then
+                            git checkout "$branch"
+                        fi
+                    fi
+                fi
+            fi
+            cd ..
             echo "Already cloned $repo"
         fi
     }
