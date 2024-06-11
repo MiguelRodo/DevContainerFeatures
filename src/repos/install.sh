@@ -99,7 +99,11 @@ mkdir -p "/var/tmp/repos"
 cat > "/var/tmp/repos/repos-github-login-env" \
 << 'EOF'
 
+echo "The initial value of FORCE_GH_TOKEN is: $FORCE_GH_TOKEN"
+
 FORCE_GH_TOKEN="${FORCE_GH_TOKEN:-true}"
+
+echo "The final value of FORCE_GH_TOKEN is: $FORCE_GH_TOKEN"
 
 # github token
 if [ -n "$GH_TOKEN" ]; then
@@ -169,6 +173,13 @@ clone_repos() {
     # Clones all repos in repos-to-clone.list
     # into the parent directory of the current
     # working directory.
+
+    echo "The initial value of OVERRIDE_CREDENTIAL_HELPER is $OVERRIDE_CREDENTIAL_HELPER"   
+
+    OVERRIDE_CREDENTIAL_HELPER="${OVERRIDE_CREDENTIAL_HELPER:-true}"
+
+    echo "The final value of OVERRIDE_CREDENTIAL_HELPER is $OVERRIDE_CREDENTIAL_HELPER"
+
 
     # Get the absolute path of the current working directory
     current_dir="$(pwd)"
