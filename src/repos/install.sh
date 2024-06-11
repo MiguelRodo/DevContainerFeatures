@@ -99,11 +99,7 @@ mkdir -p "/var/tmp/repos"
 cat > "/var/tmp/repos/repos-github-login-env" \
 << 'EOF'
 
-echo "The initial value of FORCE_GH_TOKEN is: $FORCE_GH_TOKEN"
-
 FORCE_GH_TOKEN="${FORCE_GH_TOKEN:-true}"
-
-echo "The final value of FORCE_GH_TOKEN is: $FORCE_GH_TOKEN"
 
 # github token
 if [ -n "$GH_TOKEN" ]; then
