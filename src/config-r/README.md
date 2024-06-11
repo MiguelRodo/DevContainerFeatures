@@ -15,8 +15,9 @@ Configure R
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| set_lib_paths | Whether to set default paths for R libraries (including for `renv`). | string | true |
-| config_radian | Whether to configure Radian. | string | true |
+| set_r_lib_paths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | string | true |
+| radian_auto_match | Whether to set `auto_match` to `FALSE` for the radian terminal. | string | true |
+| lighten_linting | Whether to stop checking for camel/snake case and object name length. | string | true |
 
 
 
