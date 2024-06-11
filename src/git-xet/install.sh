@@ -3,7 +3,7 @@
 
 # 1. Installs `git-xet` cli
 
-ensure_git_up_to_date (){
+ensure_git_up_to_date() {
   # Get Git version information
   git_version_string=$(git --version)
   git_version=$(echo "$git_version_string" | cut -d' ' -f3)
@@ -31,7 +31,7 @@ ensure_git_up_to_date (){
 
 set -e
 
-ensure_git_up_to_date()
+ensure_git_up_to_date
 
 pushd /tmp
 
