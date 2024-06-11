@@ -13,6 +13,9 @@ cat > /usr/local/bin/repos-xethub-login \
 
 set -e
 
+echo "The value of XETHUB_USERNAME is: $XETHUB_USERNAME"
+echo "The value of XETHUB_EMAIL is: $XETHUB_EMAIL"
+
 if [ -z "$XETHUB_TOKEN" ]
 then
     # If not set, assign the value of XETHUB_PAT to XETHUB_TOKEN
@@ -262,7 +265,8 @@ cat > /usr/local/bin/repos-github-login-store \
 
 set -e
 
-#!/usr/bin/env bash
+sudo apt update -y
+sudo apt install -y jq
 
 # Use plain-text credential store
 git config --global credential.helper 'store'
