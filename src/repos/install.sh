@@ -364,6 +364,9 @@ fi
 
 add_to_workspace() {
 
+  sudo apt update -y
+  sudo apt install -y jq
+
   # Read and process each line from the input file
   while IFS= read -r repo || [ -n "$repo" ]; do
 

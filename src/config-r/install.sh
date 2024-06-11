@@ -242,6 +242,9 @@ config_vscode_r_ext() {
       jq --arg key "$new_key" --argjson value "$new_array" '. + {($key): $value}' $path_file_json > temp.json && mv temp.json $path_file_json
   }
 
+  sudo apt update -y
+  sudo apt install -y jq
+
   # Check if r.libPaths exists and if the current R version is not in its values
   echo "Check if the key exists"
   if jq -e ". | has(\"$new_key\")" "$path_file_json" > /dev/null; then
