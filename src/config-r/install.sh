@@ -74,7 +74,7 @@ chmod +x "$path_config_r_bashrc"
 
 # directory for files to be added to
 path_dir_tmp_bashrc_d="/var/tmp/devcontainer-feature/bashrc-d"
-mkdir -p "path_dir_tmp_bashrc_d"
+mkdir -p "$path_dir_tmp_bashrc_d"
 
 # set R libraries
 # -------------------------
