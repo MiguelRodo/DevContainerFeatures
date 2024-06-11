@@ -1,22 +1,31 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "1.3.13",
+    "version": "1.4.0",
     "description": "Configure R",
     "postCreateCommand": "config-r",
     "options": {
-        "set_lib_paths": {
+        "set_r_lib_paths": {
             "type": "string",
-            "description": "Whether to set default paths for R libraries (including for `renv`).",
+            "description": "Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild.", 
             "proposals": [
                 "true",
                 "false"
             ],
             "default": "true"
         },
-        "config_radian": {
+        "radian_auto_match": {
             "type": "string",
-            "description": "Whether to configure Radian.",
+            "description": "Whether to set `auto_match` to `FALSE` for the radian terminal.",
+            "proposals": [
+                "true",
+                "false"
+            ],
+            "default": "true"
+        },
+        "lighten_linting": {
+            "type": "string",
+            "description": "Whether to stop checking for camel/snake case and object name length.",
             "proposals": [
                 "true",
                 "false"
