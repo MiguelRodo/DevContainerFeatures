@@ -166,7 +166,7 @@ chmod +x "$path_config_r_bashrc_non"
 # =======================================================
 
 path_config_r=/usr/local/bin/config-r
-cat > "$/usr/local/bin/config-r" \
+cat > "$path_config_r" \
 << 'EOF'
 #!/usr/bin/env bash
 config-r-bashrc-d
