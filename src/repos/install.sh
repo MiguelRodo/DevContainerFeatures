@@ -234,7 +234,7 @@ clone_repos() {
         sudo sed -i -E 's/helper =.*//' /etc/gitconfig
 
         # Add one that just uses secrets available in the Codespace
-        git config --global credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
+        sudo git config --system credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
     else
         echo "Retaining initial Git credential helper"
         echo "The value of OVERRIDE_CREDENTIAL_HELPER is: ${OVERRIDE_CREDENTIAL_HELPER}"
