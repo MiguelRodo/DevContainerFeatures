@@ -25,8 +25,6 @@ ensure_git_up_to_date() {
   else
       echo "Your Git version ($git_version) is up-to-date."
   fi
-
-  exit 0
 }
 
 set -e
