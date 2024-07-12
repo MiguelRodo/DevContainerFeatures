@@ -225,12 +225,26 @@ clone_repos() {
 
     # If running in a Codespace, set up Git credentials
     if [ "${OVERRIDE_CREDENTIAL_HELPER}" = "true" ]; then
-        echo "Overriding Git credential helper"
-        # Remove the default credential helper
-        sudo sed -i -E 's/helper =.*//' /etc/gitconfig
+        # check if there are repos specified in repos-to-clone.list
+        # if there are none, then do not do this:
+        k=0
+        if [ -f "./repos-to-clone.list" ]; then
+            while IFS= read -r repository || [ -n "$repository" ]; do
+                # Skip lines that are empty or contain only whitespace
+                if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
+                    continue
+                fi
+                k=1
+                break
+            done < "./repos-to-clone.list"
+        fi
+        if [ "$k" -eq 1 ]; then
+            # Remove the default credential helper
+            sudo sed -i -E 's/helper =.*//' /etc/gitconfig
 
-        # Add one that just uses secrets available in the Codespace
-        sudo git config --system credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
+            # Add one that just uses secrets available in the Codespace
+            sudo git config --system credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
+        fi
     else
         echo "Retaining initial Git credential helper"
         echo "The value of OVERRIDE_CREDENTIAL_HELPER is: ${OVERRIDE_CREDENTIAL_HELPER}"
