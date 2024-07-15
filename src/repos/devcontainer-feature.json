@@ -1,7 +1,7 @@
 {
     "name": "Add commands to work with repos",
     "id": "repos",
-    "version": "1.2.14",
+    "version": "1.2.15",
     "description": "Add commands to work with repos, esp. multiple repos",
     "postCreateCommand": "repos-workspace-add; repos-github-clone; repos-xethub-clone",
     "postStartCommand": "repos-workspace-add; repos-github-clone; repos-xethub-clone",
@@ -23,7 +23,7 @@
                 "never",
                 "auto"
             ],
-            "default": "true"
+            "default": "auto"
         }
     }
 }
