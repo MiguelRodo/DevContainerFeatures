@@ -360,17 +360,43 @@ set -e
 
 # Get the absolute path of the current working directory
 current_dir="$(pwd)"
-echo "current_dir"
+echo "current_dir:"
 echo "$current_dir"
 
 # Define the path to the workspace JSON file
 workspace_file="${current_dir}/EntireProject.code-workspace"
 
-# Create the workspace file if it does not exist
+# Create the workspace file if it does not exist,
+# and is needed (i.e. if it is a multi-root workspace,
+# as indicated by the repos-to-clone*.list files)
 if [ ! -f "$workspace_file" ]; then
-  echo "Workspace file does not exist. Creating it now..."
-  echo '{"folders": [{"path": "."}]}' > "$workspace_file"
+  k=0
+  if [ -f "./repos-to-clone.list" ]; then
+    while IFS= read -r repository || [ -n "$repository" ]; do
+      # Skip lines that are empty or contain only whitespace
+      if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
+        continue
+      fi
+      k=1
+      break
+    done < "./repos-to-clone.list"
+  fi
+  if [ -f "./repos-to-clone-xethub.list" ]; then
+    while IFS= read -r repository || [ -n "$repository" ]; do
+      # Skip lines that are empty or contain only whitespace
+      if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
+        continue
+      fi
+      k=1
+      break
+    done < "./repos-to-clone-xethub.list"
+  fi
+  if [ "$k" -eq 1 ]; then
+    echo "Workspace file does not exist. Creating it now..."
+    echo '{"folders": [{"path": "."}]}' > "$workspace_file"
+  fi
 fi
+
 
 add_to_workspace() {
 
