@@ -19,8 +19,9 @@
             "type": "string",
             "description": "Whether to override the default credential helper.",
             "proposals": [
-                "true",
-                "false"
+                "always",
+                "never",
+                "auto"
             ],
             "default": "true"
         }

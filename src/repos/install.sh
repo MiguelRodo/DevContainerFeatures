@@ -57,7 +57,7 @@ clone_repo() {
     cd "${parent_dir}"
     if [ ! -d "${1#*/}" ]; then
         git xet clone --lazy "xet://$1"
-    else 
+    else
         echo "Already cloned $1"
     fi
 }
@@ -114,13 +114,13 @@ if [ -n "$GH_TOKEN" ]; then
     export GITHUB_TOKEN="${GITHUB_TOKEN:-"$GH_TOKEN"}"
     export GITHUB_PAT="${GITHUB_PAT:-"$GH_TOKEN"}"
   fi
-elif [ -n "$GITHUB_PAT" ]; then 
+elif [ -n "$GITHUB_PAT" ]; then
   export GH_TOKEN="${GH_TOKEN:-"$GITHUB_PAT"}"
   export GITHUB_TOKEN="${GITHUB_TOKEN:-"$GITHUB_PAT"}"
-elif [ -n "$GITHUB_TOKEN" ]; then 
+elif [ -n "$GITHUB_TOKEN" ]; then
   export GH_TOKEN="${GH_TOKEN:-"$GITHUB_TOKEN"}"
   export GITHUB_PAT="${GITHUB_PAT:-"$GITHUB_TOKEN"}"
-else 
+else
   echo "No GitHub token found (none of GH_TOKEN, GITHUB_PAT, GITHUB_TOKEN)"
 fi
 
@@ -137,10 +137,10 @@ set -e
 
 config_bashrc_d() {
   # ensure that `.bashrc.d` files are sourced in
-  if [ -e "$HOME/.bashrc" ]; then 
+  if [ -e "$HOME/.bashrc" ]; then
     # we assume that if `.bashrc.d` is mentioned
     # in `$HOME/.bashrc`, then it's sourced in
-    if [ -z "$(cat "$HOME/.bashrc" | grep -F bashrc.d)" ]; then 
+    if [ -z "$(cat "$HOME/.bashrc" | grep -F bashrc.d)" ]; then
       # if it can't pick up `.bashrc.d`, tell it to
       # source all files inside `.bashrc.d`
       echo 'for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done' \
@@ -170,9 +170,9 @@ clone_repos() {
     # into the parent directory of the current
     # working directory.
 
-    echo "The initial value of OVERRIDE_CREDENTIAL_HELPER is $OVERRIDE_CREDENTIAL_HELPER"   
+    echo "The initial value of OVERRIDE_CREDENTIAL_HELPER is $OVERRIDE_CREDENTIAL_HELPER"
 
-    OVERRIDE_CREDENTIAL_HELPER="${OVERRIDE_CREDENTIAL_HELPER:-true}"
+    OVERRIDE_CREDENTIAL_HELPER="${OVERRIDE_CREDENTIAL_HELPER:-auto}"
 
     echo "The final value of OVERRIDE_CREDENTIAL_HELPER is $OVERRIDE_CREDENTIAL_HELPER"
 
@@ -199,7 +199,7 @@ clone_repos() {
             else
                 git clone -b "$branch" "https://github.com/$repo"
             fi
-        else 
+        else
             cd "$dir"
             if [ ! -d ".git" ]; then
                 echo "Warning: $dir is not a Git repository but exists already"
@@ -224,31 +224,36 @@ clone_repos() {
     }
 
     # If running in a Codespace, set up Git credentials
-    if [ "${OVERRIDE_CREDENTIAL_HELPER}" = "true" ]; then
-        # check if there are repos specified in repos-to-clone.list
-        # if there are none, then do not do this:
+    if [ ! "${OVERRIDE_CREDENTIAL_HELPER}" == "never" ]; then
+      # Check if there are repos specified in repos-to-clone.list
+      # If there are none, then do not do this:
+      if [ ! "${OVERRIDE_CREDENTIAL_HELPER}" == "always" ]; then
         k=0
         if [ -f "./repos-to-clone.list" ]; then
-            while IFS= read -r repository || [ -n "$repository" ]; do
-                # Skip lines that are empty or contain only whitespace
-                if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
-                    continue
-                fi
-                k=1
-                break
-            done < "./repos-to-clone.list"
+          while IFS= read -r repository || [ -n "$repository" ]; do
+            # Skip lines that are empty or contain only whitespace
+            if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
+              continue
+            fi
+            k=1
+            break
+          done < "./repos-to-clone.list"
         fi
-        if [ "$k" -eq 1 ]; then
-            # Remove the default credential helper
-            sudo sed -i -E 's/helper =.*//' /etc/gitconfig
+      else
+        k=1
+      fi
+      if [ "$k" -eq 1 ]; then
+        # Remove the default credential helper
+        sudo sed -i -E 's/helper =.*//' /etc/gitconfig
 
-            # Add one that just uses secrets available in the Codespace
-            sudo git config --system credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
-        fi
+        # Add one that just uses secrets available in the Codespace
+        sudo git config --system credential.helper '!f() { sleep 1; echo "username=${GITHUB_USER}"; echo "password=${GH_TOKEN}"; }; f'
+      fi
     else
-        echo "Retaining initial Git credential helper"
-        echo "The value of OVERRIDE_CREDENTIAL_HELPER is: ${OVERRIDE_CREDENTIAL_HELPER}"
+      echo "Retaining initial Git credential helper"
+      echo "The value of OVERRIDE_CREDENTIAL_HELPER is: ${OVERRIDE_CREDENTIAL_HELPER}"
     fi
+
 
     # If there is a list of repositories to clone, clone them
     if [ -f "./repos-to-clone.list" ]; then
@@ -344,7 +349,7 @@ cat > /usr/local/bin/repos-github-push \
 
 IFS=""
 all_args="$*"
-git 
+git
 IFS=" "
 
 EOF
