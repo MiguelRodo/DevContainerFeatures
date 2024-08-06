@@ -7,6 +7,6 @@ As per here: https://github.com/KlugerLab/FIt-SNE.
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/fftRtsne:0": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:0": {}
 }
 ```
