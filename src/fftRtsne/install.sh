@@ -21,6 +21,11 @@ sudo make install
 cd /tmp
 rm -rf fftw-3.3.10 fftw-3.3.10.tar.gz
 
+# Remove existing FIt-SNE directory if it exists
+if [ -d "FIt-SNE" ]; then
+    rm -rf FIt-SNE
+fi
+
 # Install FIt-SNE
 git clone https://github.com/KlugerLab/FIt-SNE
 cd FIt-SNE
