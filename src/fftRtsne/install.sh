@@ -13,9 +13,9 @@ pushd /tmp
 wget http://www.fftw.org/fftw-3.3.10.tar.gz
 tar -xzf fftw-3.3.10.tar.gz
 cd fftw-3.3.10
-./configure --prefix=$HOME/fftw
+./configure --prefix=/usr/local  # FFTW will be installed to /usr/local
 make
-make install
+sudo make install
 
 # Clean up FFTW files
 cd /tmp
@@ -24,7 +24,7 @@ rm -rf fftw-3.3.10 fftw-3.3.10.tar.gz
 # Install FIt-SNE
 git clone https://github.com/KlugerLab/FIt-SNE
 cd FIt-SNE
-g++ -std=c++11 -O3 src/sptree.cpp src/tsne.cpp src/nbodyfft.cpp -o fast_tsne -pthread -I$HOME/fftw/include -L$HOME/fftw/lib -lfftw3 -lm -Wno-address-of-packed-member
+g++ -std=c++11 -O3 src/sptree.cpp src/tsne.cpp src/nbodyfft.cpp -o fast_tsne -pthread -I/usr/local/include -L/usr/local/lib -lfftw3 -lm -Wno-address-of-packed-member
 
 # Move the fast_tsne executable to /usr/local/bin
 sudo mv fast_tsne /usr/local/bin
