@@ -24,6 +24,19 @@ usage() {
     exit 1
 }
 
+install_apptainer() {
+  set -e
+  sudo apt-get update
+  sudo apt-get install -y software-properties-common
+  sudo add-apt-repository -y ppa:apptainer/ppa
+  sudo apt-get update
+  sudo apt-get install -y apptainer
+  # as singularity mounts localtime
+  # source: https://carpentries-incubator.github.io/singularity-introduction/07-singularity-images-building/index.html#using-singularity-run-from-within-the-docker-container
+  sudo apt-get install -y tzdata
+  sudo cp /usr/share/zoneinfo/Europe/London /etc/localtime
+}
+
 # Initialize flags
 BRANCH=""
 GITHUB_USER="$GITHUB_USERNAME"
@@ -119,6 +132,17 @@ build_image() {
   echo "Docker image $IMAGE_NAME created successfully"
 }
 
+ensure_devcontainer_cli_installed() {
+  if ! command -v devcontainer &> /dev/null
+  then
+      echo "devcontainer CLI could not be found, installing it"
+      npm install -g @devcontainers/cli
+      echo "Successfully installed devcontainer CLI"
+  else
+      echo "devcontainer CLI is already installed."
+  fi
+}
+
 upload_ghcr() {
   echo "Uploading Docker image $IMAGE_NAME to GHCR"
   # Login to GitHub Container Registry
@@ -136,6 +160,7 @@ upload_ghcr() {
 }
 
 build_and_upload_apptainer() {
+
   echo "Building Apptainer image $SIF_FILE"
   if [ "$UPLOAD_DOCKER" = true ]; then
     build_apptainer_ghcr
@@ -144,6 +169,31 @@ build_and_upload_apptainer() {
   fi
   echo "Successfully built Apptainer image $SIF_FILE"
   upload_apptainer_release
+}
+
+ensure_apptainer_installed() {
+  if ! command -v apptainer &> /dev/null
+  then
+    echo "Apptainer not found, installing"
+    install_apptainer
+
+  else
+      echo "Apptainer already installed."
+  fi
+}
+
+install_apptainer() {
+  sudo set -e
+  sudo apt-get update
+  sudo apt-get install -y software-properties-common
+  sudo add-apt-repository -y ppa:apptainer/ppa
+  sudo apt-get update
+  sudo apt-get install -y apptainer
+  # as singularity mounts localtime
+  # source: https://carpentries-incubator.github.io/singularity-introduction/07-singularity-images-building/index.html#using-singularity-run-from-within-the-docker-container
+  sudo apt-get install -y tzdata
+  sudo cp /usr/share/zoneinfo/Europe/London /etc/localtime
+  echo "Successfully installed apptainer"
 }
 
 build_apptainer_ghcr() {
