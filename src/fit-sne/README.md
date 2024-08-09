@@ -7,7 +7,7 @@ Install FIt-SNE
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:0": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1": {}
 }
 ```
 
