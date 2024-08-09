@@ -3,7 +3,7 @@
 set -e
 
 path_container_build_and_share="/usr/local/bin/container-build-and-share"
-cat > "$path_config_r_bashrc" \
+cat > "$path_container_build_and_share" \
 << 'EOF'
 #!/usr/bin/env bash
 
