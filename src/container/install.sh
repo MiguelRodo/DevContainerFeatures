@@ -24,19 +24,6 @@ usage() {
     exit 1
 }
 
-install_apptainer() {
-  set -e
-  sudo apt-get update
-  sudo apt-get install -y software-properties-common
-  sudo add-apt-repository -y ppa:apptainer/ppa
-  sudo apt-get update
-  sudo apt-get install -y apptainer
-  # as singularity mounts localtime
-  # source: https://carpentries-incubator.github.io/singularity-introduction/07-singularity-images-building/index.html#using-singularity-run-from-within-the-docker-container
-  sudo apt-get install -y tzdata
-  sudo cp /usr/share/zoneinfo/Europe/London /etc/localtime
-}
-
 # Initialize flags
 BRANCH=""
 GITHUB_USER="$GITHUB_USERNAME"
@@ -122,7 +109,8 @@ clone_repo() {
 }
 
 build_image() {
-  echo "Building Docker image $IMAGE_NAME"
+  ensure_devcontainer_cli_installed
+  echo "Building Docker image $IMAGE_NAME"\
   # Build a Docker image using devcontainer CLI
   if [ -z "$DEVCONTAINER_JSON" ]; then
     devcontainer build --workspace-folder . --image-name "$IMAGE_NAME"
@@ -161,6 +149,7 @@ upload_ghcr() {
 
 build_and_upload_apptainer() {
 
+  ensure_apptainer_installed
   echo "Building Apptainer image $SIF_FILE"
   if [ "$UPLOAD_DOCKER" = true ]; then
     build_apptainer_ghcr
