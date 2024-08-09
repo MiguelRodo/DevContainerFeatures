@@ -1,6 +1,6 @@
 {
     "name": "Container Build and Share",
     "id": "container",
-    "version": "0.0.2",
+    "version": "0.1.0",
     "description": "Installs the container-build-and-share command for building and sharing Docker and Apptainer images."
 }
