@@ -1,6 +1,0 @@
-{
-    "name": "Container Build and Share",
-    "id": "container",
-    "version": "0.1.1",
-    "description": "Installs the container-build-and-share command for building and sharing Docker and Apptainer images."
-}
