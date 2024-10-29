@@ -3,8 +3,8 @@
     "id": "repos",
     "version": "1.2.15",
     "description": "Add commands to work with repos, esp. multiple repos",
-    "postCreateCommand": "repos-workspace-add; repos-github-clone; repos-xethub-clone",
-    "postStartCommand": "repos-workspace-add; repos-github-clone; repos-xethub-clone",
+    "postCreateCommand": "repos-workspace-add; repos-gh-clone; repos-hf-clone",
+    "postStartCommand": "repos-workspace-add; repos-gh-clone; repos-hf-clone",
     "options": {
         "force_gh_token": {
             "type": "string",
@@ -24,6 +24,15 @@
                 "auto"
             ],
             "default": "auto"
+        },
+        "install_huggingface": {
+            "type": "string",
+            "description": "Whether to install the Hugging Face CLI. Default is true.",
+            "proposals": [
+                "true",
+                "false"
+            ],
+            "default": "system"
         }
     }
 }
