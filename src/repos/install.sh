@@ -5,7 +5,6 @@ set -e
 # ---------------------
 
 source scripts/hf-install.sh
-source scripts/lfs-install.sh
 
 source scripts/git-auth-gitconfig.sh
 
