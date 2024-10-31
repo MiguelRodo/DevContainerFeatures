@@ -20,7 +20,7 @@ source scripts/shellrc-config.sh
 
 # install Hugging Face
 if [ "$INSTALLHUGGINGFACE" = "true" ]; then
-  repos-hf-install
+  repos-hf-install --hf-scope "$HUGGINFACEINSTALLSCOPE"
 fi
 
 # authenticate using gitconfig

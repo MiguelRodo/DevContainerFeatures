@@ -4,13 +4,11 @@ set -e
 
 # ==============================================================================
 # repos-hf-install
-# A script to install Hugging Face CLI and Git LFS either system-wide or for
-# the current user, based on provided parameters.
+# A script to install Hugging Face CLI and Git LFS.
 # ==============================================================================
 
 # Default installation scopes
 HF_SCOPE="system"
-LFS_SCOPE="system"
 
 # Function to display usage information
 usage() {
@@ -18,19 +16,13 @@ usage() {
     echo "  $(basename "$0") [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  --hf-scope [user|system]     Scope to install Hugging Face CLI (default: user)"
-    echo "  --lfs-scope [user|system]    Scope to install Git LFS (default: system)"
+    echo "  --hf-scope [system|user]     Scope to install Hugging Face CLI (default: system)"
     echo "  -h, --help                   Display this help message"
     echo ""
     echo "Examples:"
-    echo "  Install both Hugging Face CLI and Git LFS system-wide:"
-    echo "    $(basename "$0") --hf-scope system --lfs-scope system"
+    echo "  Install Hugging Face CLI system-wide:"
+    echo "    $(basename "$0") --hf-scope system"
     echo ""
-    echo "  Install Hugging Face CLI for the user and Git LFS system-wide:"
-    echo "    $(basename "$0") --hf-scope user --lfs-scope system"
-    echo ""
-    echo "  Install both tools for the user:"
-    echo "    $(basename "$0") --hf-scope user --lfs-scope user"
     exit 1
 }
 
@@ -47,15 +39,6 @@ parse_args() {
                     usage
                 fi
                 ;;
-            --lfs-scope)
-                if [[ "$2" == "user" || "$2" == "system" ]]; then
-                    LFS_SCOPE="$2"
-                    shift 2
-                else
-                    echo "Error: Invalid value for --lfs-scope: $2"
-                    usage
-                fi
-                ;;
             -h|--help)
                 usage
                 ;;
@@ -66,6 +49,7 @@ parse_args() {
         esac
     done
 }
+
 
 # Function to install a package using apt-get if not already installed
 install_if_needed() {
@@ -112,87 +96,17 @@ install_hf() {
     fi
 }
 
-# Function to install Git LFS system-wide
-install_git_lfs_system() {
-    echo "Installing Git LFS system-wide..."
+# Function to install Git LFS
+install_git_lfs() {
+    echo "### Installing Git LFS system-wide ###"
     sudo apt-get install -y git-lfs
-    echo "Initializing Git LFS system-wide..."
-    sudo git lfs install --system
-}
 
-# Function to install Git LFS for the user
-install_git_lfs_user() {
-    echo "Installing Git LFS for the user..."
-
-    # Determine architecture
-    ARCH=$(uname -m)
-    OS=$(uname -s)
-
-    if [[ "$OS" != "Linux" ]]; then
-        echo "Error: User installation of Git LFS is only supported on Linux."
-        exit 1
-    fi
-
-    # Map architecture to GitHub release asset name
-    case "$ARCH" in
-        x86_64|amd64)
-            ARCH="amd64"
-            ;;
-        aarch64|arm64)
-            ARCH="arm64"
-            ;;
-        *)
-            echo "Error: Unsupported architecture: $ARCH"
-            exit 1
-            ;;
-    esac
-
-    # Get the latest release download URL from GitHub API
-    echo "Fetching the latest Git LFS release information..."
-    RELEASE_INFO=$(curl -s https://api.github.com/repos/git-lfs/git-lfs/releases/latest)
-    DOWNLOAD_URL=$(echo "$RELEASE_INFO" | grep "browser_download_url" | grep "linux-$ARCH.tar.gz" | cut -d '"' -f 4)
-
-    if [[ -z "$DOWNLOAD_URL" ]]; then
-        echo "Error: Could not find a suitable Git LFS binary for your architecture."
-        exit 1
-    fi
-
-    # Download and extract the binary
-    TEMP_DIR=$(mktemp -d)
-    echo "Downloading Git LFS from $DOWNLOAD_URL..."
-    curl -L "$DOWNLOAD_URL" -o "$TEMP_DIR/git-lfs.tar.gz"
-
-    echo "Extracting Git LFS..."
-    tar -xzf "$TEMP_DIR/git-lfs.tar.gz" -C "$TEMP_DIR"
-
-    # Copy the binary to user's bin directory
-    USER_BIN_DIR="$(get_user_bin_dir)/bin"
-    mkdir -p "$USER_BIN_DIR"
-    echo "Installing git-lfs to $USER_BIN_DIR..."
-    cp "$TEMP_DIR/git-lfs" "$USER_BIN_DIR/"
-    chmod +x "$USER_BIN_DIR/git-lfs"
-
-    # Clean up
-    rm -rf "$TEMP_DIR"
-
-    # Add USER_BIN_DIR to PATH if not already
-    if [[ ":$PATH:" != *":$USER_BIN_DIR:"* ]]; then
-        echo "Adding '$USER_BIN_DIR' to PATH..."
-        add_to_path "$USER_BIN_DIR"
-        export PATH="$USER_BIN_DIR:$PATH"
-        echo "Updated PATH for the current session."
-        echo "To apply the changes permanently, restart your terminal or run 'source' on your shell configuration files."
-        echo "For example:"
-        echo "  source ~/.bashrc"
-        echo "  source ~/.zshrc"
-        echo "  source ~/.profile"
-    else
-        echo "'$USER_BIN_DIR' is already in your PATH."
-    fi
-
-    # Initialize Git LFS for the user
-    echo "Initializing Git LFS for the user..."
+    echo "### Configuring Git LFS for the current user ###"
     git lfs install --skip-repo
+
+    echo "### Git LFS has been successfully installed system-wide and configured for your user! ###"
+    echo "To verify the installation, run:"
+    echo "  git lfs version"
 }
 
 # Function to ensure Python3 and pip3 are installed
@@ -237,7 +151,6 @@ main() {
 
     echo "Starting repos-hf-install..."
     echo "Hugging Face CLI will be installed: $HF_SCOPE."
-    echo "Git LFS will be installed: $LFS_SCOPE."
     echo ""
 
     # Update package list once
@@ -252,12 +165,8 @@ main() {
     install_hf
     echo ""
 
-    # Install Git LFS based on scope
-    if [[ "$LFS_SCOPE" == "system" ]]; then
-        install_git_lfs_system
-    else
-        install_git_lfs_user
-    fi
+    # Install Git LFS
+    install_git_lfs
     echo ""
 
     echo "Installation completed successfully!"

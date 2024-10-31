@@ -100,6 +100,14 @@ clone_repos() {
       repo_url="$host/$repo_path"
     fi
 
+    # if it is a HuggingFace repo,
+    # then ensure git lfs is set up
+    if [[ "$host" == "https://huggingface.co" ]]; then
+      if command -v git-lfs &> /dev/null; then
+        git lfs install --skip-repo
+      fi
+    fi
+
     if [ ! -d "$dir" ]; then
       if [ -z "$branch" ]; then
         git clone "$repo_url"

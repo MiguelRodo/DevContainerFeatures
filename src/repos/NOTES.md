@@ -1,6 +1,3 @@
-Here's the updated content for your `NOTES.md` file, incorporating your requested changes:
-
-```markdown
 # TL;DR
 
 The **Repos DevContainer Feature** automates the process of working with multiple repositories in your development environment. By default, it clones repositories specified in a `repos-to-clone.list` file and sets up your workspace accordingly. It also provides scripts and commands to set up Git authentication for GitHub and Hugging Face, install necessary tools like Hugging Face CLI and Git LFS, and manage VSCode workspaces automatically.
@@ -51,9 +48,10 @@ Include the feature in your `devcontainer.json`:
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:1": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:1.3.0": {
         "installHuggingface": true,
-        "authGitconfig": "auto"
+        "authGitconfig": "auto",
+        "huggingfaceInstallScope": "system"
     }
 }
 ```
@@ -77,11 +75,15 @@ By default, the feature includes the following in your `devcontainer.json`:
 
 - **`installHuggingface`**:
   - **Type**: Boolean
-  - **Description**: Whether to install the Hugging Face CLI. Default is `true`.
+  - **Description**: Whether to install the Hugging Face CLI and Git LFS. Default is `true`.
 - **`authGitconfig`**:
   - **Type**: String
   - **Enum**: `"true"`, `"false"`, `"auto"`
   - **Description**: Whether to set up `.gitconfig` as the system default for authentication. Default is `"auto"`, in which case it is only done if in a GitHub Codespace.
+- **`huggingfaceInstallScope`**:
+  - **Type**: String
+  - **Enum**: `"system"`, `"user"`
+  - **Description**: Whether to install the Hugging Face CLI system-wide or just for the current user. Default is `"system"`.
 
 ### Example Usage
 
@@ -186,13 +188,12 @@ Installs Hugging Face CLI and Git LFS.
 **Usage:**
 
 ```bash
-repos-hf-install [--hf-scope <user|system>] [--lfs-scope <user|system>]
+repos-hf-install [--hf-scope <system|user>]
 ```
 
 **Options:**
 
-- `--hf-scope`: Install scope for Hugging Face CLI (`user` or `system`). Default is `user`.
-- `--lfs-scope`: Install scope for Git LFS (`user` or `system`). Default is `system`.
+- `--hf-scope`: Install scope for Hugging Face CLI (`system` or `user`). Default is `system`.
 
 ## Detailed Features
 
@@ -224,15 +225,16 @@ repos-hf-install [--hf-scope <user|system>] [--lfs-scope <user|system>]
 The main script that orchestrates the installation and setup:
 
 - **Script Sourcing**: Includes other scripts that perform specific tasks.
-- **Conditional Execution**: Runs installation and configuration based on provided options (`installHuggingface`, `authGitconfig`).
+- **Conditional Execution**: Runs installation and configuration based on provided options (`installHuggingface`, `authGitconfig`, `huggingfaceInstallScope`).
 
 ### `repos-hf-install`
 
 Installs Hugging Face CLI and Git LFS:
 
-- **Scope Selection**: Install tools either system-wide or for the current user.
+- **Scope Selection**: Installs Hugging Face CLI either system-wide or for the current user based on the `--hf-scope` option.
+- **Default Scope**: The default installation scope for Hugging Face CLI is `system`.
 - **Dependency Handling**: Ensures Python and pip are available.
-- **Path Management**: Adds user-level binary directories to the PATH if necessary.
+- **Git LFS Installation**: Installs Git LFS system-wide and configures it for the current user.
 
 ### `repos-git-auth-gitconfig`
 
@@ -271,5 +273,3 @@ Ensure the following environment variables are set for authentication:
 - **Repository Directory**: Repositories are cloned into the parent directory.
 - **Repository List File**: The `repos-to-clone.list` file supports comments (lines starting with `#`) and ignores empty lines.
 - **Environment Suitability**: The feature is particularly useful in Codespaces or similar development environments.
-
-

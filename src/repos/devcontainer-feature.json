@@ -16,6 +16,12 @@
             "type": "boolean",
             "description": "Whether to install the Hugging Face CLI. Default is true.",
             "default": true
+        },
+        "huggingfaceInstallScope": {
+            "type": "string",
+            "enum": ["system", "user"],
+            "description": "Whether to install the Hugging Face CLI system-wide or just for the current user. Default is user.",
+            "default": "system"
         }
     }
 }
