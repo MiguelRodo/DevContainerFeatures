@@ -16,9 +16,10 @@ Managing multiple repositories can be challenging, especially when dealing with 
 ### Automatic Repository Cloning
 
 - **Immediate Setup**: By default, the feature automatically clones all repositories specified in the `repos-to-clone.list` file upon creating or starting the devcontainer.
+- **Custom Clone Locations**: You can specify exactly where each repository should be cloned by providing a target directory for each entry in your `repos-to-clone.list` file.
 - **Commands Used**:
   - `repos-workspace-add`: Adds repositories to the VSCode workspace.
-  - `repos-git-clone`: Clones the repositories into the parent directory.
+  - `repos-git-clone`: Clones the repositories into specified directories.
 
 ### Git Authentication
 
@@ -32,13 +33,14 @@ Managing multiple repositories can be challenging, especially when dealing with 
 
 ### Cloning Multiple Repositories
 
-- **Batch Cloning**: The `repos-git-clone` script reads a list of repositories from a specified file (defaulting to `repos-to-clone.list`) and clones them into the parent directory of your devcontainer. This simplifies the process of setting up multiple projects or datasets at once.
+- **Batch Cloning**: The `repos-git-clone` script reads a list of repositories from a specified file (defaulting to `repos-to-clone.list`) and clones them into specified directories. This simplifies the process of setting up multiple projects or datasets at once.
 - **Flexible Formats**: Supports various repository formats to accommodate different hosting services:
   - **GitHub Repositories**: `owner/repo` or `owner/repo@branch`.
   - **Hugging Face Datasets**: `datasets/owner/repo` or `datasets/owner/repo@branch`.
   - **Full URLs**: `https://host/owner/repo` or `https://host/owner/repo@branch`.
 - **Branch Selection**: You can specify a branch or tag to clone by appending `@branch` to the repository identifier:
   - Example: `owner/repo@develop` will clone the `develop` branch of the repository.
+- **Custom Target Directories**: Specify a target directory for each repository directly in the `repos-to-clone.list` file.
 
 ## Installation and Usage
 
@@ -94,10 +96,16 @@ Create a `repos-to-clone.list` file in your devcontainer:
 ```bash
 # Example repositories
 owner1/repo1
-owner2/repo2@develop
-datasets/owner3/dataset1
-https://gitlab.com/owner4/repo4@feature-branch
+owner2/repo2@develop ./Projects/Repo2
+datasets/owner3/dataset1 ../Datasets
+https://gitlab.com/owner4/repo4@feature-branch ./GitLabRepos
 ```
+
+- **Specifying Target Directories**: Each line can optionally include a target directory where the repository should be cloned.
+  - **Format**: `repo_spec [target_directory]`
+    - `repo_spec`: The repository specification (e.g., `owner/repo[@branch]`).
+    - `target_directory`: Optional. The directory where you want to clone the repository.
+  - **Default Target Directory**: If no target directory is specified, the repository will be cloned into the parent directory (`..`) of the devcontainer.
 
 #### Set Up Authentication Tokens
 
@@ -136,7 +144,7 @@ Rebuild or reopen your devcontainer to apply the feature:
 
 ### Feature Execution
 
-- **Cloning Repositories**: The feature clones the specified repositories into the parent directory of your devcontainer upon creation or start.
+- **Cloning Repositories**: The feature clones the specified repositories into the directories you've specified in the `repos-to-clone.list` file upon creation or start.
 - **Git Authentication**: Sets up Git credential helpers for seamless authentication with GitHub and Hugging Face.
 - **Tool Installation**: Installs Hugging Face CLI and Git LFS if specified.
 - **Workspace Configuration**: Adds the repositories to a VSCode workspace file for easy access.
@@ -145,7 +153,7 @@ Rebuild or reopen your devcontainer to apply the feature:
 
 ### `repos-git-clone`
 
-Clones repositories listed in a specified file into the parent directory.
+Clones repositories listed in a specified file into specified directories.
 
 **Usage:**
 
@@ -156,6 +164,17 @@ repos-git-clone [-f|--file <file>]
 **Options:**
 
 - `-f, --file <file>`: Specify the repository list file. Defaults to `repos-to-clone.list`.
+
+**Repository List File Format:**
+
+Each line in the repository list file can be in the following formats:
+
+```bash
+repo_spec [target_directory]
+```
+
+- **`repo_spec`**: The repository specification.
+- **`target_directory`**: Optional. The directory where you want to clone the repository.
 
 ### `repos-workspace-add`
 
@@ -197,67 +216,23 @@ repos-hf-install [--hf-scope <system|user>]
 
 ## Detailed Features
 
-### Git Authentication
+### Cloning Repositories into Specified Directories
 
-- **Automatic Configuration**: The feature sets up Git credential helpers for GitHub and Hugging Face by modifying the system `gitconfig`. This allows Git to securely provide authentication tokens during operations without storing passwords in plain text.
-  - **System Credential Manager**: Utilizes the system credential manager to avoid exposing sensitive information.
-- **Environment Variables**: Authentication tokens are sourced from environment variables:
-  - **GitHub**:
-    - Primary: `GH_TOKEN`
-    - Fallback: `GITHUB_TOKEN`
-  - **Hugging Face**:
-    - Primary: `HF_TOKEN`
-    - Fallback: `HUGGINGFACE_TOKEN`
+- **Custom Target Directories**: You can specify a target directory for each repository in the `repos-to-clone.list` file.
+- **Default Behavior**: If no target directory is specified, repositories are cloned into the parent directory (`..`) of the devcontainer.
 
-### Cloning Multiple Repositories
+**Example Entry with Target Directory:**
 
-- **Batch Cloning**: Automatically clones repositories listed in `repos-to-clone.list`.
-- **Flexible Formats**: Supports different formats and hosts:
-  - **GitHub**: `owner/repo`, `owner/repo@branch`
-  - **Hugging Face Datasets**: `datasets/owner/repo`, `datasets/owner/repo@branch`
-  - **Full URLs**: Including branches using `@branch`
-- **Branch Selection**: Clone specific branches or tags as needed.
+```bash
+owner2/repo2@develop ./Projects/Repo2
+```
 
-## Detailed Scripts Explanation
+This will clone `owner2/repo2` into the `./Projects/Repo2` directory relative to your devcontainer.
 
-### `install.sh`
+### Workspace Configuration
 
-The main script that orchestrates the installation and setup:
-
-- **Script Sourcing**: Includes other scripts that perform specific tasks.
-- **Conditional Execution**: Runs installation and configuration based on provided options (`installHuggingface`, `authGitconfig`, `huggingfaceInstallScope`).
-
-### `repos-hf-install`
-
-Installs Hugging Face CLI and Git LFS:
-
-- **Scope Selection**: Installs Hugging Face CLI either system-wide or for the current user based on the `--hf-scope` option.
-- **Default Scope**: The default installation scope for Hugging Face CLI is `system`.
-- **Dependency Handling**: Ensures Python and pip are available.
-- **Git LFS Installation**: Installs Git LFS system-wide and configures it for the current user.
-
-### `repos-git-auth-gitconfig`
-
-Configures Git credential helpers:
-
-- **Credential Helper Setup**: Modifies the system `gitconfig` to use custom credential helpers for GitHub and Hugging Face.
-- **Token Usage**: Uses environment variables for tokens to authenticate Git operations.
-
-### `repos-git-clone`
-
-Clones repositories from a list:
-
-- **Repository Parsing**: Supports different repository formats and hosts.
-- **Branch Handling**: Clones specific branches if specified.
-- **Directory Management**: Clones into the parent directory to keep the workspace organized.
-
-### `repos-workspace-add`
-
-Adds repositories to a VSCode workspace file:
-
-- **Workspace File Detection**: Checks for the existence of `EntireProject.code-workspace` and creates it if necessary.
-- **JSON Manipulation**: Uses `jq` to update the workspace file with new folders.
-- **Automation**: Simplifies the process of managing multiple projects in VSCode.
+- **Automatic Workspace Update**: The `repos-workspace-add` script will add the cloned repositories to the VSCode workspace file, respecting the target directories you've specified.
+- **Relative Paths**: The paths in the workspace file are relative to the devcontainer, ensuring portability.
 
 ## Environment Variables
 
@@ -270,6 +245,6 @@ Ensure the following environment variables are set for authentication:
 
 ## Notes
 
-- **Repository Directory**: Repositories are cloned into the parent directory.
+- **Repository Directory**: You have full control over where repositories are cloned by specifying target directories.
 - **Repository List File**: The `repos-to-clone.list` file supports comments (lines starting with `#`) and ignores empty lines.
 - **Environment Suitability**: The feature is particularly useful in Codespaces or similar development environments.

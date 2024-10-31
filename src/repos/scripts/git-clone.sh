@@ -6,20 +6,22 @@ usage() {
   echo "Usage: $0 [options]"
   echo
   echo "Options:"
-  echo "  -f, --file <file>       Specify the path to the repository list file."
-  echo "                          Defaults to 'repos-to-clone.list'."
-  echo "  -h, --help              Display this help message."
+  echo "  -f, --file <file>          Specify the repository list file (default: 'repos-to-clone.list')."
+  echo "  -h, --help                 Display this help message."
   echo
-  echo "Each line in the repository list file should be in one of the following formats:"
+  echo "Each line in the repository list file can be in the following formats:"
+  echo "  repo_spec [target_directory]"
+  echo
+  echo "Where repo_spec is one of:"
   echo "  owner/repo[@branch]"
   echo "  datasets/owner/repo[@branch]"
   echo "  https://<host>/owner/repo[@branch]"
   echo
   echo "Examples:"
   echo "  user1/project1"
-  echo "  user2/project2@develop"
-  echo "  datasets/user3/dataset1@main"
-  echo "  https://gitlab.com/user4/project4@feature-branch"
+  echo "  user2/project2@develop ./Projects/Repo2"
+  echo "  datasets/user3/dataset1@main ../Datasets"
+  echo "  https://gitlab.com/user4/project4@feature-branch ./GitLabRepos"
 }
 
 # Default values
@@ -51,57 +53,57 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 clone_repos() {
-  # Clones all repos listed in the specified file into the parent directory of the current working directory.
-
   # Get the absolute path of the current working directory
   current_dir="$(pwd)"
 
-  # Determine the parent directory of the current directory
-  parent_dir="$(cd "${current_dir}/.." && pwd)"
-
   # Function to clone a repository
   clone_repo() {
-    cd "${parent_dir}"
-
     # Parse the repository line
     line="$1"
     # Remove leading and trailing whitespace
     line="$(echo -e "${line}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
-    # Split line into repo_url_or_path and branch
-    if [[ "$line" == *@* ]]; then
-      repo_url_or_path="${line%@*}"
-      branch="${line##*@}"
+    # Split line into tokens
+    tokens=($line)
+    repo_spec="${tokens[0]}"
+    target_dir="${tokens[1]:-".."}"  # Default to parent directory if not specified
+
+    # Ensure target directory is relative to current directory
+    target_dir="$(realpath -m "${current_dir}/${target_dir}")"
+
+    # Create target directory if it doesn't exist
+    mkdir -p "${target_dir}"
+    cd "${target_dir}"
+
+    # Split repo_spec into repo_url_or_path and branch
+    if [[ "$repo_spec" == *@* ]]; then
+      repo_url_or_path="${repo_spec%@*}"
+      branch="${repo_spec##*@}"
     else
-      repo_url_or_path="$line"
+      repo_url_or_path="$repo_spec"
       branch=""
     fi
 
-    # Check if repo_url_or_path starts with 'https://'
+    # Determine repo_url and dir
     if [[ "$repo_url_or_path" =~ ^https:// ]]; then
       # Use the URL as is
       repo_url="$repo_url_or_path"
       dir="$(basename "${repo_url%%.git}" .git)"
     else
       repo="$repo_url_or_path"
-      # Determine host and repository path
       if [[ "$repo" =~ ^datasets/.* ]]; then
-        # Use huggingface.co
         host="https://huggingface.co"
         repo_path="$repo"
         dir="${repo#datasets/}"
       else
-        # Use GitHub
         host="https://github.com"
         repo_path="$repo"
         dir="${repo#*/}"
       fi
-
       repo_url="$host/$repo_path"
     fi
 
-    # if it is a HuggingFace repo,
-    # then ensure git lfs is set up
+    # Ensure git lfs is set up for Hugging Face repos
     if [[ "$host" == "https://huggingface.co" ]]; then
       if command -v git-lfs &> /dev/null; then
         git lfs install --skip-repo
@@ -121,7 +123,6 @@ clone_repos() {
       else
         if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
           if [ -z "$branch" ]; then
-            # Checkout the default branch
             default_branch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
             git checkout "$default_branch"
           else
@@ -135,6 +136,9 @@ clone_repos() {
       cd ..
       echo "Already cloned $repo_url"
     fi
+
+    # Return to the original directory
+    cd "${current_dir}"
   }
 
   # Clone repositories listed in the specified file

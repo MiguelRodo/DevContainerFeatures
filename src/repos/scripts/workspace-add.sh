@@ -7,20 +7,22 @@ usage() {
   echo "Usage: $0 [options]"
   echo
   echo "Options:"
-  echo "  -f, --file <file>       Specify the path to the repository list file."
-  echo "                          Defaults to 'repos-to-clone.list'."
+  echo "  -f, --file <file>       Specify the repository list file (default: 'repos-to-clone.list')."
   echo "  -h, --help              Display this help message."
   echo
-  echo "Each line in the repository list file should be in one of the following formats:"
+  echo "Each line in the repository list file can be in the following formats:"
+  echo "  repo_spec [target_directory]"
+  echo
+  echo "Where repo_spec is one of:"
   echo "  owner/repo[@branch]"
   echo "  datasets/owner/repo[@branch]"
   echo "  https://<host>/owner/repo[@branch]"
   echo
   echo "Examples:"
   echo "  user1/project1"
-  echo "  user2/project2@develop"
-  echo "  datasets/user3/dataset1@main"
-  echo "  https://gitlab.com/user4/project4@feature-branch"
+  echo "  user2/project2@develop ./Projects/Repo2"
+  echo "  datasets/user3/dataset1@main ../Datasets"
+  echo "  https://gitlab.com/user4/project4@feature-branch ./GitLabRepos"
 }
 
 # Default values
@@ -53,26 +55,24 @@ done
 
 # Get the absolute path of the current working directory
 current_dir="$(pwd)"
-echo "Current directory:"
-echo "$current_dir"
 
 # Define the path to the workspace JSON file
 workspace_file="${current_dir}/EntireProject.code-workspace"
 
 # Create the workspace file if it does not exist and is needed
 if [ ! -f "$workspace_file" ]; then
-  k=0
+  has_repos=false
   if [ -f "${repos_list_file}" ]; then
     while IFS= read -r repository || [ -n "$repository" ]; do
       # Skip lines that are empty or contain only whitespace
       if [[ -z "$repository" || "$repository" =~ ^[[:space:]]*$ || "$repository" =~ ^[[:space:]]*# ]]; then
         continue
       fi
-      k=1
+      has_repos=true
       break
     done < "${repos_list_file}"
   fi
-  if [ "$k" -eq 1 ]; then
+  if [ "$has_repos" = true ]; then
     echo "Workspace file does not exist. Creating it now..."
     echo '{"folders": [{"path": "."}]}' > "$workspace_file"
   fi
@@ -96,57 +96,48 @@ add_to_workspace() {
     # Remove leading and trailing whitespace
     line="$(echo -e "${line}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
-    # Split line into repo_url_or_path and branch
-    if [[ "$line" == *@* ]]; then
-      repo_url_or_path="${line%@*}"
-      branch="${line##*@}"
+    # Split line into tokens
+    tokens=($line)
+    repo_spec="${tokens[0]}"
+    target_dir="${tokens[1]:-".."}"  # Default to parent directory if not specified
+
+    # Ensure target directory is relative to current directory
+    target_dir="$(realpath -m "${current_dir}/${target_dir}")"
+
+    # Determine directory name
+    if [[ "$repo_spec" == *@* ]]; then
+      repo_url_or_path="${repo_spec%@*}"
     else
-      repo_url_or_path="$line"
-      branch=""
+      repo_url_or_path="$repo_spec"
     fi
 
-    # Initialize variables
-    repo_url=""
-    dir=""
-
-    # Check if repo_url_or_path starts with 'https://'
     if [[ "$repo_url_or_path" =~ ^https:// ]]; then
-      # Use the URL as is
-      repo_url="$repo_url_or_path"
-      # Remove .git if present for directory naming
-      dir="$(basename "${repo_url%%.git}" .git)"
+      dir="$(basename "${repo_url_or_path%%.git}" .git)"
     else
       repo="$repo_url_or_path"
-      # Determine host and repository path
       if [[ "$repo" =~ ^datasets/.* ]]; then
-        # Use huggingface.co
-        host="https://huggingface.co"
-        repo_path="$repo"
         dir="${repo#datasets/}"
       else
-        # Use GitHub
-        host="https://github.com"
-        repo_path="$repo"
         dir="${repo#*/}"
       fi
-
-      repo_url="$host/$repo_path"
     fi
 
-    # The repos are cloned into the parent directory of the current directory
-    # So the relative path from the current directory to the repo directory is "../<dir>"
-    repo_path="../$dir"
+    # Construct the full path to the repository
+    repo_path="${target_dir}/${dir}"
+
+    # Ensure the path is relative to the current directory
+    relative_repo_path="$(realpath --relative-to="${current_dir}" "${repo_path}")"
 
     # Check if the path is already in the workspace file
     if [ -f "$workspace_file" ]; then
-      if jq -e --arg path "$repo_path" '.folders[] | select(.path == $path) | length > 0' "$workspace_file" > /dev/null; then
+      if jq -e --arg path "$relative_repo_path" '.folders[] | select(.path == $path) | length > 0' "$workspace_file" > /dev/null; then
         continue
       fi
       # Add the path to the workspace JSON file
-      jq --arg path "$repo_path" '.folders += [{"path": $path}]' "$workspace_file" > temp.json && mv temp.json "$workspace_file"
+      jq --arg path "$relative_repo_path" '.folders += [{"path": $path}]' "$workspace_file" > temp.json && mv temp.json "$workspace_file"
     else
       # Create the workspace file with the repo path
-      echo "{\"folders\": [{\"path\": \"$repo_path\"}]}" > "$workspace_file"
+      echo "{\"folders\": [{\"path\": \"$relative_repo_path\"}]}" > "$workspace_file"
     fi
 
   done < "$1"
