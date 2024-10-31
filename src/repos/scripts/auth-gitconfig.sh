@@ -25,6 +25,6 @@ setup_gitconfig
 EOF
 
 # Make the script executable
-chmod +x /usr/local/bin/repos-auth-gitconfig
+chmod +x /usr/local/bin/repos-git-auth-gitconfig
 
-echo "Script /usr/local/bin/repos-auth-gitconfig has been created and made executable."
+echo "Script /usr/local/bin/repos-git-auth-gitconfig has been created and made executable."
