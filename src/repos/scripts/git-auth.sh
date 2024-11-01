@@ -82,7 +82,7 @@ setup_gitconfig() {
             echo "Error: sudo is required for system scope but is not installed."
             exit 1
         fi
-        sudo sed -i -E '/credential\.helper\s*=/d' /etc/gitconfig
+        sudo sed -i -E 's/helper =.*//' /etc/gitconfig
     elif [[ "$auth_gitconfig_scope" == "global" ]]; then
         git config --global --unset credential.helper
     elif [[ "$auth_gitconfig_scope" == "local" ]]; then
