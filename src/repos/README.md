@@ -15,9 +15,8 @@ Add commands to work with multiple repos
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| authGitconfig | Whether to set up .gitconfig as the system default for authentication. Default is auto, in which case it is only done if in a GitHub Codespace. | string | auto |
-| installHuggingface | Whether to install the Hugging Face CLI. Default is true. | boolean | true |
-| huggingfaceInstallScope | Whether to install the Hugging Face CLI system-wide or just for the current user. Default is user. | string | system |
+| installHuggingFace | Whether to install the Hugging Face CLI. Default is true. | boolean | true |
+| huggingFaceInstallScope | Whether to install the Hugging Face CLI system-wide or just for the current user. Default is user. | string | system |
 
 # TL;DR
 
