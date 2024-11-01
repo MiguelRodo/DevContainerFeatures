@@ -35,8 +35,8 @@ if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
 fi
 
 if [ "$INSTALL_PAK_AND_BIOCMANAGER" = "true" ]; then
-    chmod 755 scripts/r-pkg-pak-and-biocmanager.sh
-    scripts/r-pkg-pak-and-biocmanager.sh || {
+    chmod 755 scripts/pkg-pak-and-biocmanager.sh
+    scripts/pkg-pak-and-biocmanager.sh || {
       echo "Failed to install pak and biocmanager"
     }
 fi
