@@ -72,7 +72,7 @@ fi
 setup_gitconfig() {
   local auth_gitconfig_scope="$1"
   # Remove the default credential helper
-  if ("$auth_gitconfig_scope" == "system") {
+  if [ "$auth_gitconfig_scope" == "system" ] {
     sudo sed -i -E 's/helper =.*//' /etc/gitconfig
   }
 

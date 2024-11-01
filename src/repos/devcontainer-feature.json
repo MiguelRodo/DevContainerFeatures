@@ -1,7 +1,7 @@
 {
     "name": "Add commands to work with repos",
     "id": "repos",
-    "version": "1.4.7",
+    "version": "1.4.7a",
     "description": "Add commands to work with multiple repos",
     "postCreateCommand": "repos-workspace-add; repos-git-auth; repos-git-clone",
     "postStartCommand": "repos-workspace-add; repos-git-clone",
