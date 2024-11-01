@@ -32,6 +32,10 @@ message("🔧 Initializing renv in the temporary project...")
 renv::init(project = temp_dir, bare = TRUE, restart = FALSE, bioconductor = TRUE)
 message("✅ renv initialized.")
 
+# Get debugging information
+cache_path <- renv::paths$cache()
+message("🗂️ renv global cache path: ", cache_path)
+
 # Define the packages to install
 packages_to_install <- c("pak", "BiocManager")
 message("📦 Installing packages: ", paste(packages_to_install, collapse = ", "))
