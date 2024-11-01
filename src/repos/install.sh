@@ -6,7 +6,7 @@ set -e
 
 source scripts/hf-install.sh
 
-source scripts/auth-gitconfig.sh
+source scripts/git-auth.sh
 
 source scripts/git-clone.sh
 
