@@ -7,7 +7,7 @@ Configure R
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:1": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {}
 }
 ```
 
@@ -15,9 +15,10 @@ Configure R
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| set_r_lib_paths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | string | true |
-| radian_auto_match | Whether to set `auto_match` to `FALSE` for the radian terminal. | string | true |
-| lighten_linting | Whether to stop checking for camel/snake case and object name length. | string | true |
+| setRLibPaths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | boolean | true |
+| ensureGitHubPatSet | If true and GITHUB_PAT is not set, will first try set it from GH_TOKEN and then GITHUB_TOKEN. | boolean | true |
+| installPakAndBiocManager | Whether to install `pak` and `BiocManager` (into `renv` cache and out). Default is true. | boolean | true |
+| restoreRenv | Whether to restore renv packages if renv.lock file is detected. | boolean | true |
 
 
 
