@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#!/usr/local/bin/Rscript
 
 # Exit immediately if an error occurs
 options(error = function() quit(status = 1))
