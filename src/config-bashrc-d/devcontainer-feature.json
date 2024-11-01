@@ -1,7 +1,7 @@
 {
     "name": "Configure bashrc.d",
     "id": "config-bashrc-d",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Source files in .bashrc.d",
     "postCreateCommand": "/usr/local/lib/config-bashrc-d-post-create-command",
     "options": {
