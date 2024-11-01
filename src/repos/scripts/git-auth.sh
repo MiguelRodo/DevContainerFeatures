@@ -75,7 +75,6 @@ fi
 
 setup_gitconfig() {
     local auth_gitconfig_scope="$1"
-    local SUDO=""
 
     # Remove the default credential helper
     if [[ "$auth_gitconfig_scope" == "system" ]]; then
@@ -84,33 +83,37 @@ setup_gitconfig() {
             exit 1
         fi
         sudo sed -i -E '/credential\.helper\s*=/d' /etc/gitconfig
-        SUDO="sudo"
     elif [[ "$auth_gitconfig_scope" == "global" ]]; then
         git config --global --unset credential.helper
     elif [[ "$auth_gitconfig_scope" == "local" ]]; then
         git config --unset credential.helper
     fi
 
-    # Set SUDO based on scope
     if [[ "$auth_gitconfig_scope" == "system" ]]; then
-        SUDO="sudo"
+        sudo git config --${auth_gitconfig_scope} credential."https://github.com".helper "!f() {
+            sleep 1
+            echo username=\${GITHUB_USER:-TOKEN}
+            echo password=\${GH_TOKEN:-\$GITHUB_TOKEN}
+        }; f"
+        sudo git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper "!f() {
+            sleep 1
+            echo username=\${HF_USER:-\${HUGGINGFACE_USER:-TOKEN}}
+            echo password=\${HF_TOKEN:-\$HUGGINGFACE_TOKEN}
+        }; f"
     else
-        SUDO=""
+        git config --${auth_gitconfig_scope} credential."https://github.com".helper "!f() {
+            sleep 1
+            echo username=\${GITHUB_USER:-TOKEN}
+            echo password=\${GH_TOKEN:-\$GITHUB_TOKEN}
+        }; f"
+        git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper "!f() {
+            sleep 1
+            echo username=\${HF_USER:-\${HUGGINGFACE_USER:-TOKEN}}
+            echo password=\${HF_TOKEN:-\$HUGGINGFACE_TOKEN}
+        }; f"
     fi
 
-    # Configure GitHub credential helper
-    "$SUDO" git config --${auth_gitconfig_scope} credential."https://github.com".helper "!f() {
-        sleep 1
-        echo username=\${GITHUB_USER:-TOKEN}
-        echo password=\${GH_TOKEN:-\$GITHUB_TOKEN}
-    }; f"
-
-    # Configure Hugging Face credential helper
-    "$SUDO" git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper "!f() {
-        sleep 1
-        echo username=\${HF_USER:-\${HUGGINGFACE_USER:-TOKEN}}
-        echo password=\${HF_TOKEN:-\$HUGGINGFACE_TOKEN}
-    }; f"
+    echo "Git authentication with gitconfig has been configured."
 }
 
 # Authenticate using gitconfig
