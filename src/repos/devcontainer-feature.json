@@ -1,23 +1,17 @@
 {
     "name": "Add commands to work with repos",
     "id": "repos",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "description": "Add commands to work with multiple repos",
-    "postCreateCommand": "repos-workspace-add; repos-git-clone",
+    "postCreateCommand": "repos-git-auth; repos-workspace-add; repos-git-clone",
     "postStartCommand": "repos-workspace-add; repos-git-clone",
     "options": {
-        "authGitconfig": {
-            "type": "string",
-            "enum": ["true", "false", "auto"],
-            "description": "Whether to set up .gitconfig as the system default for authentication. Default is auto, in which case it is only done if in a GitHub Codespace.",
-            "default": "auto"
-        },
-        "installHuggingface": {
+        "installHuggingFace": {
             "type": "boolean",
             "description": "Whether to install the Hugging Face CLI. Default is true.",
             "default": true
         },
-        "huggingfaceInstallScope": {
+        "huggingFaceInstallScope": {
             "type": "string",
             "enum": ["system", "user"],
             "description": "Whether to install the Hugging Face CLI system-wide or just for the current user. Default is user.",

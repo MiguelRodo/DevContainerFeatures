@@ -22,11 +22,3 @@ if [ "$INSTALLHUGGINGFACE" = "true" ]; then
   repos-hf-install --hf-scope "$HUGGINGFACEINSTALLSCOPE"
 fi
 
-# authenticate using gitconfig
-if [ "$AUTHGITCONFIG" = "auto" ]; then
-  if [ "$CODESPACES" = "true" ]; then
-    repos-git-auth-gitconfig
-  fi
-elif [ "$AUTHGITCONFIG" = "true" ]; then
-  repos-git-auth-gitconfig
-fi
