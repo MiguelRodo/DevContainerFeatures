@@ -3,7 +3,7 @@
     "id": "repos",
     "version": "1.4.10",
     "description": "Add commands to work with multiple repos",
-    "postCreateCommand": "repos-workspace-add; repos-git-auth; repos-git-clone",
+    "postCreateCommand": "repos-workspace-add --scope system; repos-git-auth; repos-git-clone",
     "postStartCommand": "repos-workspace-add; repos-git-clone",
     "options": {
         "installHuggingFace": {
