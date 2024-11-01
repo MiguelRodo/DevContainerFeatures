@@ -18,9 +18,11 @@ workspace_dir="/workspaces"
 # Append the environment variables to Renviron.site
 cat << EOF | sudo tee -a "$RENVSITE"
 # Set R library paths and renv variables
-R_LIBS_USER=${workspace_dir}/.local/lib/R
-RENV_PATHS_CACHE=${workspace_dir}/.local/R/lib/renv
-RENV_PATHS_LIBRARY_ROOT=${workspace_dir}/.local/.cache/R/renv
-RENV_PATHS_LIBRARY=${workspace_dir}/.local/.cache/R/renv
-RENV_PREFIX_AUTO=TRUE
+XDG_CACHE_HOME=${workspace_dir}/.cache
+RENV_PATHS_ROOT=${workspace_dir}/.local/renv
+R_LIBS=${workspace_dir}/.local/lib/R
 EOF
+
+mkdir -p ${workspace_dir}/.cache
+mkdir -p ${workspace_dir}/.local/renv
+mkdir -p ${workspace_dir}/.local/lib/R
