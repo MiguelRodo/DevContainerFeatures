@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [ -z "$GITHUB_PAT" ]; then
+   if [ -n "$GH_TOKEN" ]; then
+       export GITHUB_PAT="$GH_TOKEN"
+   elif [ -n "$GITHUB_TOKEN" ]; then
+       export GITHUB_PAT="$GITHUB_TOKEN"
+   fi
+fi

@@ -1,0 +1,67 @@
+#!/usr/bin/env Rscript
+
+# Exit immediately if an error occurs
+options(error = function() quit(status = 1))
+
+# Load required libraries
+suppressMessages(library(renv))
+
+# Function to check if renv.lock exists in the project directory
+check_lockfile <- function(project_dir = ".") {
+  lockfile_path <- file.path(project_dir, "renv.lock")
+  return(file.exists(lockfile_path))
+}
+
+# Function to check if a package is installed
+is_installed <- function(pkg) {
+  requireNamespace(pkg, quietly = TRUE)
+}
+
+# Ensure renv is installed
+if (!is_installed("renv")) {
+  message("🔍 renv not found. Installing renv...")
+  install.packages("renv", repos = "https://cloud.r-project.org")
+} else {
+  message("✅ renv is already installed.")
+}
+
+# Parse command-line arguments for project directory
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) >= 1) {
+  project_dir <- args[1]
+  if (!dir.exists(project_dir)) {
+    message("[ERROR] Specified project directory does not exist: ", project_dir)
+    quit(status = 1)
+  }
+} else {
+  project_dir <- "."
+}
+
+# Main function to restore renv packages
+restore_renv <- function(project_dir = ".") {
+  if (!check_lockfile(project_dir)) {
+    message("[INFO] No renv.lock file detected in ", project_dir, ". Skipping renv restoration.")
+    return(invisible(NULL))
+  }
+  
+  message("[INFO] renv.lock file detected in ", project_dir, ". Attempting to restore renv packages...")
+  
+  tryCatch({
+    renv::restore(
+      project = project_dir,
+      transactional = TRUE,
+      exclude = c("pak", "BiocManager")
+    )
+    message("[SUCCESS] renv packages restored successfully in ", project_dir, ".")
+  }, error = function(e) {
+    message("[WARNING] renv::restore() encountered an error in ", project_dir, ":")
+    message(e$message)
+    message("[WARNING] Continuing without failing the container build.")
+    # Optionally, log the error to a file for later review
+    # writeLines(e$message, con = "renv_restore_error.log")
+  })
+}
+
+# Execute the restoration in the specified project directory
+restore_renv(project_dir)

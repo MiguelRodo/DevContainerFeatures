@@ -1,36 +1,29 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "1.4.2",
+    "version": "2.0.0",
     "description": "Configure R",
-    "postCreateCommand": "config-r",
+    "postCreateCommand": "/usr/local/lib/config-r-post-create-command",
     "options": {
-        "set_r_lib_paths": {
-            "type": "string",
+        "setRLibPaths": {
+            "type": "boolean",
             "description": "Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild.", 
-            "proposals": [
-                "true",
-                "false"
-            ],
-            "default": "true"
+            "default": true
         },
-        "radian_auto_match": {
-            "type": "string",
-            "description": "Whether to set `auto_match` to `FALSE` for the radian terminal.",
-            "proposals": [
-                "true",
-                "false"
-            ],
-            "default": "true"
+        "ensureGitHubPatSet": {
+            "description": "If true and GITHUB_PAT is not set, will first try set it from GH_TOKEN and then GITHUB_TOKEN.",
+            "type": "boolean",
+            "default": true
         },
-        "lighten_linting": {
-            "type": "string",
-            "description": "Whether to stop checking for camel/snake case and object name length.",
-            "proposals": [
-                "true",
-                "false"
-            ],
-            "default": "true"
+        "installPakAndBiocManager": {
+            "type": "boolean",
+            "description": "Whether to install `pak` and `BiocManager` (into `renv` cache and out). Default is true.",
+            "default": true
+        },
+        "restoreRenv": {
+            "type": "boolean",
+            "description": "Whether to restore renv packages if renv.lock file is detected.",
+            "default": true
         }
     }
 }

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# set up bashrc_d:
+# - ensure it exists
+# - ensure it is sourced once by `~/.bashrc`
+config_bashrc_d() {
+  echo "Configuring bashrc.d"
+  
+  # Ensure that `.bashrc.d` files are sourced in `.bashrc`
+  if [ -e "$HOME/.bashrc" ]; then 
+    # Check if `.bashrc.d` is already mentioned in `.bashrc`
+    if ! grep -q 'bashrc.d' "$HOME/.bashrc"; then 
+      # Append sourcing of `.bashrc.d` to `.bashrc`
+      echo 'for i in "$HOME/.bashrc.d/"*; do
+  if [ -f "$i" ]; then
+    source "$i"
+  fi
+done' >> "$HOME/.bashrc"
+      echo "Added sourcing of .bashrc.d to ~/.bashrc"
+    else
+      echo ".bashrc already sources .bashrc.d"
+    fi
+  else
+    # Create `.bashrc` and add sourcing of `.bashrc.d`
+    touch "$HOME/.bashrc"
+    echo 'for i in "$HOME/.bashrc.d/"*; do
+  if [ -f "$i" ]; then
+    source "$i"
+  fi
+done' > "$HOME/.bashrc"
+    echo "Created ~/.bashrc and added sourcing of .bashrc.d"
+  fi
+
+  # Create the `.bashrc.d` directory if it doesn't exist
+  mkdir -p "$HOME/.bashrc.d"
+  echo "Ensured ~/.bashrc.d directory exists"
+}
+
+# Execute the functions
+config_bashrc_d
