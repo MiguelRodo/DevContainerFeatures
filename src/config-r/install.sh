@@ -2,7 +2,7 @@
 
 set -e
 
-PATH_POST_CREATE_COMMAND=/usr/local/lib/config-r-post-create-command
+PATH_POST_CREATE_COMMAND=/usr/local/bin/config-r-post-create-command
 cp cmd/post-create-command "$PATH_POST_CREATE_COMMAND"
 chmod 755 "$PATH_POST_CREATE_COMMAND"
 
@@ -13,11 +13,11 @@ PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 
 copy_and_set_execute_bit() {
-    cp cmd/"$1" /usr/local/lib/config-r-"$1" || {
+    cp cmd/"$1" /usr/local/bin/config-r-"$1" || {
       echo "Failed to copy cmd/$1"
     }
-    chmod 755 /usr/local/lib/config-r-"$1" || {
-      echo "Failed to set execute bit for /usr/local/lib/config-r-$1"
+    chmod 755 /usr/local/bin/config-r-"$1" || {
+      echo "Failed to set execute bit for /usr/local/bin/config-r-$1"
     }
 }
 
@@ -57,12 +57,12 @@ fi
 
 if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
     copy_and_set_execute_bit bashrc-d
-    echo "/usr/local/lib/config-r-bashrc-d" >> "$PATH_POST_CREATE_COMMAND"
+    echo "/usr/local/bin/config-r-bashrc-d" >> "$PATH_POST_CREATE_COMMAND"
     copy_and_set_execute_bit github-pat
-    /usr/local/lib/config-r-github-pat || {
+    /usr/local/bin/config-r-github-pat || {
       echo "Failed to run config-r-github-pat"
     }
-    echo "/usr/local/lib/config-r-github-pat" >> "$PATH_POST_CREATE_COMMAND" || {
+    echo "/usr/local/bin/config-r-github-pat" >> "$PATH_POST_CREATE_COMMAND" || {
       echo "Failed to add config-r-github-pat to post-create-command"
     }
 fi
@@ -70,9 +70,9 @@ fi
 copy_and_set_execute_bit renv-restore
 copy_and_set_execute_bit renv-restore-build
 if [ "$DEBUG" = "true" ]; then
-    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" --debug
+    /usr/local/bin/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" --debug
 else
-    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE"
+    /usr/local/bin/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE"
 fi
 
 echo " " >> "$PATH_POST_CREATE_COMMAND" 
