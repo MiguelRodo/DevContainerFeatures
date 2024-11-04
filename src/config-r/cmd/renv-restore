@@ -13,6 +13,7 @@ usage() {
     echo "  -d, --directory DIRECTORY        Project directory containing 'renv.lock' file. Default is current directory."
     echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within the project. Default is true."
     echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
+    echo "  -n, --no-pak                     Do not use pak for package management."
     echo "  -D, --debug                      Enable debug mode."
     echo "  -h, --help                       Display this help message."
     exit 1
@@ -22,6 +23,7 @@ PROJECT_DIR="."
 RESTORE=true
 EXCLUDE_PACKAGES=""
 DEBUG=false
+USE_PAK=true
 
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -37,6 +39,10 @@ while [[ "$#" -gt 0 ]]; do
         -e|--exclude)
             EXCLUDE_PACKAGES="$2"
             shift 2
+            ;;
+        -n|--no-pak)
+            USE_PAK=false
+            shift
             ;;
         -D|--debug)
             DEBUG=true
@@ -62,6 +68,7 @@ debug "Running renv-restore"
 debug "PROJECT_DIR: $PROJECT_DIR"
 debug "RESTORE: $RESTORE"
 debug "EXCLUDE_PACKAGES: $EXCLUDE_PACKAGES"
+debug "USE_PAK: $USE_PAK"
 
 # Activate project
 renv_activate() {
@@ -114,6 +121,10 @@ install_pak_bioc() {
     install_pkg pak
     install_pkg BiocManager
 }
+
+if [ "$USE_PAK" = true ]; then
+    export RENV_CONFIG_PAK_ENABLED=true
+fi
 
 restore() {
     echo "🔄 Attempting to restore packages"

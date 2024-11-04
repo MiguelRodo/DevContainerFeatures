@@ -14,6 +14,7 @@ ENSURE_GITHUB_PAT_SET="${ENSUREGITHUBPATSET:-true}"
 RESTORE="${RESTORE:-true}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
+USE_PAK="${USEPAK:-true}"
 
 copy_and_set_execute_bit() {
   if ! cp cmd/"$1" /usr/local/bin/config-r-"$1"; then
@@ -72,9 +73,17 @@ fi
 copy_and_set_execute_bit renv-restore
 copy_and_set_execute_bit renv-restore-build
 if [ "$DEBUG" = "true" ]; then
-    /usr/local/bin/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" --debug
+    if [ "$USE_PAK" = "true" ]; then
+        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE" --debug
+    else 
+        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE" --debug --no-pak
+    fi
 else
-    /usr/local/bin/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE"
+    if [ "$USE_PAK" = "true" ]; then
+        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE"
+    else 
+        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE" --no-pak
+    fi
 fi
 
 echo " " >> "$PATH_POST_CREATE_COMMAND" 
