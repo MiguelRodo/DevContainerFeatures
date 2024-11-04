@@ -70,13 +70,9 @@ fi
 copy_and_set_execute_bit renv-restore
 copy_and_set_execute_bit renv-restore-build
 if [ "$DEBUG" = "true" ]; then
-    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" --debug || {
-        echo "Failed to restore R packages"
-    }
+    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" --debug
 else
-    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" || {
-        echo "Failed to restore R packages"
-    }
+    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE"
 fi
 
 echo " " >> "$PATH_POST_CREATE_COMMAND" 
