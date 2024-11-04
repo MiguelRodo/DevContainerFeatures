@@ -13,12 +13,12 @@ PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 
 copy_and_set_execute_bit() {
-    cp cmd/"$1" /usr/local/bin/config-r-"$1" || {
+  if ! cp cmd/"$1" /usr/local/bin/config-r-"$1"; then
       echo "Failed to copy cmd/$1"
-    }
-    chmod 755 /usr/local/bin/config-r-"$1" || {
+  fi
+  if ! chmod 755 /usr/local/bin/config-r-"$1"; then
       echo "Failed to set execute bit for /usr/local/bin/config-r-$1"
-    }
+  fi
 }
 
 # Function to empty a directory (remove all contents)
@@ -50,21 +50,21 @@ rm_dirs() {
 
 if [ "$SET_R_LIB_PATHS" = "true" ]; then
     chmod 755 scripts/r-lib.sh
-    bash scripts/r-lib.sh || {
+    if ! bash scripts/r-lib.sh; then
       echo "Failed to define R library environment variables"
-    }
+    fi
 fi
 
 if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
     copy_and_set_execute_bit bashrc-d
     echo "/usr/local/bin/config-r-bashrc-d" >> "$PATH_POST_CREATE_COMMAND"
     copy_and_set_execute_bit github-pat
-    /usr/local/bin/config-r-github-pat || {
+    if ! /usr/local/bin/config-r-github-pat; then
       echo "Failed to run config-r-github-pat"
-    }
-    echo "/usr/local/bin/config-r-github-pat" >> "$PATH_POST_CREATE_COMMAND" || {
+    fi
+    if ! grep -q "/usr/local/bin/config-r-github-pat" "$PATH_POST_CREATE_COMMAND"; then
       echo "Failed to add config-r-github-pat to post-create-command"
-    }
+    fi
 fi
 
 copy_and_set_execute_bit renv-restore

@@ -132,19 +132,19 @@ restore() {
 run_custom_scripts() {
     if [ -f "config-r-renv.sh" ]; then 
         echo "🔍 Found shell script"
-        ./config-r-renv.sh "$EXCLUDE_PACKAGES" || {
-            echo "⚠️  Project-specific shell script attempted"
+        if ! ./config-r-renv.sh "$EXCLUDE_PACKAGES"; then
+            echo "⚠️  Project-specific shell script failed"
             echo "---------------------------------------------"
-        }
+        fi
     fi
 
     if [ -f "config-r-renv.R" ]; then
         echo "🔍 Found R script"
         cd "$PROJECT_DIR"
-        Rscript config-r-renv.R "$EXCLUDE_PACKAGES" || {
-            echo "⚠️  Project-specific R script attempted"
+        if ! Rscript config-r-renv.R "$EXCLUDE_PACKAGES"; then
+            echo "⚠️  Project-specific R script failed"
             echo "---------------------------------------------"
-        }
+        fi
     fi
 }
 
