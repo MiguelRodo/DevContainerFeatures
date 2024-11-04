@@ -16,7 +16,7 @@ fi
 workspace_dir="/workspaces"
 
 # Append the environment variables to Renviron.site
-cat << EOF | sudo tee -a "$RENVSITE"
+cat << EOF | tee -a "$RENVSITE"
 # Set R library paths and renv variables
 XDG_CACHE_HOME=${workspace_dir}/.cache
 RENV_PATHS_ROOT=${workspace_dir}/.local/renv
