@@ -248,3 +248,7 @@ Ensure the following environment variables are set for authentication:
 - **Repository Directory**: You have full control over where repositories are cloned by specifying target directories.
 - **Repository List File**: The `repos-to-clone.list` file supports comments (lines starting with `#`) and ignores empty lines.
 - **Environment Suitability**: The feature is particularly useful in Codespaces or similar development environments.
+
+## Acknowledgments
+
+This project incorporates code from [AwesomeProject](https://github.com/rocker-org/devcontainer-features), which is licensed under the MIT License.
