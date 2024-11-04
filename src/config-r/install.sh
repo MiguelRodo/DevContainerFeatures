@@ -59,11 +59,10 @@ if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
     copy_and_set_execute_bit bashrc-d
     echo "/usr/local/bin/config-r-bashrc-d" >> "$PATH_POST_CREATE_COMMAND"
     copy_and_set_execute_bit github-pat
-    if ! /usr/local/bin/config-r-github-pat; then
-      echo "Failed to run config-r-github-pat"
-    fi
-    if ! grep -q "/usr/local/bin/config-r-github-pat" "$PATH_POST_CREATE_COMMAND"; then
-      echo "Failed to add config-r-github-pat to post-create-command"
+    if ! echo "/usr/local/bin/config-r-github-pat" >> "$PATH_POST_CREATE_COMMAND"; then
+        echo "❌ Failed to add config-r-github-pat to post-create-command"
+    else
+        echo "✅ Added config-r-github-pat to post-create-command"
     fi
 fi
 
