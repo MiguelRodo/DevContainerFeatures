@@ -86,12 +86,12 @@ setup_gitconfig() {
     fi
 
     if [[ "$auth_gitconfig_scope" == "system" ]]; then
-        sudo git config --${auth_gitconfig_scope} credential."https://github.com".helper "!f() {
+        git config --${auth_gitconfig_scope} credential."https://github.com".helper "!f() {
             sleep 1
             echo username=\${GITHUB_USER:-TOKEN}
             echo password=\${GH_TOKEN:-\$GITHUB_TOKEN}
         }; f"
-        sudo git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper "!f() {
+        git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper "!f() {
             sleep 1
             echo username=\${HF_USER:-\${HUGGINGFACE_USER:-TOKEN}}
             echo password=\${HF_TOKEN:-\$HUGGINGFACE_TOKEN}

@@ -99,7 +99,7 @@ install_hf() {
 # Function to install Git LFS
 install_git_lfs() {
     echo "### Installing Git LFS system-wide ###"
-    sudo apt-get install -y git-lfs
+    apt-get install -y git-lfs
 
     echo "### Configuring Git LFS for the current user ###"
     git lfs install --skip-repo

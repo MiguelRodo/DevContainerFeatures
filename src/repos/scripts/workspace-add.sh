@@ -82,8 +82,8 @@ add_to_workspace() {
   # Ensure jq is installed
   if ! command -v jq &> /dev/null; then
     echo "jq could not be found, installing jq..."
-    sudo apt update -y
-    sudo apt install -y jq
+    apt-get update -y
+    apt-get install -y jq
   fi
 
   # Read and process each line from the input file
