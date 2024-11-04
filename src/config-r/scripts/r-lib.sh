@@ -5,8 +5,8 @@ set -e
 # Define the path to the system-wide Renviron file
 if [[ -f "/etc/R/Renviron.site" ]]; then
     RENVSITE=/etc/R/Renviron.site
-elif [[ -f "/usr/local/lib/R/etc/Renviron.site" ]]; then
-    RENVSITE=/usr/local/lib/R/etc/Renviron.site
+elif [[ -f "/usr/local/bin/R/etc/Renviron.site" ]]; then
+    RENVSITE=/usr/local/bin/R/etc/Renviron.site
 else
     echo "No system-wide .Renviron file found"
     exit 1

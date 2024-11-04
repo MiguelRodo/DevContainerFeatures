@@ -85,9 +85,9 @@ for PROJECT_DIR in "$RENV_DIR"/*/; do
     debug "PROJECT_NAME: $PROJECT_NAME"
     
     if [ "$DEBUG" = "true" ]; then
-        /usr/local/lib/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE" -D
+        /usr/local/bin/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE" -D
     else
-        /usr/local/lib/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE"
+        /usr/local/bin/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE"
     fi
 done
 
