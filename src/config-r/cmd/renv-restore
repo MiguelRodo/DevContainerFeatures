@@ -77,13 +77,24 @@ renv_activate() {
     echo "---------------------------------------------"
 }
 
+restore_renv() {
+    echo "Restoring original renv version"
+    Rscript -e "
+        tryCatch(
+            renv::restore(packages = 'renv', transactional = TRUE),
+            error = function(e) {
+                message('⚠️  Restore failed: ', e)
+            }
+        )"
+}
+
 install_pkg() {
     echo "🔍 Installing $1"
     Rscript -e "
-    tryCatch(
-        {   
+    tryCatch( 
+        {  
             Sys.setenv(RENV_CONFIG_PAK_ENABLED = 'false')
-            if (!requireNamespace('$1', quietly = TRUE)) {
+            if (isFALSE(requireNamespace('$1', quietly = TRUE))) {
                 message('🔍 $1 not found. Installing $1...')
                 utils::install.packages('$1', repos = 'https://cloud.r-project.org')
             } else {
@@ -93,7 +104,7 @@ install_pkg() {
         error = function(e) {
             message('⚠️  Installation failed: ', e)
         }
-    )" || true
+    )"
     echo "✅ Installation process attempted"
     echo "---------------------------------------------"
 }
@@ -111,7 +122,13 @@ restore() {
         debug "EXCLUDE_ARRAY: $EXCLUDE_ARRAY"
         Rscript -e "
             tryCatch(
-                renv::restore(exclude=c(\"$EXCLUDE_ARRAY\"), transactional = TRUE),
+                {
+                    if ('transactional' %in% names(formals(renv::restore))) {
+                        renv::restore(exclude = c(\"$EXCLUDE_ARRAY\"), transactional = TRUE)
+                    } else {
+                        renv::restore(exclude = c(\"$EXCLUDE_ARRAY\"))
+                    }
+                },
                 error = function(e) {
                     message('⚠️  Restore failed: ', e)
                 }
@@ -119,7 +136,13 @@ restore() {
     else
         Rscript -e "
             tryCatch(
-                renv::restore(transactional = TRUE),
+                {
+                    if ('transactional' %in% names(formals(renv::restore))) {
+                        renv::restore(transactional = TRUE)
+                    } else {
+                        renv::restore()
+                    }
+                },
                 error = function(e) {
                     message('⚠️  Restore failed: ', e)
                 }

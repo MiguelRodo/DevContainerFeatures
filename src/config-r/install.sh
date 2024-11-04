@@ -3,7 +3,10 @@
 set -e
 
 PATH_POST_CREATE_COMMAND=/usr/local/bin/config-r-post-create-command
-cp cmd/post-create-command "$PATH_POST_CREATE_COMMAND"
+if [ ! -f "$PATH_POST_CREATE_COMMAND" ]; then
+    touch "$PATH_POST_CREATE_COMMAND"
+fi
+echo '#!/usr/bin/env bash' >> "$PATH_POST_CREATE_COMMAND"
 chmod 755 "$PATH_POST_CREATE_COMMAND"
 
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
