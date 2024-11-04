@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
 
+# Exit immediately if an error occurs
 set -e
 
-# Define the path to the system-wide Renviron file
-if [[ -f "/etc/R/Renviron.site" ]]; then
-    RENVSITE=/etc/R/Renviron.site
-elif [[ -f "/usr/local/bin/R/etc/Renviron.site" ]]; then
-    RENVSITE=/usr/local/bin/R/etc/Renviron.site
+# Determine the path to the R executable
+R_PATH=$(which R)
+
+# Define the path to the system-wide Renviron file based on the R installation path
+if [[ -n "$R_PATH" ]]; then
+    R_BASE_DIR=$(dirname $(dirname "$R_PATH"))
+    RENVSITE="$R_BASE_DIR/lib/R/etc/Renviron.site"
 else
-    echo "No system-wide .Renviron file found"
+    echo "R is not installed or not found in PATH"
     exit 1
+fi
+
+# Create the Renviron.site file if it doesn't exist
+if [[ ! -f "$RENVSITE" ]]; then
+    echo "Creating system-wide Renviron.site file at $RENVSITE"
+    mkdir -p "$(dirname "$RENVSITE")"
+    touch "$RENVSITE"
 fi
 
 # Define the workspace directory
@@ -23,6 +33,9 @@ RENV_PATHS_ROOT=${workspace_dir}/.local/renv
 R_LIBS=${workspace_dir}/.local/lib/R
 EOF
 
+# Create the necessary directories
 mkdir -p ${workspace_dir}/.cache
 mkdir -p ${workspace_dir}/.local/renv
 mkdir -p ${workspace_dir}/.local/lib/R
+
+echo "✅ R library paths and renv variables have been set in $RENVSITE"
