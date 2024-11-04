@@ -6,10 +6,11 @@ PATH_POST_CREATE_COMMAND=/usr/local/lib/config-r-post-create-command
 cp cmd/post-create-command "$PATH_POST_CREATE_COMMAND"
 chmod 755 "$PATH_POST_CREATE_COMMAND"
 
-SET_R_LIB_PATHS="$SETRLIBPATHS"
-ENSURE_GITHUB_PAT_SET="$ENSUREGITHUBPATSET"
-RESTORE="$RESTORE"
-PKG_EXCLUDE="$PKGEXCLUDE"
+SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
+ENSURE_GITHUB_PAT_SET="${ENSUREGITHUBPATSET:-true}"
+RESTORE="${RESTORE:-true}"
+PKG_EXCLUDE="${PKGEXCLUDE:-}"
+DEBUG="${DEBUG:-false}"
 
 copy_and_set_execute_bit() {
     cp cmd/"$1" /usr/local/lib/config-r-"$1" || {
@@ -22,7 +23,7 @@ copy_and_set_execute_bit() {
 
 if [ "$SET_R_LIB_PATHS" = "true" ]; then
     chmod 755 scripts/r-lib.sh
-    scripts/r-lib.sh || {
+    bash scripts/r-lib.sh || {
       echo "Failed to define R library environment variables"
     }
 fi
