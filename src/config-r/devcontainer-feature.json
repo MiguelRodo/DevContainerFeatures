@@ -1,7 +1,7 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "2.0.6",
+    "version": "2.1.0",
     "description": "Configure R",
     "postCreateCommand": "/usr/local/lib/config-r-post-create-command",
     "options": {
@@ -15,15 +15,20 @@
             "type": "boolean",
             "default": true
         },
-        "installPakAndBiocManager": {
+        "restore": {
             "type": "boolean",
-            "description": "Whether to install `pak` and `BiocManager` (into `renv` cache and out). Default is true.",
+            "description": "Whether to run `renv::restore()`. Default is true.",
             "default": true
         },
-        "restoreRenv": {
+        "pkgExclude": {
+            "type": "string",
+            "description": "Comma-separated list of packages to exclude from the renv snapshot restore process.",
+            "default": ""
+        },
+        "debug": {
             "type": "boolean",
-            "description": "Whether to restore renv packages if renv.lock file is detected.",
-            "default": true
+            "description": "Whether to print debug information during package restore.",
+            "default": false
         }
     }
 }

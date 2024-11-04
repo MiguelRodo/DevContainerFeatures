@@ -8,8 +8,17 @@ chmod 755 "$PATH_POST_CREATE_COMMAND"
 
 SET_R_LIB_PATHS="$SETRLIBPATHS"
 ENSURE_GITHUB_PAT_SET="$ENSUREGITHUBPATSET"
-INSTALL_PAK_AND_BIOCMANAGER="$INSTALLPAKANDBIOCMANAGER"
-RESTORE_RENV="$RESTORERENV"
+RESTORE="$RESTORE"
+PKG_EXCLUDE="$PKGEXCLUDE"
+
+copy_and_set_execute_bit() {
+    cp cmd/"$1" /usr/local/lib/config-r-"$1" || {
+      echo "Failed to copy cmd/$1"
+    }
+    chmod 755 /usr/local/lib/config-r-"$1" || {
+      echo "Failed to set execute bit for /usr/local/lib/config-r-$1"
+    }
+}
 
 if [ "$SET_R_LIB_PATHS" = "true" ]; then
     chmod 755 scripts/r-lib.sh
@@ -19,13 +28,9 @@ if [ "$SET_R_LIB_PATHS" = "true" ]; then
 fi
 
 if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
-    cp cmd/bashrc-d /usr/local/lib/config-r-bashrc-d
-    chmod 755 /usr/local/lib/config-r-bashrc-d
+    copy_and_set_execute_bit bashrc-d
     echo "/usr/local/lib/config-r-bashrc-d" >> "$PATH_POST_CREATE_COMMAND"
-    cp cmd/github-pat /usr/local/lib/config-r-github-pat || {
-      echo "Failed to copy cmd/github-pat"
-    }
-    chmod 755 /usr/local/lib/config-r-github-pat
+    copy_and_set_execute_bit github-pat
     /usr/local/lib/config-r-github-pat || {
       echo "Failed to run config-r-github-pat"
     }
@@ -34,20 +39,16 @@ if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
     }
 fi
 
-if [ "$INSTALL_PAK_AND_BIOCMANAGER" = "true" ]; then
-    chmod 755 scripts/pkg-pak-and-biocmanager.sh
-    scripts/pkg-pak-and-biocmanager.sh || {
-      echo "Failed to install pak and biocmanager"
+copy_and_set_execute_bit renv-restore
+copy_and_set_execute_bit renv-restore-build
+if [ "$DEBUG" = "true" ]; then
+    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" --debug || {
+        echo "Failed to restore R packages"
+    }
+else
+    /usr/local/lib/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE" || {
+        echo "Failed to restore R packages"
     }
 fi
 
-cp cmd/renv-restore /usr/local/lib/config-r-renv-restore
-chmod 755 /usr/local/lib/config-r-renv-restore
-
-if [ "$RESTORE_RENV" = "true" ]; then
-    /usr/local/lib/config-r-renv-restore || {
-      echo "Failed to restore R packages"
-    }
-fi
-
-echo " " >> "$PATH_POST_CREATE_COMMAND"
+echo " " >> "$PATH_POST_CREATE_COMMAND" 

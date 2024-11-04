@@ -1,67 +1,177 @@
-#!/usr/local/bin/Rscript
+#!/usr/bin/env bash
 
 # Exit immediately if an error occurs
-options(error = function() quit(status = 1))
+set -e
 
-# Load required libraries
-suppressMessages(library(renv))
-
-# Function to check if renv.lock exists in the project directory
-check_lockfile <- function(project_dir = ".") {
-  lockfile_path <- file.path(project_dir, "renv.lock")
-  return(file.exists(lockfile_path))
+# Function to display usage information
+usage() {
+    echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
+    echo ""
+    echo "Description:"
+    echo "  This script restores R packages for a specified project directory containing an 'renv.lock' file."
+    echo "Options:"
+    echo "  -d, --directory                  Project directory containing `renv.lock` file. Default is current directory."
+    echo "  -r, --restore                    Run `renv::restore(transactional = TRUE)` within all projects. Default is true."
+    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
+    echo "  -d, --debug                      Enable debug mode."
+    echo "  -h, --help                       Display this help message."
+    echo ""
+    echo "Description:"
+    echo "  This script processes each top-level subdirectory in the 'renv/' directory by:"
+    echo "    - Running the configuration script '/usr/local/lib/config-r-renv-pak-bioc'."
+    echo "    - Optionally restoring packages using 'renv::restore', excluding specified packages."
+    echo "    - Optionally running project-specific scripts from a JSON mapping."
+    exit 1
 }
 
-# Function to check if a package is installed
-is_installed <- function(pkg) {
-  requireNamespace(pkg, quietly = TRUE)
+PROJECT_DIR="."
+RESTORE=true
+EXCLUDE_PACKAGES=""
+DBEUG=false
+
+# Parse command-line arguments
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -d|--directory)
+            PROJECT_DIR="$2"
+            shift 2
+            ;;
+        -r|--restore)
+            RESTORE=true
+            shift
+            ;;
+        -e|--exclude)
+            EXCLUDE_PACKAGES="$2"
+            shift 2
+            ;;
+        --debug)
+            DEBUG=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "❌ Unknown parameter passed: $1"
+            usage
+            ;;
+    esac
+done
+
+debug() {
+    if [ "$DEBUG" = true ]; then
+        echo "🐛 DEBUG: $1"
+    fi
 }
 
-# Ensure renv is installed
-if (!is_installed("renv")) {
-  message("🔍 renv not found. Installing renv...")
-  install.packages("renv", repos = "https://cloud.r-project.org")
-} else {
-  message("✅ renv is already installed.")
+debug "Running renv-restore"
+
+debug "PROJECT_DIR: $PROJECT_DIR"
+debug "RESTORE: $RESTORE"
+debug "EXCLUDE_PACKAGES: $EXCLUDE_PACKAGES"
+
+# activate project?
+renv_activate() {
+    echo "🔍 Activating project"
+    Rscript -e "
+        tryCatch(
+            renv::activate(),
+            error = function(e) {
+                message('⚠️  Activation threw error: ', e)
+            }
+        )"
+    echo "✅ Activation process attempted"
+    echo "---------------------------------------------"
 }
 
-# Parse command-line arguments for project directory
-args <- commandArgs(trailingOnly = TRUE)
-
-if (length(args) >= 1) {
-  project_dir <- args[1]
-  if (!dir.exists(project_dir)) {
-    message("[ERROR] Specified project directory does not exist: ", project_dir)
-    quit(status = 1)
-  }
-} else {
-  project_dir <- "."
+install_pkg() {
+    echo "🔍 Installing $1"
+    Rscript -e "
+    tryCatch(
+        {   
+            Sys.setenv("RENV_CONFIG_PAK_ENABLED" = "false")
+            if (!requireNamespace('$1', quietly = TRUE)) {
+                message('🔍 $1 not found. Installing $1...')
+                utils::install.packages('$1', repos = 'https://cloud.r-project.org')
+            } else {
+                message('✅ $1 is already installed.')
+            }
+        },
+        error = function(e) {
+            message('⚠️  Installation failed: ', e)
+        }
+    )" || true
+    echo "✅ Installation process attempted"
+    echo "---------------------------------------------"
 }
 
-# Main function to restore renv packages
-restore_renv <- function(project_dir = ".") {
-  if (!check_lockfile(project_dir)) {
-    message("[INFO] No renv.lock file detected in ", project_dir, ". Skipping renv restoration.")
-    return(invisible(NULL))
-  }
-  
-  message("[INFO] renv.lock file detected in ", project_dir, ". Attempting to restore renv packages...")
-  
-  tryCatch({
-    renv::restore(
-      project = project_dir,
-      transactional = TRUE,
-      exclude = c("pak", "BiocManager")
-    )
-    message("[SUCCESS] renv packages restored successfully in ", project_dir, ".")
-  }, error = function(e) {
-    message("[WARNING] renv::restore() encountered an error in ", project_dir, ":")
-    message(e$message)
-    message("[WARNING] Continuing without failing the container build.")
-    # Optionally, log the error to a file for later review
-    # writeLines(e$message, con = "renv_restore_error.log")
-  })
+install_pak_bioc() {
+    echo "🔍 Installing pak and BiocManager"
+    install_pkg pak
+    install_pkg BiocManager
 }
 
-# Execute the restoration in the specified project directory
-restore_renv(project_dir)
+restore() {
+    echo "🔄 Attempting to restore packages"
+    # Prepare the exclude packages parameter for R
+    if [ -n "$EXCLUDE_PACKAGES" ]; then
+        EXCLUDE_ARRAY=$(echo "$EXCLUDE_PACKAGES" | sed "s/,/','/g")
+        debug "EXCLUDE_ARRAY: $EXCLUDE_ARRAY"
+        Rscript -e "
+            tryCatch(
+                renv::restore(exclude=c('$EXCLUDE_ARRAY'), transactional = TRUE),
+                error = function(e) {
+                    message('⚠️  Restore failed: ', e)
+                }
+            )"
+    else
+        Rscript -e "
+            tryCatch(
+                renv::restore(transactional = TRUE),
+                error = function(e) {
+                    message('⚠️  Restore failed: ', e)
+                }
+            )"
+    fi
+    echo "✅ Restore process attempted"
+    echo "---------------------------------------------"
+}
+
+run_custom_scripts() {
+    if [ -f "$PROJECT_DIR/config-r-renv.sh" ]; then 
+        echo "🔍 Found shell script"
+        ./config-r-renv.sh "$EXCLUDE_PACKAGES" || {
+            echo "⚠️  Project-specific shell script attempted"
+            echo "---------------------------------------------"
+        }
+    fi
+
+    if [ -f "$PROJECT_DIR/config-r-renv.R" ]; then
+        echo "🔍 Found R script for"
+        cd "$PROJECT_DIR"
+        Rscript config-r-renv.R "$EXCLUDE_PACKAGES" || {
+            echo "⚠️  Project-specific R script attempted"
+            echo "---------------------------------------------"
+        }
+    fi
+}
+
+main() {
+    ORIG_DIR=$(pwd)
+    PROJECT_NAME=$(basename "$PROJECT_DIR")
+    echo "🚀 Processing project: $PROJECT_NAME"
+    trap 'cd "$ORIG_DIR"' EXIT
+    cd "$PROJECT_DIR"
+    # Activate project
+    renv_activate 
+    # Install pak and BiocManager
+    install_pak_bioc
+    # Run renv::restore
+    restore
+    # Run custom scripts
+    run_custom_scripts
+    echo "✅ Finished processing project: $PROJECT_NAME"
+    echo "---------------------------------------------"
+}
+
+main

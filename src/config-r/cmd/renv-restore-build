@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+# Exit immediately if an error occurs
+set -e
+
+# Function to display usage information
+usage() {
+    echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -r, --restore                    Run `renv::restore(transactional = TRUE)` within all projects. Default is true."
+    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
+    echo "  -d, --debug                      Enable debug mode."
+    echo "  -h, --help                       Display this help message."
+    echo ""
+    echo "Description:"
+    echo "  This script processes each top-level subdirectory in the 'renv/' directory by:"
+    echo "    - Running the configuration script '/usr/local/lib/config-r-renv-pak-and-bioc'."
+    echo "    - Optionally restoring packages using 'renv::restore', excluding specified packages."
+    echo "    - Optionally running project-specific scripts from a JSON mapping."
+    exit 1
+}
+
+# Initialize variables
+RESTORE=true
+PKG_EXCLUDE=""
+DEBUG=false
+
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -r|--restore)
+            RESTORE=true
+            shift
+            ;;
+        -e|--exclude)
+            PKG_EXCLUDE="$2"
+            shift 2
+            ;;
+        -d|--debug)
+            DEBUG=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "❌ Unknown parameter passed: $1"
+            usage
+            ;;
+    esac
+done
+
+debug() {
+    if [ "$DEBUG" = true ]; then
+        echo "🐛 DEBUG: $1"
+    fi
+}
+
+debug "Running renv-restore-build"
+
+debug "RESTORE: $RESTORE"
+debug "PKG_EXCLUDE: $PKG_EXCLUDE"
+
+# path to sub-folder that would contain any renv directories
+RENV_DIR="/workspaces/local/share/config-r/renv"
+debug "RENV_DIR: $RENV_DIR"
+if [ ! -d "$RENV_DIR" ]; then
+    echo "ℹ️ No 'renv/' directory found in '$RENV_DIR'."
+    exit 0
+fi
+
+# exit if there are no sub-directories within `renv`
+if [ ! -d "renv" ]; then
+    echo "ℹ️ No projects found in '$RENV_DIR/renv/' directory."
+    exit 0
+fi
+
+ORIG_DIR=$(pwd)
+TEMP_DIR=$(mktemp -d)
+debug "ORIG_DIR: $ORIG_DIR"
+debug "TEMP_DIR: $TEMP_DIR"
+
+# Define a custom exit function if needed
+custom_exit() {
+    echo "Performing custom exit tasks..."
+    rm -rf "$TEMP_DIR"
+    cd "$ORIG_DIR"
+}
+
+# Set the trap to execute both the custom exit function and change directory
+trap 'custom_exit' EXIT
+
+# Loop over each top-level subdirectory in 'renv/'
+for PROJECT_DIR in "$RENV_DIR"/*/; do
+    debug "PROJECT_DIR: $PROJECT_DIR"
+
+    # Remove trailing slash and extract the project name
+    PROJECT_DIR="${PROJECT_DIR%/}"
+    PROJECT_NAME=$(basename "$PROJECT_DIR")
+    debug "PROJECT_DIR: $PROJECT_DIR"
+    debug "PROJECT_NAME: $PROJECT_NAME"
+    
+    if [ "$DEBUG" = "true" ]; then
+        /usr/local/lib/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE" --debug
+    else
+        /usr/local/lib/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE"
+    fi
+done
+
+echo "🎉 All projects have been processed successfully."
