@@ -89,10 +89,11 @@ add_to_path() {
 install_hf() {
     if [[ "$HF_SCOPE" == "system" ]]; then
         echo "Installing/Upgrading Hugging Face CLI system-wide..."
-        pip3 install --upgrade huggingface-hub[cli]
+        pip3 install --upgrade --break-system-packages huggingface-hub[cli]
     else
         echo "Installing/Upgrading Hugging Face CLI for the user..."
         pip3 install --user --upgrade huggingface-hub[cli]
+        ensure_user_bin_in_path
     fi
 }
 
