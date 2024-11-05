@@ -52,6 +52,11 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
+if [[ ! -f "${repos_list_file}" ]]; then
+  echo "Repository list file '${repos_list_file}' not found."
+  exit 0
+fi
+
 clone_repos() {
   # Get the absolute path of the current working directory
   current_dir="$(pwd)"
