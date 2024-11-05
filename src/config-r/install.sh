@@ -133,7 +133,7 @@ restore() {
     fi
 
     # Log the command for debugging purposes
-    debug "🔧 Executing command: ${command[*]}"
+    echo "🔧 Executing command: ${command[*]}"
 
     # Execute the command with error handling
     if ! "${command[@]}"; then
