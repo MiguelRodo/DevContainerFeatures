@@ -10,13 +10,15 @@ usage() {
     echo "Options:"
     echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within all projects. Default is true."
     echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
+    echo "  -n, --no-pak                     Do not use pak for package management."
+    echo "  -d, --directory                  Directory containing project directories. Default is '/usr/local/share/config-r/renv'."
     echo "  -D, --debug                      Enable debug mode."
     echo "  -h, --help                       Display this help message."
     echo ""
     echo "Description:"
-    echo "  This script processes each top-level subdirectory in the 'renv/' directory by:"
-    echo "    - Restoring packages using renv::restore, excluding specified packages."
-    echo "    - Running project-specific scripts if present."
+    echo "  This script processes each top-level subdirectory in the specified directory by:"
+    echo "    - Restoring packages using renv::restore, excluding specified packages (if restore is enabled)."
+    echo "    - Running project-specific scripts if present (config-r-renv.R and config-r-renv.sh)."
     exit 1
 }
 
@@ -24,6 +26,8 @@ usage() {
 RESTORE=true
 PKG_EXCLUDE=""
 DEBUG=false
+USE_PAK=true
+RENV_DIR="/usr/local/share/config-r/renv"
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -33,6 +37,14 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         -e|--exclude)
             PKG_EXCLUDE="$2"
+            shift 2
+            ;;
+        -n|--no-pak)
+            USE_PAK=false
+            shift
+            ;;
+        -d|--directory)
+            RENV_DIR="$2"
             shift 2
             ;;
         -D|--debug)
@@ -58,24 +70,30 @@ debug() {
 debug "Running renv-restore-build"
 debug "RESTORE: $RESTORE"
 debug "PKG_EXCLUDE: $PKG_EXCLUDE"
-
-# Path to sub-folder that contains renv directories
-RENV_DIR="/usr/local/share/config-r/renv"
+debug "USE_PAK: $USE_PAK"
 debug "RENV_DIR: $RENV_DIR"
 
-if [ ! -d "$RENV_DIR" ]; then
-    echo "ℹ️ No 'renv/' directory found in '$RENV_DIR'."
-    exit 0
-fi
+exit_early_if_needed() {
+    if [ ! -d "$RENV_DIR" ]; then
+        echo "ℹ️ No 'renv/' directory found in '$RENV_DIR'."
+        exit 0
+    fi
 
-# Check if there are subdirectories within `RENV_DIR`
-if [ -z "$(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d)" ]; then
-    echo "ℹ️ No projects found in '$RENV_DIR'."
-    exit 0
-fi
+    # Check if there are subdirectories within `RENV_DIR`
+    if [ -z "$(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d)" ]; then
+        echo "ℹ️ No projects found in '$RENV_DIR'."
+        exit 0
+    fi
+}
 
-# Loop over each top-level subdirectory in 'renv/'
-for PROJECT_DIR in "$RENV_DIR"/*/; do
+restore_projects() {
+    # Loop over each top-level subdirectory in 'renv/'
+    for PROJECT_DIR in "$RENV_DIR"/*/; do
+        restore_project
+    done
+}
+
+restore_project() {
     debug "PROJECT_DIR: $PROJECT_DIR"
 
     # Remove trailing slash and extract the project name
@@ -89,6 +107,12 @@ for PROJECT_DIR in "$RENV_DIR"/*/; do
     else
         /usr/local/bin/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE"
     fi
-done
+}
 
-echo "🎉 All projects have had restoration attempted."
+main() {
+    exit_early_if_needed
+    restore_projects
+    echo "🎉 All projects have had restoration attempted."
+}
+
+main

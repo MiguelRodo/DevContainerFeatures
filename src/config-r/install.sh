@@ -10,6 +10,7 @@ RESTORE="${RESTORE:-true}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
+RENV_DIR="${RENVDIR:-"/usr/local/share/config-r/renv"}"
 
 # Function to create the post-create command path and initialize the command file
 create_path_post_create_command() {
@@ -120,7 +121,7 @@ restore() {
     copy_and_set_execute_bit renv-restore-build
     
     # Construct the base command with provided arguments
-    local command="/usr/local/bin/config-r-renv-restore-build -r \"$RESTORE\" -e \"$PKG_EXCLUDE\""
+    local command="/usr/local/bin/config-r-renv-restore-build -r \"$RESTORE\" -e \"$PKG_EXCLUDE\" -d \"$RENV_DIR\""
     
     # Append debug flag if enabled
     [ "$DEBUG" = "true" ] && command="$command --debug"
