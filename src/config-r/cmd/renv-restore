@@ -94,6 +94,19 @@ renv_activate() {
     echo "---------------------------------------------"
 }
 
+r_lib_paths() {
+    # echo out R library paths
+    debug "R library paths:"
+    R_LIB_PATHS=$(Rscript -e 'cat(.libPaths(), sep="\n")' 2>/dev/null | tr -d '\r')
+
+    if [ $? -eq 0 ] && [ -n "$R_LIB_PATHS" ]; then
+        debug "$R_LIB_PATHS"
+    else
+        debug "Failed to retrieve R library paths."
+    fi
+}
+
+
 restore_renv() {
     echo "Restoring original renv version"
     Rscript -e "
@@ -105,7 +118,24 @@ restore_renv() {
         )"
 }
 
-install_pkg() {
+install_pak() {
+    local version=$1
+
+    if [ "${version}" = "auto" ]; then
+        if su "${USERNAME}" -c "R -s -e 'packageVersion(\"pak\")'" >/dev/null 2>&1; then
+            echo "pak is already installed. Skip pak installation..."
+            return
+        else
+            version="stable"
+        fi
+    fi
+
+    echo "Installing pak ${version}..."
+    # shellcheck disable=SC2016
+    su "${USERNAME}" -c 'R -q -e "install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/'"${version}"'/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))"'
+}
+
+install_bioc() {
     echo "🔍 Installing $1"
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
     if [ "$renv_config_pak_orig" = "true" ]; then
@@ -200,7 +230,9 @@ main() {
     echo "🚀 Processing project: $PROJECT_NAME"
     trap 'cd "$ORIG_DIR"' EXIT
     cd "$PROJECT_DIR"
+    r_lib_paths
     renv_activate
+    r_lib_paths
     install_pak_bioc
     restore
     run_custom_scripts
