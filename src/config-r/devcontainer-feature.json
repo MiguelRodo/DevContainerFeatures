@@ -28,7 +28,7 @@
         "usePak": {
             "type": "boolean",
             "description": "Whether to use `pak` for package installation.",
-            "default": true
+            "default": false
         },
         "debug": {
             "type": "boolean",

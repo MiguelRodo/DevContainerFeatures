@@ -14,7 +14,7 @@ ENSURE_GITHUB_PAT_SET="${ENSUREGITHUBPATSET:-true}"
 RESTORE="${RESTORE:-true}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
-USE_PAK="${USEPAK:-true}"
+USE_PAK="${USEPAK:-false}"
 
 copy_and_set_execute_bit() {
   if ! cp cmd/"$1" /usr/local/bin/config-r-"$1"; then
