@@ -121,6 +121,8 @@ restore() {
     copy_and_set_execute_bit renv-restore-build
 
     # set renv cache mode
+    echo "USERNAME: $USERNAME"
+    echo "USER: $USER"
     echo "REMOTE_USER: $_REMOTE_USER"
     echo "CONTAINER_USER: $_CONTAINER_USER"
     export RENV_CACHE_MODE="0755"
