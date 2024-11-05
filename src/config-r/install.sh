@@ -121,8 +121,8 @@ restore() {
     copy_and_set_execute_bit renv-restore-build
 
     # set renv cache mode
-    debug "REMOTE_USER: $_REMOTE_USER"
-    debug "CONTAINER_USER: $_CONTAINER_USER"
+    echo "REMOTE_USER: $_REMOTE_USER"
+    echo "CONTAINER_USER: $_CONTAINER_USER"
     export RENV_CACHE_MODE="0755"
     
     # Construct the command as an array
