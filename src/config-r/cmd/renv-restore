@@ -129,7 +129,7 @@ install_pak() {
         {  
             if (isFALSE(requireNamespace('pak', quietly = TRUE))) {
                 message('🔍 pak not found. Installing pak...')
-                install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/'"${version}"'/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
+                install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/"${version}"/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
             } else {
                 message('✅ pak is already installed.')
             }
