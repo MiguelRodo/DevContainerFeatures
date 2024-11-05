@@ -44,8 +44,8 @@ source scripts/shellrc-config.sh
 # ---------------------
 
 # Paths to the command files
-PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create-command
-PATH_START_CREATE_COMMAND=/usr/local/bin/repos-start-command
+PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create
+PATH_START_CREATE_COMMAND=/usr/local/bin/repos-post-start
 
 # Initialize the command files
 initialize_command_file "$PATH_POST_CREATE_COMMAND"
@@ -59,7 +59,7 @@ append_command_with_error_handling \
 append_command_with_error_handling \
     "/usr/local/bin/repos-git-clone" "$PATH_POST_CREATE_COMMAND"
 
-# post-start-command
+# post-start
 append_command_with_error_handling \
     "/usr/local/bin/repos-workspace-add" "$PATH_START_CREATE_COMMAND"
 append_command_with_error_handling \

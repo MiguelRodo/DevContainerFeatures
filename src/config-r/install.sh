@@ -14,7 +14,7 @@ RENV_DIR="${RENVDIR:-"/usr/local/share/config-r/renv"}"
 
 # Function to create the post-create command path and initialize the command file
 create_path_post_create_command() {
-    PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create-command
+    PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create
     initialize_command_file "$PATH_POST_CREATE_COMMAND"
 }
 
@@ -99,17 +99,17 @@ ensure_github_pat_set() {
         # Copy and set execute permissions for bashrc-d script
         copy_and_set_execute_bit bashrc-d
         
-        # Append command to post-create-command file with error handling
+        # Append command to post-create file with error handling
         echo -e "/usr/local/bin/config-r-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/config-r-bashrc-d'}\n" >> "$PATH_POST_CREATE_COMMAND"
         
         # Copy and set execute permissions for github-pat script
         copy_and_set_execute_bit github-pat
         
-        # Append command to post-create-command file with sudo and error handling
+        # Append command to post-create file with sudo and error handling
         if ! echo -e "sudo /usr/local/bin/config-r-github-pat || \n    {echo 'Failed to run /usr/local/bin/config-r-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
-            echo "❌ Failed to add config-r-github-pat to post-create-command"
+            echo "❌ Failed to add config-r-github-pat to post-create"
         else
-            echo "✅ Added config-r-github-pat to post-create-command"
+            echo "✅ Added config-r-github-pat to post-create"
         fi
     fi
 }
