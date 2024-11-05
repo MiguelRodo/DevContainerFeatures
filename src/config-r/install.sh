@@ -119,6 +119,11 @@ restore() {
     # Copy and set execute permissions for renv restore scripts
     copy_and_set_execute_bit renv-restore
     copy_and_set_execute_bit renv-restore-build
+
+    # set renv cache mode
+    debug "REMOTE_USER: $_REMOTE_USER"
+    debug "CONTAINER_USER: $_CONTAINER_USER"
+    export RENV_CACHE_MODE="0755"
     
     # Construct the command as an array
     local command=(/usr/local/bin/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE")
