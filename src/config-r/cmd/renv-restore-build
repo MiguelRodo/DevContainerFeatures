@@ -26,7 +26,7 @@ usage() {
 RESTORE=false
 PKG_EXCLUDE=""
 DEBUG=false
-USE_PAK=true
+USE_PAK=false
 RENV_DIR="/usr/local/share/config-r/renv"
 
 while [[ "$#" -gt 0 ]]; do

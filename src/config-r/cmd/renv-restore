@@ -107,10 +107,13 @@ restore_renv() {
 
 install_pkg() {
     echo "🔍 Installing $1"
+    local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
+    if [ "$renv_config_pak_orig" = "true" ]; then
+        export RENV_CONFIG_PAK_ENABLED=false
+    fi
     Rscript -e "
     tryCatch( 
         {  
-            Sys.setenv(RENV_CONFIG_PAK_ENABLED = 'false')
             if (isFALSE(requireNamespace('$1', quietly = TRUE))) {
                 message('🔍 $1 not found. Installing $1...')
                 utils::install.packages('$1', repos = 'https://cloud.r-project.org')
@@ -122,6 +125,9 @@ install_pkg() {
             message('⚠️  Installation failed: ', e)
         }
     )"
+    if [ "$renv_config_pak_orig" = "true" ]; then
+        export RENV_CONFIG_PAK_ENABLED=true
+    fi
     echo "✅ Installation process attempted"
     echo "---------------------------------------------"
 }
@@ -131,10 +137,6 @@ install_pak_bioc() {
     install_pkg pak
     install_pkg BiocManager
 }
-
-if [ "$USE_PAK" = true ]; then
-    export RENV_CONFIG_PAK_ENABLED=true
-fi
 
 restore() {
     echo "🔄 Attempting to restore packages"
