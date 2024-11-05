@@ -8,10 +8,10 @@ usage() {
     echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within all projects. Default is true."
-    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
-    echo "  -n, --no-pak                     Do not use pak for package management."
     echo "  -d, --directory                  Directory containing project directories. Default is '/usr/local/share/config-r/renv'."
+    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
+    echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within all projects. Default is true."
+    echo "  -p, --pak                        Use pak for package management."
     echo "  -D, --debug                      Enable debug mode."
     echo "  -h, --help                       Display this help message."
     echo ""
@@ -23,7 +23,7 @@ usage() {
 }
 
 # Initialize variables
-RESTORE=true
+RESTORE=false
 PKG_EXCLUDE=""
 DEBUG=false
 USE_PAK=true
@@ -36,16 +36,26 @@ while [[ "$#" -gt 0 ]]; do
             shift
             ;;
         -e|--exclude)
-            PKG_EXCLUDE="$2"
-            shift 2
+            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+                PKG_EXCLUDE="$2"
+                shift 2
+            else
+                echo "❌ --exclude requires a non-empty package name argument."
+                usage
+            fi
             ;;
-        -n|--no-pak)
-            USE_PAK=false
+        -p|--pak)
+            USE_PAK=true
             shift
             ;;
         -d|--directory)
-            RENV_DIR="$2"
-            shift 2
+            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+                RENV_DIR="$2"
+                shift 2
+            else
+                echo "❌ --directory requires a directory path argument."
+                usage
+            fi
             ;;
         -D|--debug)
             DEBUG=true
@@ -102,10 +112,33 @@ restore_project() {
     debug "PROJECT_DIR: $PROJECT_DIR"
     debug "PROJECT_NAME: $PROJECT_NAME"
     
+    # Construct the command as an array
+    local command=(/usr/local/bin/config-r-renv-restore)
+
+    # Append options based on conditions
+    if [ "$RESTORE" = "true" ]; then
+        command+=("--restore")
+    fi
+
     if [ "$DEBUG" = "true" ]; then
-        /usr/local/bin/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE" -D
-    else
-        /usr/local/bin/config-r-renv-restore -d "$PROJECT_DIR" -r "$RESTORE" -e "$PKG_EXCLUDE"
+        command+=("--debug")
+    fi
+
+    if [ "$USE_PAK" = "true" ]; then
+        command+=("--pak")
+    fi
+
+    if [ -n "$PKG_EXCLUDE" ]; then
+        command+=("--exclude")
+        command+=("$PKG_EXCLUDE")
+    fi
+
+    # Log the command for debugging purposes
+    echo "🔧 Executing command: ${command[*]}"
+
+    # Execute the command with error handling
+    if ! "${command[@]}"; then
+        echo "❌ config-r-renv-restore-build failed with command: ${command[*]}"
     fi
 }
 

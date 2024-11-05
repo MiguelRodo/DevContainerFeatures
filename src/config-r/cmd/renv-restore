@@ -13,35 +13,36 @@ usage() {
     echo "  -d, --directory DIRECTORY        Project directory containing 'renv.lock' file. Default is current directory."
     echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within the project. Default is true."
     echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
-    echo "  -n, --no-pak                     Do not use pak for package management."
+    echo "  -p, --pak                        Use pak for package management."
     echo "  -D, --debug                      Enable debug mode."
     echo "  -h, --help                       Display this help message."
     exit 1
 }
 
 PROJECT_DIR="."
-RESTORE=true
-EXCLUDE_PACKAGES=""
+RESTORE=false
+PKG_EXCLUDE=""
 DEBUG=false
-USE_PAK=true
+USE_PAK=false
 
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        -d|--directory)
-            PROJECT_DIR="$2"
-            shift 2
-            ;;
         -r|--restore)
             RESTORE=true
             shift
             ;;
         -e|--exclude)
-            EXCLUDE_PACKAGES="$2"
-            shift 2
+            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+                PKG_EXCLUDE="$2"
+                shift 2
+            else
+                echo "❌ --exclude requires a non-empty package name argument."
+                usage
+            fi
             ;;
-        -n|--no-pak)
-            USE_PAK=false
+        -p|--pak)
+            USE_PAK=true
             shift
             ;;
         -D|--debug)
@@ -67,7 +68,7 @@ debug() {
 debug "Running renv-restore"
 debug "PROJECT_DIR: $PROJECT_DIR"
 debug "RESTORE: $RESTORE"
-debug "EXCLUDE_PACKAGES: $EXCLUDE_PACKAGES"
+debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 
 # Activate project
@@ -128,8 +129,8 @@ fi
 
 restore() {
     echo "🔄 Attempting to restore packages"
-    if [ -n "$EXCLUDE_PACKAGES" ]; then
-        EXCLUDE_ARRAY=$(echo "$EXCLUDE_PACKAGES" | sed "s/,/\",\"/g")
+    if [ -n "$PKG_EXCLUDE" ]; then
+        EXCLUDE_ARRAY=$(echo "$PKG_EXCLUDE" | sed "s/,/\",\"/g")
         debug "EXCLUDE_ARRAY: $EXCLUDE_ARRAY"
         Rscript -e "
             tryCatch(
@@ -166,7 +167,7 @@ restore() {
 run_custom_scripts() {
     if [ -f "config-r-renv.sh" ]; then 
         echo "🔍 Found shell script"
-        if ! ./config-r-renv.sh "$EXCLUDE_PACKAGES"; then
+        if ! ./config-r-renv.sh "$PKG_EXCLUDE"; then
             echo "⚠️  Project-specific shell script failed"
             echo "---------------------------------------------"
         fi
@@ -175,7 +176,7 @@ run_custom_scripts() {
     if [ -f "config-r-renv.R" ]; then
         echo "🔍 Found R script"
         cd "$PROJECT_DIR"
-        if ! Rscript config-r-renv.R "$EXCLUDE_PACKAGES"; then
+        if ! Rscript config-r-renv.R "$PKG_EXCLUDE"; then
             echo "⚠️  Project-specific R script failed"
             echo "---------------------------------------------"
         fi

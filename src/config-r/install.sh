@@ -12,6 +12,14 @@ DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/config-r/renv"}"
 
+
+# Function to log debug messages if enabled
+debug() {
+    if [ "$DEBUG" = true ]; then
+        echo "🐛 DEBUG: $1"
+    fi
+}
+
 # Function to create the post-create command path and initialize the command file
 create_path_post_create_command() {
     PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create
@@ -37,12 +45,12 @@ initialize_command_file() {
 # Function to copy a script and set its execute permissions
 copy_and_set_execute_bit() {
     local script_name="$1"
-    
+
     # Copy the script to /usr/local/bin with a prefixed name
     if ! cp "cmd/$script_name" "/usr/local/bin/config-r-$script_name"; then
         echo "Failed to copy cmd/$script_name"
     fi
-    
+
     # Set execute permissions on the copied script
     if ! chmod 755 "/usr/local/bin/config-r-$script_name"; then
         echo "Failed to set execute bit for /usr/local/bin/config-r-$script_name"
@@ -52,11 +60,11 @@ copy_and_set_execute_bit() {
 # Function to empty a directory by removing all its contents
 empty_dir() {
     local directory="$1"
-    
+
     if [ -d "$directory" ]; then
         # Remove all visible files and directories
         rm -rf "$directory"/*
-        
+
         # Remove hidden files and directories
         rm -rf "$directory"/.[!.]* "$directory"/..?*
     else
@@ -69,7 +77,7 @@ rm_dirs() {
     if [ -z "$1" ]; then
         return
     fi
-    
+
     for dir in "$@"; do
         if [ -d "$dir" ]; then
             rm -rf "$dir"
@@ -85,7 +93,7 @@ set_r_libs() {
     if [ "$SET_R_LIB_PATHS" = "true" ]; then
         # Ensure the R library script is executable
         chmod 755 scripts/r-lib.sh
-        
+
         # Execute the R library script
         if ! bash scripts/r-lib.sh; then
             echo "Failed to define R library environment variables"
@@ -98,13 +106,13 @@ ensure_github_pat_set() {
     if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
         # Copy and set execute permissions for bashrc-d script
         copy_and_set_execute_bit bashrc-d
-        
+
         # Append command to post-create file with error handling
         echo -e "/usr/local/bin/config-r-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/config-r-bashrc-d'}\n" >> "$PATH_POST_CREATE_COMMAND"
-        
+
         # Copy and set execute permissions for github-pat script
         copy_and_set_execute_bit github-pat
-        
+
         # Append command to post-create file with sudo and error handling
         if ! echo -e "sudo /usr/local/bin/config-r-github-pat || \n    {echo 'Failed to run /usr/local/bin/config-r-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
             echo "❌ Failed to add config-r-github-pat to post-create"
@@ -120,23 +128,43 @@ restore() {
     copy_and_set_execute_bit renv-restore
     copy_and_set_execute_bit renv-restore-build
 
-    # set renv cache mode
-    echo "USERNAME: $USERNAME"
-    echo "USER: $USER"
-    echo "REMOTE_USER: $_REMOTE_USER"
-    echo "CONTAINER_USER: $_CONTAINER_USER"
+    # set renv cache mode and user
+    debug "USERNAME: $USERNAME"
+    debug "USER: $USER"
+    debug "REMOTE_USER: $_REMOTE_USER"
+    debug "CONTAINER_USER: $_CONTAINER_USER"
+
     export RENV_CACHE_MODE="0755"
-    
+    debug "RENV_CACHE_MODE: $RENV_CACHE_MODE"
+    if [ -n "$_REMOTE_USER" ]; then
+        export RENV_CACHE_USER="$_REMOTE_USER"
+        debug "RENV_CACHE_USER: $_REMOTE_USER"
+    fi
+
     # Construct the command as an array
-    local command=(/usr/local/bin/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE")
+    local command=(/usr/local/bin/config-r-renv-restore-build)
 
     # Append options based on conditions
+    if [ "$RESTORE" = "true" ]; then
+        command+=("--restore")
+    fi
+
     if [ "$DEBUG" = "true" ]; then
         command+=("--debug")
     fi
 
-    if [ "$USE_PAK" = "false" ]; then
-        command+=("--no-pak")
+    if [ "$USE_PAK" = "true" ]; then
+        command+=("--pak")
+    fi
+
+    if [ -n "$PKG_EXCLUDE" ]; then
+        command+=("--exclude")
+        command+=("$PKG_EXCLUDE")
+    fi
+
+    if [ -n "$RENV_DIR" ]; then
+        command+=("--dir")
+        command+=("$RENV_DI R")
     fi
 
     # Log the command for debugging purposes
@@ -153,7 +181,7 @@ restore() {
 clean_up() {
     # Remove specified temporary directories
     rm_dirs /tmp/Rtmp* /tmp/rig
-    
+
     # Empty the apt lists directory
     empty_dir /var/lib/apt/lists
 }
