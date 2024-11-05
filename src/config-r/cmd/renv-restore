@@ -106,7 +106,6 @@ r_lib_paths() {
     fi
 }
 
-
 restore_renv() {
     echo "Restoring original renv version"
     Rscript -e "
@@ -119,23 +118,34 @@ restore_renv() {
 }
 
 install_pak() {
-    local version=$1
-
-    if [ "${version}" = "auto" ]; then
-        if su "${USERNAME}" -c "R -s -e 'packageVersion(\"pak\")'" >/dev/null 2>&1; then
-            echo "pak is already installed. Skip pak installation..."
-            return
-        else
-            version="stable"
-        fi
+    echo "🔍 Installing pak"
+    local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
+    if [ "$renv_config_pak_orig" = "true" ]; then
+        export RENV_CONFIG_PAK_ENABLED=false
     fi
-
-    echo "Installing pak ${version}..."
-    # shellcheck disable=SC2016
-    su "${USERNAME}" -c 'R -q -e "install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/'"${version}"'/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))"'
+    local version="stable"
+    Rscript -e "
+    tryCatch( 
+        {  
+            if (isFALSE(requireNamespace('pak', quietly = TRUE))) {
+                message('🔍 pak not found. Installing pak...')
+                install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/'"${version}"'/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
+            } else {
+                message('✅ pak is already installed.')
+            }
+        },
+        error = function(e) {
+            message('⚠️  Installation failed: ', e)
+        }
+    )"
+    if [ "$renv_config_pak_orig" = "true" ]; then
+        export RENV_CONFIG_PAK_ENABLED=true
+    fi
+    echo "✅ Installation process attempted"
+    echo "---------------------------------------------"
 }
 
-install_bioc() {
+install_pkg() {
     echo "🔍 Installing $1"
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
     if [ "$renv_config_pak_orig" = "true" ]; then
@@ -164,7 +174,7 @@ install_bioc() {
 
 install_pak_bioc() {
     echo "🔍 Installing pak and BiocManager"
-    install_pkg pak
+    install_pak
     install_pkg BiocManager
 }
 
