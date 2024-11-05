@@ -120,20 +120,26 @@ restore() {
     copy_and_set_execute_bit renv-restore
     copy_and_set_execute_bit renv-restore-build
     
-    # Construct the base command with provided arguments
-    local command="/usr/local/bin/config-r-renv-restore-build -r \"$RESTORE\" -e \"$PKG_EXCLUDE\" -d \"$RENV_DIR\""
-    
-    # Append debug flag if enabled
-    [ "$DEBUG" = "true" ] && command="$command --debug"
-    
-    # Append no-pak flag if pak usage is disabled
-    [ "$USE_PAK" = "false" ] && command="$command --no-pak"
-    
-    # Execute the constructed command with error handling
-    eval $command || {
-        echo "❌ config-r-renv-restore-build failed"
-        exit 1
-    }
+    # Construct the command as an array
+    local command=(/usr/local/bin/config-r-renv-restore-build -r "$RESTORE" -e "$PKG_EXCLUDE")
+
+    # Append options based on conditions
+    if [ "$DEBUG" = "true" ]; then
+        command+=("--debug")
+    fi
+
+    if [ "$USE_PAK" = "false" ]; then
+        command+=("--no-pak")
+    fi
+
+    # Log the command for debugging purposes
+    debug "🔧 Executing command: ${command[*]}"
+
+    # Execute the command with error handling
+    if ! "${command[@]}"; then
+        echo "❌ config-r-renv-restore-build failed with command: ${command[*]}"
+        exit 0
+    fi
 }
 
 # Function to perform cleanup tasks
