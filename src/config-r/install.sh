@@ -163,8 +163,8 @@ restore() {
     fi
 
     if [ -n "$RENV_DIR" ]; then
-        command+=("--dir")
-        command+=("$RENV_DI R")
+        command+=("--directory")
+        command+=("$RENV_DIR")
     fi
 
     # Log the command for debugging purposes
