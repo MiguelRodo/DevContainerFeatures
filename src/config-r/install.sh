@@ -5,8 +5,8 @@ set -e
 PATH_POST_CREATE_COMMAND=/usr/local/bin/config-r-post-create-command
 if [ ! -f "$PATH_POST_CREATE_COMMAND" ]; then
     touch "$PATH_POST_CREATE_COMMAND"
+    echo -e '#!/usr/bin/env bash\n' >> "$PATH_POST_CREATE_COMMAND"
 fi
-echo '#!/usr/bin/env bash' >> "$PATH_POST_CREATE_COMMAND"
 chmod 755 "$PATH_POST_CREATE_COMMAND"
 
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
@@ -61,9 +61,9 @@ fi
 
 if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
     copy_and_set_execute_bit bashrc-d
-    echo "/usr/local/bin/config-r-bashrc-d" >> "$PATH_POST_CREATE_COMMAND"
+    echo -e "/usr/local/bin/config-r-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/config-r-bashrc-d}\n" >> "$PATH_POST_CREATE_COMMAND"
     copy_and_set_execute_bit github-pat
-    if ! echo "/usr/local/bin/config-r-github-pat" >> "$PATH_POST_CREATE_COMMAND"; then
+    if ! echo -e "sudo /usr/local/bin/config-r-github-pat || \n    {echo 'Failed to run /usr/local/bin/config-r-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
         echo "❌ Failed to add config-r-github-pat to post-create-command"
     else
         echo "✅ Added config-r-github-pat to post-create-command"
@@ -85,8 +85,6 @@ else
         /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE" --no-pak
     fi
 fi
-
-echo " " >> "$PATH_POST_CREATE_COMMAND" 
 
 empty_dir /var/lib/apt/lists
 rm_dirs /tmp/Rtmp* /tmp/rig
