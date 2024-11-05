@@ -41,6 +41,15 @@ while [[ "$#" -gt 0 ]]; do
                 usage
             fi
             ;;
+        -d|--directory)
+            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+                PROJECT_DIR="$2"
+                shift 2
+            else
+                echo "❌ --directory requires a directory path argument."
+                usage
+            fi
+            ;;
         -p|--pak)
             USE_PAK=true
             shift

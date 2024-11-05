@@ -97,23 +97,18 @@ exit_early_if_needed() {
 }
 
 restore_projects() {
-    # Loop over each top-level subdirectory in 'renv/'
-    for PROJECT_DIR in "$RENV_DIR"/*/; do
-        restore_project
-    done
+    # Loop over each top-level subdirectory in 'renv/', excluding 'self'
+    while IFS= read -r PROJECT_DIR; do
+        restore_project "$PROJECT_DIR"
+    done < <(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d)
 }
 
 restore_project() {
-    debug "PROJECT_DIR: $PROJECT_DIR"
-
-    # Remove trailing slash and extract the project name
-    PROJECT_DIR="${PROJECT_DIR%/}"
-    PROJECT_NAME=$(basename "$PROJECT_DIR")
-    debug "PROJECT_DIR: $PROJECT_DIR"
-    debug "PROJECT_NAME: $PROJECT_NAME"
+    local project_dir="$1"
+    debug "project_dir: $project_dir"
     
     # Construct the command as an array
-    local command=(/usr/local/bin/config-r-renv-restore)
+    local command=(/usr/local/bin/config-r-renv-restore --directory "$project_dir")
 
     # Append options based on conditions
     if [ "$RESTORE" = "true" ]; then
@@ -129,8 +124,7 @@ restore_project() {
     fi
 
     if [ -n "$PKG_EXCLUDE" ]; then
-        command+=("--exclude")
-        command+=("$PKG_EXCLUDE")
+        command+=("--exclude" "$PKG_EXCLUDE")
     fi
 
     # Log the command for debugging purposes
