@@ -22,7 +22,7 @@ debug() {
 
 # Function to create the post-create command path and initialize the command file
 create_path_post_create_command() {
-    PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create
+    PATH_POST_CREATE_COMMAND=/usr/local/bin/config-r-post-create
     initialize_command_file "$PATH_POST_CREATE_COMMAND"
 }
 
