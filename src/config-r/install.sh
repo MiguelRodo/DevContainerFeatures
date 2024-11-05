@@ -2,19 +2,30 @@
 
 set -e
 
-PATH_POST_CREATE_COMMAND=/usr/local/bin/config-r-post-create-command
-if [ ! -f "$PATH_POST_CREATE_COMMAND" ]; then
-    touch "$PATH_POST_CREATE_COMMAND"
-    echo -e '#!/usr/bin/env bash\n' >> "$PATH_POST_CREATE_COMMAND"
-fi
-chmod 755 "$PATH_POST_CREATE_COMMAND"
-
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
 ENSURE_GITHUB_PAT_SET="${ENSUREGITHUBPATSET:-true}"
 RESTORE="${RESTORE:-true}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
+
+create_path_post_create_command() {
+  PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create-command
+  initialize_command_file "$PATH_POST_CREATE_COMMAND"
+}
+
+initialize_command_file() {
+    local file_path="$1"
+    if [ ! -f "$file_path" ]; then
+        printf '#!/usr/bin/env bash\n' > "$file_path"
+    else
+        # Check if shebang exists; add if missing
+        if ! grep -q '^#!/usr/bin/env bash' "$file_path"; then
+            sed -i '1i#!/usr/bin/env bash' "$file_path"
+        fi
+    fi
+    chmod 755 "$file_path"
+}
 
 copy_and_set_execute_bit() {
   if ! cp cmd/"$1" /usr/local/bin/config-r-"$1"; then
@@ -52,39 +63,60 @@ rm_dirs() {
   done
 }
 
-if [ "$SET_R_LIB_PATHS" = "true" ]; then
-    chmod 755 scripts/r-lib.sh
-    if ! bash scripts/r-lib.sh; then
-      echo "Failed to define R library environment variables"
-    fi
-fi
+set_r_libs() {
+  if [ "$SET_R_LIB_PATHS" = "true" ]; then
+      chmod 755 scripts/r-lib.sh
+      if ! bash scripts/r-lib.sh; then
+        echo "Failed to define R library environment variables"
+      fi
+  fi
+}
 
-if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
-    copy_and_set_execute_bit bashrc-d
-    echo -e "/usr/local/bin/config-r-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/config-r-bashrc-d}\n" >> "$PATH_POST_CREATE_COMMAND"
-    copy_and_set_execute_bit github-pat
-    if ! echo -e "sudo /usr/local/bin/config-r-github-pat || \n    {echo 'Failed to run /usr/local/bin/config-r-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
-        echo "❌ Failed to add config-r-github-pat to post-create-command"
-    else
-        echo "✅ Added config-r-github-pat to post-create-command"
-    fi
-fi
+ensure_github_pat_set() {
+  if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
+      copy_and_set_execute_bit bashrc-d
+      echo -e "/usr/local/bin/config-r-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/config-r-bashrc-d}\n" >> "$PATH_POST_CREATE_COMMAND"
+      copy_and_set_execute_bit github-pat
+      if ! echo -e "sudo /usr/local/bin/config-r-github-pat || \n    {echo 'Failed to run /usr/local/bin/config-r-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
+          echo "❌ Failed to add config-r-github-pat to post-create-command"
+      else
+          echo "✅ Added config-r-github-pat to post-create-command"
+      fi
+  fi
+}
 
-copy_and_set_execute_bit renv-restore
-copy_and_set_execute_bit renv-restore-build
-if [ "$DEBUG" = "true" ]; then
-    if [ "$USE_PAK" = "true" ]; then
-        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE" --debug
-    else 
-        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE" --debug --no-pak
-    fi
-else
-    if [ "$USE_PAK" = "true" ]; then
-        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE"
-    else 
-        /usr/local/bin/config-r-renv-restore -r "$RESTORE" -e "$PKG_EXCLUDE" --no-pak
-    fi
-fi
 
-empty_dir /var/lib/apt/lists
-rm_dirs /tmp/Rtmp* /tmp/rig
+
+restore() {
+  copy_and_set_execute_bit renv-restore
+  copy_and_set_execute_bit renv-restore-build
+
+  # Construct the base command
+  command="/usr/local/bin/config-r-renv-restore-build -r \"$RESTORE\" -e \"$PKG_EXCLUDE\""
+
+  # Append options based on conditions
+  [ "$DEBUG" = "true" ] && command="$command --debug"
+  [ "$USE_PAK" = "false" ] && command="$command --no-pak"
+  
+  # Execute the command with error handling
+  eval $command || {
+    echo "❌ config-r-renv-restore-build failed"
+    exit 1
+  }
+}
+
+clean_up() {
+  rm_dirs /tmp/Rtmp* /tmp/rig
+  empty_dir /var/lib/apt/lists
+}
+
+main() {
+  create_path_post_create_command
+  set_r_libs
+  ensure_github_pat_set
+  restore
+  clean_up
+}
+
+main
+
