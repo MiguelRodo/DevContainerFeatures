@@ -120,6 +120,12 @@ ensure_github_pat_set() {
         else
             echo "✅ Added config-r-github-pat to post-create"
         fi
+
+        if ! echo -e 'mkdir -p "$HOME"/.bashrc.d; cp /usr/local/bin/config-r-github-pat "$HOME"/.bashrc.d/' >> "$PATH_POST_CREATE_COMMAND"; then
+            echo "❌ Failed to add config-r-github-pat to post-create"
+        else
+            echo "✅ Added config-r-github-pat to post-create"
+        fi
     fi
 }
 
