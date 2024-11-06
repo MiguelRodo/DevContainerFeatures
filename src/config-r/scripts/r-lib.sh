@@ -28,9 +28,7 @@ workspace_dir="/workspaces"
 # Append the environment variables to Renviron.site
 cat << EOF | tee -a "$RENVSITE"
 # Set R library paths and renv variables
-XDG_CACHE_HOME=${workspace_dir}/.cache
 RENV_PATHS_ROOT=${workspace_dir}/.local/renv
-RENV_PATHS_CACHE=${workspace_dir}/.cache/renv
 R_LIBS=${workspace_dir}/.local/lib/R
 EOF
 
