@@ -117,6 +117,22 @@ ensure_python_pip() {
     install_if_needed "pip3" "python3-pip"
 }
 
+check_and_upgrade_pip() {
+  # Get the current pip3 version
+  current_version=$(pip3 --version | awk '{print $2}')
+  
+  # Define the minimum required version
+  required_version="23.2"
+  
+  # Compare versions
+  if [ "$(printf '%s\n' "$required_version" "$current_version" | sort -V | head -n1)" != "$required_version" ]; then
+    echo "pip3 is up-to-date (version $current_version)."
+  else
+    echo "Upgrading pip3 to version 23.2 or later..."
+    python3 -m pip install --upgrade pip
+  fi
+}
+
 # Function to ensure USER_BIN_DIR is in PATH
 ensure_user_bin_in_path() {
     USER_BIN_DIR="$(get_user_bin_dir)/bin"
@@ -160,6 +176,7 @@ main() {
 
     # Ensure Python3 and pip3 are installed
     ensure_python_pip
+    check_and_upgrade_pip
     echo ""
 
     # Install Hugging Face CLI
