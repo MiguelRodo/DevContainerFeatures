@@ -207,7 +207,7 @@ restore() {
             tryCatch(
                 {
                     if ('transactional' %in% names(formals(renv::restore))) {
-                        renv::restore(exclude = c(\"$EXCLUDE_ARRAY\"), transactional = TRUE)
+                        renv::restore(exclude = c(\"$EXCLUDE_ARRAY\"), transactional = FALSE)
                     } else {
                         renv::restore(exclude = c(\"$EXCLUDE_ARRAY\"))
                     }
@@ -221,7 +221,7 @@ restore() {
             tryCatch(
                 {
                     if ('transactional' %in% names(formals(renv::restore))) {
-                        renv::restore(transactional = TRUE)
+                        renv::restore(transactional = FALSE)
                     } else {
                         renv::restore()
                     }
