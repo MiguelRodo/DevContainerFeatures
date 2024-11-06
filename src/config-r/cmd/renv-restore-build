@@ -103,8 +103,14 @@ exit_early_if_needed() {
     fi
 }
 
+install_renv() {
+    echo "Restoring original renv version"
+    Rscript -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
+}
+
 restore_projects() {
     # Loop over each top-level subdirectory in 'renv/', excluding 'self'
+    install_renv
     while IFS= read -r PROJECT_DIR; do
         restore_project "$PROJECT_DIR"
     done < <(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d)
