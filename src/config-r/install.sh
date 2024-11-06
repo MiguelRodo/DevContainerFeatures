@@ -102,6 +102,19 @@ set_r_libs() {
     fi
 }
 
+update_renv_cache() {
+    if [ "$SET_R_LIB_PATHS" = "true" ]; then
+        # Ensure the R library script is executable
+        chmod 755 scripts/r-lib-update.sh
+
+        # Execute the R library script
+        if ! bash scripts/r-lib-update.sh; then
+            echo "Failed to update R library environment variables"
+        fi
+    fi
+    
+}
+
 # Function to ensure GitHub Personal Access Token (PAT) is set
 ensure_github_pat_set() {
     if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
