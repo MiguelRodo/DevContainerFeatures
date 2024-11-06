@@ -30,12 +30,14 @@ cat << EOF | tee -a "$RENVSITE"
 # Set R library paths and renv variables
 XDG_CACHE_HOME=${workspace_dir}/.cache
 RENV_PATHS_ROOT=${workspace_dir}/.local/renv
+RENV_PATHS_CACHE=${workspace_dir}/.cache/renv
 R_LIBS=${workspace_dir}/.local/lib/R
 EOF
 
 # Create the necessary directories
-mkdir -p ${workspace_dir}/.cache
+mkdir -p ${workspace_dir}/.cache/renv
 mkdir -p ${workspace_dir}/.local/renv
 mkdir -p ${workspace_dir}/.local/lib/R
+
 
 echo "✅ R library paths and renv variables have been set in $RENVSITE"
