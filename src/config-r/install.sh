@@ -11,6 +11,7 @@ PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/config-r/renv"}"
+DEBUG_RENV="${DEBUGRENV:-false}"
 
 
 # Function to log debug messages if enabled
@@ -151,6 +152,10 @@ restore() {
 
     if [ "$DEBUG" = "true" ]; then
         command+=("--debug")
+    fi
+
+    if [ "$DEBUG_RENV" = "true" ]; then
+        command+=("--debug-renv")
     fi
 
     if [ "$USE_PAK" = "true" ]; then

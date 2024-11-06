@@ -39,6 +39,11 @@
             "type": "boolean",
             "description": "Whether to print debug information during package restore.",
             "default": false
+        },
+        "debugRenv": {
+            "type": "boolean",
+            "description": "Whether to print debug information during renv restore.",
+            "default": false
         }
     }
 }

@@ -15,6 +15,7 @@ usage() {
     echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
     echo "  -p, --pak                        Use pak for package management."
     echo "  -D, --debug                      Enable debug mode."
+    echo "  --debug-renv                     Enable debug mode for renv."
     echo "  -h, --help                       Display this help message."
     exit 1
 }
@@ -24,6 +25,7 @@ RESTORE=false
 PKG_EXCLUDE=""
 DEBUG=false
 USE_PAK=false
+DEBUG_RENV=false
 
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -58,6 +60,10 @@ while [[ "$#" -gt 0 ]]; do
             DEBUG=true
             shift
             ;;
+        --debug-renv)
+            DEBUG_RENV=true
+            shift
+            ;;
         -h|--help)
             usage
             ;;
@@ -74,15 +80,23 @@ debug() {
     fi
 }
 
+set_debug_renv() {
+    if [ "$DEBUG_RENV" = true ]; then
+        export RENV_CONFIG_DEBUG=true
+    fi
+}
+
 debug "Running renv-restore"
 debug "PROJECT_DIR: $PROJECT_DIR"
 debug "RESTORE: $RESTORE"
 debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
+debug "DEBUG_RENV: $DEBUG_RENV"
 
 # Activate project
 renv_activate() {
     echo "🔍 Activating project"
+    set_debug_renv
     Rscript -e "
         tryCatch(
             renv::activate(),
@@ -96,6 +110,7 @@ renv_activate() {
 
 r_lib_paths() {
     # echo out R library paths
+    set_debug_renv
     debug "R library paths:"
     R_LIB_PATHS=$(Rscript -e 'cat(.libPaths(), sep="\n")' 2>/dev/null | tr -d '\r')
 
@@ -108,6 +123,7 @@ r_lib_paths() {
 
 restore_renv() {
     echo "Restoring original renv version"
+    set_debug_renv
     Rscript -e "
         tryCatch(
             renv::restore(packages = 'renv', transactional = TRUE),
@@ -119,6 +135,7 @@ restore_renv() {
 
 install_pak() {
     echo "🔍 Installing pak"
+    set_debug_renv
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
     if [ "$renv_config_pak_orig" = "true" ]; then
         export RENV_CONFIG_PAK_ENABLED=false
@@ -147,6 +164,7 @@ install_pak() {
 
 install_pkg() {
     echo "🔍 Installing $1"
+    set_debug_renv
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
     if [ "$renv_config_pak_orig" = "true" ]; then
         export RENV_CONFIG_PAK_ENABLED=false
@@ -174,12 +192,14 @@ install_pkg() {
 
 install_pak_bioc() {
     echo "🔍 Installing pak and BiocManager"
+    set_debug_renv
     install_pak
     install_pkg BiocManager
 }
 
 restore() {
     echo "🔄 Attempting to restore packages"
+    set_debug_renv
     if [ -n "$PKG_EXCLUDE" ]; then
         EXCLUDE_ARRAY=$(echo "$PKG_EXCLUDE" | sed "s/,/\",\"/g")
         debug "EXCLUDE_ARRAY: $EXCLUDE_ARRAY"
@@ -216,6 +236,7 @@ restore() {
 }
 
 run_custom_scripts() {
+    set_debug_renv
     if [ -f "config-r-renv.sh" ]; then 
         echo "🔍 Found shell script"
         if ! ./config-r-renv.sh "$PKG_EXCLUDE"; then

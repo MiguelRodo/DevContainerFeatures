@@ -13,6 +13,7 @@ usage() {
     echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within all projects. Default is true."
     echo "  -p, --pak                        Use pak for package management."
     echo "  -D, --debug                      Enable debug mode."
+    echo "  --debug-renv                     Enable debug mode for renv."
     echo "  -h, --help                       Display this help message."
     echo ""
     echo "Description:"
@@ -28,6 +29,7 @@ PKG_EXCLUDE=""
 DEBUG=false
 USE_PAK=false
 RENV_DIR="/usr/local/share/config-r/renv"
+DEBUG_RENV=false
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -61,6 +63,10 @@ while [[ "$#" -gt 0 ]]; do
             DEBUG=true
             shift
             ;;
+        --debug-renv)
+            DEBUG_RENV=true
+            shift
+            ;;
         -h|--help)
             usage
             ;;
@@ -82,6 +88,7 @@ debug "RESTORE: $RESTORE"
 debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 debug "RENV_DIR: $RENV_DIR"
+debug "DEBUG_RENV: $DEBUG_RENV"
 
 exit_early_if_needed() {
     if [ ! -d "$RENV_DIR" ]; then
