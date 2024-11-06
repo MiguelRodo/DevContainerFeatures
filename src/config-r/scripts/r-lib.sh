@@ -29,6 +29,8 @@ workspace_dir="/workspaces"
 cat << EOF | tee -a "$RENVSITE"
 # Set R library paths and renv variables
 RENV_PATHS_ROOT=${workspace_dir}/.local/renv
+RENV_PATHS_LIBRARY_ROOT=${workspace_dir}/.local/lib/R/library
+RENV_PATHS_CACHE=${workspace_dir}/.cache/renv
 R_LIBS=${workspace_dir}/.local/lib/R
 EOF
 
@@ -36,6 +38,6 @@ EOF
 mkdir -p ${workspace_dir}/.cache/renv
 mkidr -p "${workspace_dir}/.cache/R/pkgcache/pkg" # pak cache directory
 mkdir -p ${workspace_dir}/.local/renv
-mkdir -p ${workspace_dir}/.local/lib/R
+mkdir -p ${workspace_dir}/.local/lib/R/library
 
 echo "✅ R library paths and renv variables have been set in $RENVSITE"
