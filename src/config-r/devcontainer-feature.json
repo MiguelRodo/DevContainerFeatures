@@ -1,7 +1,7 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "2.3.15",
+    "version": "2.3.16",
     "description": "Configure R",
     "postCreateCommand": "/usr/local/bin/config-r-post-create",
     "options": {

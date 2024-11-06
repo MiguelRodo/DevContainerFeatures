@@ -36,8 +36,8 @@ EOF
 
 # Create the necessary directories
 mkdir -p ${workspace_dir}/.cache/renv
+mkidr -p "${workspace_dir}/.cache/R/pkgcache/pkg" # pak cache directory
 mkdir -p ${workspace_dir}/.local/renv
 mkdir -p ${workspace_dir}/.local/lib/R
-
 
 echo "✅ R library paths and renv variables have been set in $RENVSITE"
