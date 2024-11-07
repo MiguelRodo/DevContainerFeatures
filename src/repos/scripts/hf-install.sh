@@ -50,16 +50,50 @@ parse_args() {
     done
 }
 
+check_python3_pip() {
+    check_packages python3
+    check_pip
+}
+
+
+apt_get_update() {
+    if [ "$(find /var/lib/apt/lists/* | wc -l)" = "0" ]; then
+        echo "Running apt-get update..."
+        apt-get update -y
+    fi
+}
 
 # Function to install a package using apt-get if not already installed
-install_if_needed() {
-    local cmd="$1"
-    local pkg="$2"
-    if ! command -v "$cmd" &> /dev/null; then
-        echo "$cmd not found. Installing $pkg..."
-        apt-get install -y "$pkg"
-    else
-        echo "$cmd is already installed."
+check_packages() {
+    if ! dpkg -s "$@" >/dev/null 2>&1; then
+        apt_get_update
+        apt-get -y install --no-install-recommends "$@"
+    fi
+}
+
+check_pip() {
+    if ! python3 -m pip --help >/dev/null 2>&1; then
+        check_packages python3-pip python3-dev
+    fi
+}
+
+install_pip_packages() {
+    local packages="$*"
+    if [ -n "${packages}" ]; then
+        check_pip
+        export PIP_BREAK_SYSTEM_PACKAGES=1
+        # shellcheck disable=SC2086
+        python3 -m pip install --upgrade --no-cache-dir --no-warn-script-location "${packages}"
+    fi
+}
+
+install_pip_packages_user() {
+    local packages="$*"
+    if [ -n "${packages}" ]; then
+        check_pip
+        # shellcheck disable=SC2086
+        python3 -m pip install --upgrade --user --no-cache-dir --no-warn-script-location "${packages}"
+        ensure_user_bin_in_path
     fi
 }
 
@@ -89,11 +123,12 @@ add_to_path() {
 install_hf() {
     if [[ "$HF_SCOPE" == "system" ]]; then
         echo "Installing/Upgrading Hugging Face CLI system-wide..."
-        pip3 install --upgrade --break-system-packages huggingface-hub[cli]
+        export PIP_BREAK_SYSTEM_PACKAGES=1
+        install_pip_packages huggingface-hub[cli]
     else
         echo "Installing/Upgrading Hugging Face CLI for the user..."
-        pip3 install --user --upgrade huggingface-hub[cli]
-        ensure_user_bin_in_path
+        install_pip_packages_user huggingface-hub[cli]
+        
     fi
 }
 
@@ -108,29 +143,6 @@ install_git_lfs() {
     echo "### Git LFS has been successfully installed system-wide and configured for your user! ###"
     echo "To verify the installation, run:"
     echo "  git lfs version"
-}
-
-# Function to ensure Python3 and pip3 are installed
-ensure_python_pip() {
-    echo "Ensuring Python3 and pip3 are installed..."
-    install_if_needed "python3" "python3"
-    install_if_needed "pip3" "python3-pip"
-}
-
-check_and_upgrade_pip() {
-  # Get the current pip3 version
-  current_version=$(pip3 --version | awk '{print $2}')
-  
-  # Define the minimum required version
-  required_version="23.2"
-  
-  # Compare versions
-  if [ "$(printf '%s\n' "$required_version" "$current_version" | sort -V | head -n1)" != "$required_version" ]; then
-    echo "pip3 is up-to-date (version $current_version)."
-  else
-    echo "Upgrading pip3 to version 23.2 or later..."
-    python3 -m pip install --upgrade pip
-  fi
 }
 
 # Function to ensure USER_BIN_DIR is in PATH
@@ -170,14 +182,8 @@ main() {
     echo "Hugging Face CLI will be installed: $HF_SCOPE."
     echo ""
 
-    # Update package list once
-    echo "Updating package list..."
-    apt-get update -y
-
     # Ensure Python3 and pip3 are installed
-    ensure_python_pip
-    check_and_upgrade_pip
-    echo ""
+    check_python3_pip
 
     # Install Hugging Face CLI
     install_hf
