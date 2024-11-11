@@ -22,6 +22,7 @@ Configure R
 | pkgExclude | Comma-separated list of packages to exclude from the renv snapshot restore process. | string | - |
 | usePak | Whether to use `pak` for package installation. | boolean | false |
 | debug | Whether to print debug information during package restore. | boolean | false |
+| debugRenv | Whether to print debug information during renv restore. | boolean | false |
 
 ## Acknowledgments
 
