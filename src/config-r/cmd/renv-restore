@@ -93,6 +93,11 @@ debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 debug "DEBUG_RENV: $DEBUG_RENV"
 
+install_renv() {
+    echo "Restoring original renv version"
+    Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) install.packages('renv', repos = 'https://cloud.r-project.org')"
+}
+
 # Activate project
 renv_activate() {
     echo "🔍 Activating project"
