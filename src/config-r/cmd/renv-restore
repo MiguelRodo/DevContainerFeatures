@@ -267,6 +267,7 @@ main() {
     trap 'cd "$ORIG_DIR"' EXIT
     cd "$PROJECT_DIR"
     r_lib_paths
+    install_renv
     renv_activate
     r_lib_paths
     install_pak_bioc
