@@ -63,8 +63,6 @@ append_command_with_error_handling \
 append_command_with_error_handling \
     "/usr/local/bin/repos-workspace-add" "$PATH_POST_CREATE_COMMAND"
 append_command_with_error_handling \
-    'if [ "$(id -u)" -eq 0 ]; then /usr/local/bin/repos-git-auth --scope system; fi' "$PATH_POST_CREATE_COMMAND"
-append_command_with_error_handling \
     "/usr/local/bin/repos-git-clone" "$PATH_POST_CREATE_COMMAND"
 
 # post-start
