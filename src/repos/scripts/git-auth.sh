@@ -78,7 +78,9 @@ setup_gitconfig() {
 
     # Remove the default credential helper
     if [[ "$auth_gitconfig_scope" == "system" ]]; then
-        sed -i -E 's/helper =.*//' /etc/gitconfig
+        if [ -f "/etc/gitconfig" ]; then
+            sed -i -E 's/helper =.*//' /etc/gitconfig
+        fi
     elif [[ "$auth_gitconfig_scope" == "global" ]]; then
         git config --global --unset credential.helper
     elif [[ "$auth_gitconfig_scope" == "local" ]]; then
