@@ -21,6 +21,19 @@ initialize_command_file() {
 append_command_with_error_handling() {
     local command="$1"
     local file_path="$2"
+    if [ -e "$file_path" ] && [ ! -f "$file_path" ]; then
+        echo "Error: $file_path exists but is not a regular file"
+        exit 2
+    fi
+
+    # Create the file if it doesn't exist
+    if [ ! -f "$file_path" ]; then
+        if ! touch "$file_path"; then
+            echo "Error: Failed to create $file_path"
+            exit 3
+        fi
+    fi
+
     # Check if the command already exists to prevent duplicates
     if ! grep -Fxq "$command || { echo \"Failed to run $command\"; }" "$file_path"; then
         printf '%s || {\n    echo "Failed to run %s"\n}\n\n' "$command" "$command" >> "$file_path"
@@ -57,7 +70,15 @@ initialize_command_file "$PATH_START_CREATE_COMMAND"
 
 # post-create
 append_command_with_error_handling \
-    'if [ "$(id -u)" -eq 0 ]; then /usr/local/bin/repos-git-auth --scope system; fi' "$PATH_POST_CREATE_COMMAND"
+'if [ \"$(id -u)\" -eq 0 ]; then 
+    /usr/local/bin/repos-git-auth --scope system; 
+else 
+    if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then 
+        sudo /usr/local/bin/repos-git-auth --scope system; 
+    else 
+        echo \"Warning: Cannot run as root and sudo is not available. Skipping.\" 
+    fi; 
+fi' "$PATH_POST_CREATE_COMMAND"
 
 # post-start
 append_command_with_error_handling \
