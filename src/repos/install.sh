@@ -30,6 +30,8 @@ append_command_with_error_handling() {
 # install scripts
 # ---------------------
 
+source scripts/lib.sh
+
 source scripts/hf-install.sh
 
 source scripts/git-auth.sh
