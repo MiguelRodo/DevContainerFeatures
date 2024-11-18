@@ -86,27 +86,27 @@ setup_gitconfig() {
     fi
 
     if [[ "$auth_gitconfig_scope" == "system" ]]; then
-        git config --${auth_gitconfig_scope} credential."https://github.com".helper "!f() {
-            sleep 1
-            echo username=\${GITHUB_USER:-TOKEN}
-            echo password=\${GH_TOKEN:-\$GITHUB_TOKEN}
-        }; f"
-        git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper "!f() {
-            sleep 1
-            echo username=\${HF_USER:-\${HUGGINGFACE_USER:-TOKEN}}
-            echo password=\${HF_TOKEN:-\$HUGGINGFACE_TOKEN}
-        }; f"
+        git config --${auth_gitconfig_scope} credential."https://github.com".helper '!f() { \
+        sleep 1; \
+        echo username="${GITHUB_USER:-TOKEN}"; \
+        echo password="${GH_TOKEN:-$GITHUB_TOKEN}"; \
+        }; f'
+        git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper '!f() { \
+        sleep 1; \
+        echo username="${HF_USER:-${HUGGINGFACE_USER:-TOKEN}}"; \
+        echo password="${HF_TOKEN:-$HUGGINGFACE_TOKEN}"; \
+        }; f'
     else
-        git config --${auth_gitconfig_scope} credential."https://github.com".helper "!f() {
-            sleep 1
-            echo username=\${GITHUB_USER:-TOKEN}
-            echo password=\${GH_TOKEN:-\$GITHUB_TOKEN}
-        }; f"
-        git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper "!f() {
-            sleep 1
-            echo username=\${HF_USER:-\${HUGGINGFACE_USER:-TOKEN}}
-            echo password=\${HF_TOKEN:-\$HUGGINGFACE_TOKEN}
-        }; f"
+        git config --${auth_gitconfig_scope} credential."https://github.com".helper '!f() { \
+        sleep 1; \
+        echo username="${GITHUB_USER:-TOKEN}"; \
+        echo password="${GH_TOKEN:-$GITHUB_TOKEN}"; \
+        }; f'
+        git config --${auth_gitconfig_scope} credential."https://huggingface.co".helper '!f() { \
+        sleep 1; \
+        echo username="${HF_USER:-${HUGGINGFACE_USER:-TOKEN}}"; \
+        echo password="${HF_TOKEN:-$HUGGINGFACE_TOKEN}"; \
+        }; f'
     fi
 
     echo "Git authentication with gitconfig has been configured."
