@@ -44,26 +44,18 @@ source scripts/shellrc-config.sh
 # ---------------------
 
 # Paths to the command files
-PATH_UPDATE_CONTENT_COMMAND=/usr/local/bin/repos-update-content
 PATH_POST_CREATE_COMMAND=/usr/local/bin/repos-post-create
 PATH_START_CREATE_COMMAND=/usr/local/bin/repos-post-start
 
 # Initialize the command files
-initialize_command_file "$PATH_UPDATE_CONTENT_COMMAND"
 initialize_command_file "$PATH_POST_CREATE_COMMAND"
 initialize_command_file "$PATH_START_CREATE_COMMAND"
 
 # Add commands
 
-# update-content
-append_command_with_error_handling \
-    "/usr/local/bin/repos-git-auth --scope system" "$PATH_UPDATE_CONTENT_COMMAND"
-
 # post-create
 append_command_with_error_handling \
-    "/usr/local/bin/repos-workspace-add" "$PATH_POST_CREATE_COMMAND"
-append_command_with_error_handling \
-    "/usr/local/bin/repos-git-clone" "$PATH_POST_CREATE_COMMAND"
+    'if [ "$(id -u)" -eq 0 ]; then /usr/local/bin/repos-git-auth --scope system; fi' "$PATH_POST_CREATE_COMMAND"
 
 # post-start
 append_command_with_error_handling \
