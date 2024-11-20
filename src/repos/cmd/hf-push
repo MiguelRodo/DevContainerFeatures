@@ -199,8 +199,8 @@ BATCH_SIZE=0
 BATCH_FILES=()
 COUNTER=1
 
-# Get list of untracked and modified files
-mapfile -t FILES < <(git status --porcelain | awk '/^\?\?|^ M/ {print $2}')
+# Get list of modified and untracked files, handling filenames with spaces
+mapfile -d '' -t FILES < <(git ls-files -m -o --exclude-standard -z)
 
 echo "Total files to process: ${#FILES[@]}"
 
@@ -221,7 +221,7 @@ for file in "${FILES[@]}"; do
     # Check if batch limits are reached
     if { [ "$MAX_BATCH_SIZE" -gt 0 ] && [ "$BATCH_SIZE" -ge "$MAX_BATCH_SIZE" ]; } || { [ "$MAX_FILES_PER_BATCH" -gt 0 ] && [ "$BATCH_COUNTER" -ge "$MAX_FILES_PER_BATCH" ]; }; then
         echo "Batch limits reached. Committing batch of $BATCH_COUNTER files."
-        git add "${BATCH_FILES[@]}"
+        git add -- "${BATCH_FILES[@]}"
         git commit -m "Add/update batch of $BATCH_COUNTER files"
         BATCH_SIZE=0
         BATCH_COUNTER=0
@@ -234,9 +234,10 @@ done
 # Commit any remaining files in the batch
 if [ "${#BATCH_FILES[@]}" -gt 0 ]; then
     echo "Committing remaining batch of ${#BATCH_FILES[@]} files."
-    git add "${BATCH_FILES[@]}"
+    git add -- "${BATCH_FILES[@]}"
     git commit -m "Add/update remaining batch of ${#BATCH_FILES[@]} files"
 fi
+
 
 echo "Total files processed: $TOTAL_FILES"
 echo "Total size of files: $TOTAL_SIZE bytes"
