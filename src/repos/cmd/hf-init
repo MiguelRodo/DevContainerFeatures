@@ -217,8 +217,9 @@ if [ -n "$TRACK_PATTERNS" ]; then
     done
 fi
 
-# Tracking FCS files by default
+# Tracking FCS and workspace files by default
 git lfs track "*.fcs"
+git lfs track "*.wsp"
 
 # Create .gitignore if it doesn't exist
 [ -f .gitignore ] || touch .gitignore
