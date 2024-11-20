@@ -223,6 +223,14 @@ for file in "${FILES[@]}"; do
         echo "Batch limits reached. Committing batch of $BATCH_COUNTER files."
         git add -- "${BATCH_FILES[@]}"
         git commit -m "Add/update batch of $BATCH_COUNTER files"
+        echo "Pushing batch to $CURRENT_BRACH"
+        if git push origin "$CURRENT_BRANCH"; then
+            echo "Push succeeded"
+        else
+            echo "Push failed"
+            exit 1
+       fi
+        echo "Push succeeded"
         BATCH_SIZE=0
         BATCH_COUNTER=0
         BATCH_FILES=()
@@ -236,6 +244,13 @@ if [ "${#BATCH_FILES[@]}" -gt 0 ]; then
     echo "Committing remaining batch of ${#BATCH_FILES[@]} files."
     git add -- "${BATCH_FILES[@]}"
     git commit -m "Add/update remaining batch of ${#BATCH_FILES[@]} files"
+    echo "Pushing batch to $CURRENT_BRACH"
+    if git push origin "$CURRENT_BRANCH"; then
+        echo "Push succeeded"
+    else
+        echo "Push failed"
+        exit 1
+    fi
 fi
 
 
@@ -249,7 +264,7 @@ git add VERSION
 git commit -m "Update VERSION to $VERSION"
 
 # Push changes
-echo "Pushing changes directly to 'main' branch."
+echo "Pushing VERSION to $CURRENT_BRANCH"
 git push origin "$CURRENT_BRANCH"
 
 # Return to the original directory
