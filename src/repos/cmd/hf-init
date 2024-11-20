@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+
+# Script to create a new Hugging Face dataset repository and initialize it locally
+
+# Usage function
+usage() {
+    echo "Usage: $0 -r <repo_name> [-d <directory>] [-u <username>] [--track-dir <dirs>] [--track-type <types>] [--track-pattern <patterns>] [--ignore <dirs>]"
+    echo "  -r, --repo           The name of the new Hugging Face dataset repository to create"
+    echo "  -d, --directory      The directory where to clone the repository (default: current directory)"
+    echo "  -u, --username       Your Hugging Face username (if not provided, uses HF_USERNAME or HUGGINGFACE_USERNAME)"
+    echo "  --track-dir          Comma-separated list of directories to track with git LFS"
+    echo "  --track-type         Comma-separated list of file extensions to track with git LFS (e.g., 'jpg,png,csv')"
+    echo "  --track-pattern      Comma-separated list of patterns to track with git LFS (e.g., '*.h5,model_*.bin')"
+    echo "  --ignore             Comma-separated list of directories to ignore in .gitignore"
+    echo "  -h, --help           Display this help message"
+    echo ""
+    echo "Example:"
+    echo "  $0 -r MyRepo -d ../CustomDirectory -u myusername --track-dir '_output' --track-type 'jpg,png' --track-pattern 'model_*.bin' --ignore '_tmp'"
+    echo ""
+    echo "This script creates a new Hugging Face dataset repository and initializes it in the specified directory."
+    exit 1
+}
+
+# Initialize variables
+REPO_NAME=""
+DIRECTORY=""
+USERNAME=""
+TRACK_DIRS=""
+TRACK_TYPES=""
+TRACK_PATTERNS=""
+IGNORE_DIRS=""
+
+# Parse options
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -r|--repo)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            REPO_NAME="$2"
+            shift 2
+            ;;
+        -d|--directory)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            DIRECTORY="$2"
+            shift 2
+            ;;
+        -u|--username)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            USERNAME="$2"
+            shift 2
+            ;;
+        --track-dir)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            TRACK_DIRS="$2"
+            shift 2
+            ;;
+        --track-type)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            TRACK_TYPES="$2"
+            shift 2
+            ;;
+        --track-pattern)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            TRACK_PATTERNS="$2"
+            shift 2
+            ;;
+        --ignore)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            IGNORE_DIRS="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Error: Unknown option '$1'"
+            usage
+            ;;
+    esac
+done
+
+# Check if REPO_NAME is set
+if [ -z "$REPO_NAME" ]; then
+    echo "Error: --repo is required."
+    usage
+fi
+
+# Ensure USERNAME is set
+if [ -z "$USERNAME" ]; then
+    USERNAME="${HF_USERNAME:-${HUGGINGFACE_USERNAME}}"
+    if [ -z "$USERNAME" ]; then
+        echo "Error: Hugging Face username is required. Provide it via -u option or set HF_USERNAME or HUGGINGFACE_USERNAME environment variable."
+        exit 1
+    fi
+fi
+
+# Set default directory to current directory if not provided
+DIRECTORY="${DIRECTORY:-.}"
+
+# Check that git is installed
+if ! command -v git >/dev/null 2>&1; then
+    echo "Error: git is not installed. Please install git to use this script."
+    exit 1
+fi
+
+# Check that huggingface-cli is installed
+if ! command -v huggingface-cli >/dev/null 2>&1; then
+    echo "Error: huggingface-cli is not installed. Please install it with 'pip install huggingface_hub'."
+    exit 1
+fi
+
+# Check that git-lfs is installed
+if ! command -v git-lfs >/dev/null 2>&1; then
+    echo "Error: git-lfs is not installed. Please install it from https://git-lfs.github.com/."
+    exit 1
+fi
+
+# Ensure HF_PAT is set
+if [ -z "${HF_PAT:-}" ]; then
+    echo "Error: Please set your Hugging Face Personal Access Token (HF_PAT) as an environment variable."
+    echo "You can export it using: export HF_PAT=your_token_here"
+    exit 1
+fi
+
+# Log in to Hugging Face CLI using HF_PAT
+echo "Logging in to Hugging Face CLI..."
+echo "$HF_PAT" | huggingface-cli login --token --quiet
+
+# Create Hugging Face repository
+echo "Creating Hugging Face repository '${USERNAME}/${REPO_NAME}'..."
+huggingface-cli repo create "${USERNAME}/${REPO_NAME}" --type dataset -y || echo "Repository may already exist."
+
+# Define the directory paths
+ORIG_DIR=$(pwd)
+TARGET_DIR="${DIRECTORY}/$REPO_NAME"
+
+# Clone the repository
+echo "Cloning repository into '$TARGET_DIR'..."
+git clone "https://huggingface.co/datasets/${USERNAME}/${REPO_NAME}.git" "$TARGET_DIR"
+
+# Navigate to the target directory
+cd "$TARGET_DIR" || { echo "Failed to navigate to '$TARGET_DIR'"; exit 1; }
+
+# Install git LFS
+git lfs install
+
+# Process TRACK_DIRS
+if [ -n "$TRACK_DIRS" ]; then
+    IFS=',' read -ra TRACK_DIRS_ARRAY <<< "$TRACK_DIRS"
+    for dir in "${TRACK_DIRS_ARRAY[@]}"; do
+        dir="$(echo -e "${dir}" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        if [ -z "$dir" ]; then
+            continue
+        fi
+        echo "Tracking directory '$dir' with git LFS..."
+        git lfs track "$dir/**/*"
+    done
+fi
+
+# Process TRACK_TYPES
+if [ -n "$TRACK_TYPES" ]; then
+    IFS=',' read -ra TRACK_TYPES_ARRAY <<< "$TRACK_TYPES"
+    for type in "${TRACK_TYPES_ARRAY[@]}"; do
+        type="$(echo -e "${type}" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        if [ -z "$type" ]; then
+            continue
+        fi
+        pattern="$type"
+        if [[ "$pattern" == \*.* ]]; then
+            # User provided pattern like '*.csv', use as is
+            pattern="$pattern"
+        elif [[ "$pattern" == .* ]]; then
+            # User provided pattern like '.csv', prepend '*'
+            pattern="*$pattern"
+        elif [[ "$pattern" == \** ]]; then
+            # User provided pattern starting with '*', use as is
+            pattern="$pattern"
+        else
+            # User provided extension without dot, e.g., 'csv'
+            pattern="*.$pattern"
+        fi
+        echo "Tracking file type '$type' with git LFS using pattern '$pattern'..."
+        git lfs track "$pattern"
+    done
+fi
+
+# Process TRACK_PATTERNS
+if [ -n "$TRACK_PATTERNS" ]; then
+    IFS=',' read -ra TRACK_PATTERNS_ARRAY <<< "$TRACK_PATTERNS"
+    for pattern in "${TRACK_PATTERNS_ARRAY[@]}"; do
+        pattern="$(echo -e "${pattern}" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        if [ -z "$pattern" ]; then
+            continue
+        fi
+        echo "Tracking pattern '$pattern' with git LFS..."
+        git lfs track "$pattern"
+    done
+fi
+
+# Create .gitignore if it doesn't exist
+[ -f .gitignore ] || touch .gitignore
+
+# Process IGNORE_DIRS
+if [ -n "$IGNORE_DIRS" ]; then
+    IFS=',' read -ra IGNORE_ARRAY <<< "$IGNORE_DIRS"
+    for dir in "${IGNORE_ARRAY[@]}"; do
+        dir="$(echo -e "${dir}" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        if [ -z "$dir" ]; then
+            continue
+        fi
+        echo "Ignoring directory '$dir' in .gitignore..."
+        grep -qxF "$dir" .gitignore || echo "$dir" >> .gitignore
+        grep -qxF "$dir/**/*" .gitignore || echo "$dir/**/*" >> .gitignore
+    done
+fi
+
+# Add .gitattributes and .gitignore to git
+git add .gitattributes .gitignore
+
+# Commit the changes
+if git status --porcelain | grep -q -e '.gitattributes' -e '.gitignore'; then
+    git commit -m "Set up git LFS tracking and .gitignore"
+else
+    echo ".gitattributes and .gitignore already committed."
+fi
+
+# Push to remote repository
+echo "Pushing to remote repository..."
+git push
+
+# Return to the original directory
+cd "$ORIG_DIR" || { echo "Failed to return to original directory"; exit 1; }
+
+echo "Repository '$REPO_NAME' created and initialized in '$TARGET_DIR'."
+echo "Remember to make the repository PRIVATE on Hugging Face"
+echo "If desired - it is open to anyone by default."

@@ -1,0 +1,259 @@
+#!/usr/bin/env bash
+
+# Enable strict mode
+set -euo pipefail
+IFS=$'\n\t'
+
+# Function to display usage information
+usage() {
+    echo "Usage: $0 [--version <version> | --bump-version <component>] [--max-batch-size <size_in_GB>] [--max-files-per-batch <number>]"
+    echo "  --version             Specify the new version (e.g., 1.0.1). Must be greater than the current version."
+    echo "  --bump-version        Specify which part of the version to bump: major, minor, or patch."
+    echo "  --max-batch-size      Maximum batch size in GB for commits (default is 1 GB)."
+    echo "  --max-files-per-batch Maximum number of files per batch (default is unlimited)."
+    echo "  -h, --help            Display this help message."
+    echo ""
+    echo "Example:"
+    echo "  $0 --bump-version minor"
+    echo "  $0 --version 1.2.0 --max-batch-size 2"
+    echo ""
+    echo "Purpose: This script adds all untracked and modified files to the git repository, commits the changes in batches,"
+    echo "         and pushes the changes directly to the main branch."
+    echo "         Run this script from the root directory of your local git repository."
+    exit 1
+}
+
+# Function to compare two versions
+version_greater() {
+    # Returns 0 if $1 > $2, 1 otherwise
+    if [[ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" != "$1" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Initialize variables
+VERSION=""
+BUMP_COMPONENT=""
+MAX_BATCH_SIZE_GB=1      # Default to 1 GB
+MAX_FILES_PER_BATCH=0    # Default to unlimited
+
+# Parse options
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --version)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires a non-empty argument."
+                usage
+            fi
+            VERSION="$2"
+            shift 2
+            ;;
+        --bump-version)
+            if [[ -z "${2:-}" || "$2" == -* ]]; then
+                echo "Error: Option '$1' requires an argument: major, minor, or patch."
+                usage
+            fi
+            BUMP_COMPONENT="$2"
+            shift 2
+            ;;
+        --max-batch-size)
+            if [[ -z "${2:-}" || "$2" == -* || ! "$2" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+                echo "Error: Option '$1' requires a numeric argument in GB."
+                usage
+            fi
+            MAX_BATCH_SIZE_GB="$2"
+            shift 2
+            ;;
+        --max-files-per-batch)
+            if [[ -z "${2:-}" || "$2" == -* || ! "$2" =~ ^[0-9]+$ ]]; then
+                echo "Error: Option '$1' requires a numeric argument."
+                usage
+            fi
+            MAX_FILES_PER_BATCH="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Error: Unknown option '$1'"
+            usage
+            ;;
+    esac
+done
+
+# Validate version options
+if [[ -n "$VERSION" && -n "$BUMP_COMPONENT" ]]; then
+    echo "Error: Cannot specify both --version and --bump-version."
+    usage
+fi
+
+if [[ -z "$VERSION" && -z "$BUMP_COMPONENT" ]]; then
+    BUMP_COMPONENT="patch"
+fi
+
+# Start logging
+LOG_FILE="script_$(date +%Y%m%d_%H%M%S).log"
+exec > >(tee -i "$LOG_FILE") 2>&1
+
+echo "Script started at $(date)"
+echo "Version: ${VERSION:-"Not specified"}"
+echo "Bump component: ${BUMP_COMPONENT:-"Not specified"}"
+echo "Max batch size: ${MAX_BATCH_SIZE_GB} GB"
+echo "Max files per batch: ${MAX_FILES_PER_BATCH:-"Unlimited"}"
+echo ""
+echo "Logging to '$LOG_FILE'."
+echo ""
+
+# Check if Git is installed
+if ! command -v git &> /dev/null; then
+    echo "Error: Git is not installed. Please install Git and try again."
+    exit 1
+fi
+
+# Store the original directory
+ORIG_DIR=$(pwd)
+
+# Ensure we're in a git repository
+if ! git rev-parse --is-inside-work-tree &> /dev/null; then
+    echo "Error: This script must be run inside a git repository."
+    exit 1
+fi
+
+# Check the current branch
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+    echo "Error: You are not on the 'main' branch. Please switch to 'main' before running this script."
+    exit 1
+fi
+
+# Handle versioning
+# Read or create the VERSION file
+if [ -f VERSION ]; then
+    CURRENT_VERSION=$(cat VERSION)
+    echo "Current version: $CURRENT_VERSION"
+else
+    CURRENT_VERSION="0.0.1"
+    echo "VERSION file not found. Creating with default version $CURRENT_VERSION."
+    echo "$CURRENT_VERSION" > VERSION
+    git add VERSION
+    git commit -m "Add VERSION file with default version $CURRENT_VERSION"
+fi
+
+# Function to validate semantic versioning
+validate_version() {
+    if [[ ! "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: Version '$1' does not follow semantic versioning (e.g., 1.0.0)."
+        exit 1
+    fi
+}
+
+# Determine the new version
+if [[ -n "$VERSION" ]]; then
+    # Validate version format
+    validate_version "$VERSION"
+    if version_greater "$VERSION" "$CURRENT_VERSION"; then
+        echo "New version $VERSION is greater than current version $CURRENT_VERSION."
+    else
+        echo "Error: New version $VERSION is not greater than current version $CURRENT_VERSION."
+        exit 1
+    fi
+elif [[ -n "$BUMP_COMPONENT" ]]; then
+    # Bump the version accordingly
+    IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+    case "$BUMP_COMPONENT" in
+        major)
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+        minor)
+            minor=$((minor + 1))
+            patch=0
+            ;;
+        patch)
+            patch=$((patch + 1))
+            ;;
+        *)
+            echo "Error: Invalid bump component '$BUMP_COMPONENT'. Must be 'major', 'minor', or 'patch'."
+            exit 1
+            ;;
+    esac
+    VERSION="$major.$minor.$patch"
+    echo "Version bumped to $VERSION."
+else
+    echo "Error: No version specified."
+    exit 1
+fi
+
+# Compute MAX_BATCH_SIZE in bytes
+MAX_BATCH_SIZE=$(awk "BEGIN {printf \"%.0f\", $MAX_BATCH_SIZE_GB * 1024 * 1024 * 1024}")
+
+# Initialize counters and batch array
+TOTAL_FILES=0
+TOTAL_SIZE=0
+BATCH_COUNTER=0
+BATCH_SIZE=0
+BATCH_FILES=()
+COUNTER=1
+
+# Get list of untracked and modified files
+mapfile -t FILES < <(git status --porcelain | awk '/^\?\?|^ M/ {print $2}')
+
+echo "Total files to process: ${#FILES[@]}"
+
+# Loop through each file
+for file in "${FILES[@]}"; do
+    echo "Processing file $COUNTER: $file"
+    if [ -f "$file" ]; then
+        FILE_SIZE=$(stat -c%s "$file")
+        BATCH_SIZE=$((BATCH_SIZE + FILE_SIZE))
+        BATCH_FILES+=("$file")
+        BATCH_COUNTER=$((BATCH_COUNTER + 1))
+        TOTAL_SIZE=$((TOTAL_SIZE + FILE_SIZE))
+        TOTAL_FILES=$((TOTAL_FILES + 1))
+    else
+        echo "Warning: '$file' is not a regular file. Skipping."
+    fi
+
+    # Check if batch limits are reached
+    if { [ "$MAX_BATCH_SIZE" -gt 0 ] && [ "$BATCH_SIZE" -ge "$MAX_BATCH_SIZE" ]; } || { [ "$MAX_FILES_PER_BATCH" -gt 0 ] && [ "$BATCH_COUNTER" -ge "$MAX_FILES_PER_BATCH" ]; }; then
+        echo "Batch limits reached. Committing batch of $BATCH_COUNTER files."
+        git add "${BATCH_FILES[@]}"
+        git commit -m "Add/update batch of $BATCH_COUNTER files"
+        BATCH_SIZE=0
+        BATCH_COUNTER=0
+        BATCH_FILES=()
+    fi
+
+    COUNTER=$((COUNTER + 1))
+done
+
+# Commit any remaining files in the batch
+if [ "${#BATCH_FILES[@]}" -gt 0 ]; then
+    echo "Committing remaining batch of ${#BATCH_FILES[@]} files."
+    git add "${BATCH_FILES[@]}"
+    git commit -m "Add/update remaining batch of ${#BATCH_FILES[@]} files"
+fi
+
+echo "Total files processed: $TOTAL_FILES"
+echo "Total size of files: $TOTAL_SIZE bytes"
+
+# Update the VERSION file
+echo "Updating VERSION file to '$VERSION'."
+echo "$VERSION" > VERSION
+git add VERSION
+git commit -m "Update VERSION to $VERSION"
+
+# Push changes
+echo "Pushing changes directly to 'main' branch."
+git push origin "$CURRENT_BRANCH"
+
+# Return to the original directory
+cd "$ORIG_DIR" || { echo "Failed to return to original directory"; exit 1; }
+
+echo ""
+echo "Script completed at $(date)."
+echo "Log file saved at '$ORIG_DIR/$LOG_FILE'."

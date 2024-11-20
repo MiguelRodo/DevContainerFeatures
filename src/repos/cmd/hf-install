@@ -186,7 +186,7 @@ main() {
 
     # Install Hugging Face CLI
     install_hf
-    echo ""
+    echo ""R
 
     # Install Git LFS
     install_git_lfs

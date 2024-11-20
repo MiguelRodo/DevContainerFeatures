@@ -62,6 +62,8 @@ append_command_with_error_handling() {
 source scripts/lib.sh
 
 copy_and_set_execute_bit hf-install
+copy_and_set_execute_bit hf-init
+copy_and_set_execute_bit hf-push
 
 copy_and_set_execute_bit git-auth
 
