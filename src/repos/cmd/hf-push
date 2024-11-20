@@ -244,7 +244,7 @@ if [ "${#BATCH_FILES[@]}" -gt 0 ]; then
     echo "Committing remaining batch of ${#BATCH_FILES[@]} files."
     git add -- "${BATCH_FILES[@]}"
     git commit -m "Add/update remaining batch of ${#BATCH_FILES[@]} files"
-    echo "Pushing batch to $CURRENT_BRACH"
+    echo "Pushing batch to $CURRENT_BRANCH"
     if git push origin "$CURRENT_BRANCH"; then
         echo "Push succeeded"
     else
