@@ -1,7 +1,7 @@
 {
     "name": "Add commands to work with repos",
     "id": "repos",
-    "version": "1.6.2",
+    "version": "1.6.3",
     "description": "Add commands to work with multiple repos",
     "postCreateCommand": "/usr/local/bin/repos-post-create",
     "postStartCommand": "/usr/local/bin/repos-post-start",

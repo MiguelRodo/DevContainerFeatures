@@ -223,7 +223,7 @@ for file in "${FILES[@]}"; do
         echo "Batch limits reached. Committing batch of $BATCH_COUNTER files."
         git add -- "${BATCH_FILES[@]}"
         git commit -m "Add/update batch of $BATCH_COUNTER files"
-        echo "Pushing batch to $CURRENT_BRACH"
+        echo "Pushing batch to $CURRENT_BRANCH"
         if git push origin "$CURRENT_BRANCH"; then
             echo "Push succeeded"
         else
