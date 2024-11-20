@@ -1,4 +1,3 @@
-cat > /usr/local/bin/repos-git-clone << 'EOF'
 #!/usr/bin/env bash
 set -e
 
@@ -162,10 +161,3 @@ clone_repos() {
 }
 
 clone_repos
-
-EOF
-
-# Make the script executable
-chmod +x /usr/local/bin/repos-git-clone
-
-echo "Script /usr/local/bin/repos-git-clone has been created and made executable."

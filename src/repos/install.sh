@@ -17,6 +17,22 @@ initialize_command_file() {
     chmod 755 "$file_path"
 }
 
+# Function to copy a script and set its execute permissions
+copy_and_set_execute_bit() {
+    local script_name="$1"
+
+    # Copy the script to /usr/local/bin with a prefixed name
+    if ! cp "cmd/$script_name" "/usr/local/bin/repos-$script_name"; then
+        echo "Failed to copy cmd/$script_name"
+    fi
+
+    # Set execute permissions on the copied script
+    if ! chmod 755 "/usr/local/bin/repos-$script_name"; then
+        echo "Failed to set execute bit for /usr/local/bin/repos-$script_name"
+    fi
+}
+
+
 # Function to append a command with error handling to a specified file
 append_command_with_error_handling() {
     local command="$1"
@@ -45,13 +61,13 @@ append_command_with_error_handling() {
 
 source scripts/lib.sh
 
-source scripts/hf-install.sh
+copy_and_set_execute_bit hf-install
 
-source scripts/git-auth.sh
+copy_and_set_execute_bit git-auth
 
-source scripts/git-clone.sh
+copy_and_set_execute_bit git-clone
 
-source scripts/workspace-add.sh
+copy_and_set_execute_bit workspace-add
 
 source scripts/shellrc-config.sh
 

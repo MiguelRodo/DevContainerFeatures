@@ -1,4 +1,3 @@
-cat > /usr/local/bin/repos-git-auth << 'EOF'
 #!/usr/bin/env bash
 
 set -e
@@ -116,10 +115,3 @@ setup_gitconfig() {
 
 # Authenticate using gitconfig
 setup_gitconfig "$AUTH_GITCONFIG_SCOPE"
-
-EOF
-
-# Make the script executable
-chmod +x /usr/local/bin/repos-git-auth
-
-echo "Script /usr/local/bin/repos-git-auth has been created and made executable."

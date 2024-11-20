@@ -1,4 +1,3 @@
-cat > /usr/local/bin/repos-hf-install << 'EOF'
 #!/usr/bin/env bash
 set -e
 
@@ -198,10 +197,3 @@ main() {
 
 # Execute the main function with all script arguments
 main "$@"
-
-EOF
-
-# Make the installation script executable
-chmod +x /usr/local/bin/repos-hf-install
-
-echo "Script /usr/local/bin/repos-hf-install has been created and made executable."
