@@ -26,8 +26,11 @@ apt-get clean
 rm -rf /var/lib/apt/lists/*
 
 # Install Node.js (LTS) and npm
+apt-get remove -y libnode-dev nodejs
+apt-get autoremove -y
 curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
 apt-get install -y nodejs
+npm install -g @mermaid-js/mermaid-cli
 
 # Install Mermaid CLI globally
 npm install -g @mermaid-js/mermaid-cli
