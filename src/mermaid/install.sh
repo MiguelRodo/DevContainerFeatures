@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 set -e
 
+# Set non-interactive frontend to avoid debconf prompts
+export DEBIAN_FRONTEND=noninteractive
+
+# Variables
 USERNAME="mermaiduser"
 CONFIG_DIR="/usr/local/share/mermaid-config"
 PUPPETEER_CONFIG="$CONFIG_DIR/puppeteer-config.json"
 WRAPPER_SCRIPT="/usr/local/bin/mermaid-mmdc"
 
+# Function to detect Ubuntu codename
+get_ubuntu_codename() {
+    if command -v lsb_release &>/dev/null; then
+        lsb_release -sc
+    elif [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo "$VERSION_CODENAME"
+    else
+        echo "unknown"
+    fi
+}
+
+# Ensure the script is run as root
 if [ "$EUID" -ne 0 ]; then
     echo "Error: install.sh must be run as root."
     exit 1
@@ -16,24 +33,55 @@ if ! id "$USERNAME" &>/dev/null; then
     useradd --system --shell /bin/bash --no-create-home "$USERNAME"
 fi
 
-# Update packages and install dependencies
+# Update package lists and install dependencies
 apt-get update -y
 apt-get install -y curl gnupg ca-certificates build-essential libssl-dev \
     libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 \
     libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
     fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 libasound2
+
+# Clean up APT cache
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 
-# Install Node.js (LTS) and npm
-apt-get remove -y libnode-dev nodejs
+# Remove conflicting Node.js packages
+apt-get remove -y libnode-dev nodejs npm
 apt-get autoremove -y
-curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+
+# Detect Ubuntu codename
+UBUNTU_CODENAME=$(get_ubuntu_codename)
+if [ "$UBUNTU_CODENAME" = "unknown" ]; then
+    echo "Error: Unable to detect Ubuntu codename."
+    exit 1
+fi
+
+# Add NodeSource GPG key
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg > /dev/null
+
+# Add NodeSource repository for Node.js LTS (ensure correct codename)
+echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_lts $UBUNTU_CODENAME main" | tee /etc/apt/sources.list.d/nodesource.list
+echo "deb-src [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_lts $UBUNTU_CODENAME main" | tee -a /etc/apt/sources.list.d/nodesource.list
+
+# Update package lists to include NodeSource repository
+apt-get update -y
+
+# Install Node.js (LTS) and npm
 apt-get install -y nodejs
-npm install -g @mermaid-js/mermaid-cli
+
+# Verify Node.js installation
+if ! command -v node &>/dev/null; then
+    echo "Error: Node.js installation failed."
+    exit 1
+fi
 
 # Install Mermaid CLI globally
 npm install -g @mermaid-js/mermaid-cli
+
+# Verify Mermaid CLI installation
+if ! command -v mmdc &>/dev/null; then
+    echo "Error: Mermaid CLI installation failed."
+    exit 1
+fi
 
 # Create shared configuration directory and Puppeteer config
 mkdir -p "$CONFIG_DIR"
@@ -75,6 +123,7 @@ Otherwise, it fails.
 USAGE
 }
 
+# Parse options
 while [ $# -gt 0 ]; do
     case "$1" in
         --username=*)
@@ -94,26 +143,26 @@ while [ $# -gt 0 ]; do
             break
             ;;
         -*)
-            # Encountered an option that's not recognized by this script.
-            # Stop parsing here, remaining args go to mmdc.
+            # Unrecognized option, stop parsing
             break
             ;;
         *)
-            # Positional argument (likely an mmdc arg), stop parsing
+            # Positional argument, stop parsing
             break
             ;;
     esac
 done
 
-# After parsing known options, $@ holds arguments intended for mmdc
+# Ensure mmdc is installed
 if ! command -v mmdc &>/dev/null; then
     echo "Error: 'mmdc' command not found."
     exit 1
 fi
 
-# Construct the command
+# Construct the mmdc command with the provided config and arguments
 CMD="mmdc -c \"$CONFIG_FILE\" $*"
 
+# Execute the command as the specified user
 if [ "$EUID" -eq 0 ]; then
     # Running as root
     exec su -s /bin/bash "$USERNAME" -c "$CMD"
@@ -128,6 +177,7 @@ else
 fi
 EOF
 
+# Make the wrapper script executable
 chmod +x "$WRAPPER_SCRIPT"
 
 echo "Mermaid environment setup complete."
