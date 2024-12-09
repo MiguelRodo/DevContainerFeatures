@@ -63,16 +63,16 @@ if ! command -v mmdc &>/dev/null; then
 fi
 
 # Construct the mmdc command with the provided config and arguments
-CMD="mmdc -c \"$CONFIG_FILE\" $*"
+CMD="mmdc -p \"$CONFIG_FILE\" $*"
 
 # Execute the command as the specified user
 if [ "$EUID" -eq 0 ]; then
     # Running as root
-    exec su -s /bin/bash "$USERNAME" -c "$CMD"
+   su -s /bin/bash "$USERNAME" -c "$CMD"
 else
     # Not running as root, check for sudo
     if command -v sudo &>/dev/null; then
-        exec sudo -u "$USERNAME" bash -c "$CMD"
+        sudo -u "$USERNAME" bash -c "$CMD"
     else
         echo "Error: Not root and no 'sudo' available to switch user."
         exit 1
