@@ -65,7 +65,18 @@ install_dependencies() {
     apt-get install -y curl gnupg ca-certificates build-essential libssl-dev \
         libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 \
         libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
-        fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 libasound2 sudo
+        fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 sudo
+
+    if apt-cache show libasound2 &>/dev/null; then
+        apt-get install -y libasound2
+    elif apt-cache show libasound2t64 &>/dev/null; then
+        apt-get install -y libasound2t64
+    elif apt-cache show liboss4-salsa-asound2 &>/dev/null; then
+        apt-get install -y liboss4-salsa-asound2
+    else
+        echo "[ERROR] No compatible libasound2 package found."
+        exit 1
+    fi
 
     # Verify installations
     for cmd in curl gnupg node npm npx sudo; do
