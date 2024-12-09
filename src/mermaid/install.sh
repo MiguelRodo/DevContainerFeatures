@@ -149,7 +149,7 @@ verify_nodejs_installation() {
 
 setup_mermaid() {
     install_mermaid_cli
-    create_puppeteer_config
+    setup_puppeteer
     copy_and_set_execute_bit mmdc
 }
 
@@ -179,6 +179,11 @@ install_mermaid_cli() {
     else
         echo "Warning: Could not find 'mmdc' in $NPM_GLOBAL_BIN. Make sure npm bin path is correct."
     fi
+}
+
+setup_puppeteer() {
+    su - mermaiduser -c "npx puppeteer browsers install chrome-headless-shell"
+    create_puppeteer_config
 }
 
 create_puppeteer_config() {
