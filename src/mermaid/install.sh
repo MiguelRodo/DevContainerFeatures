@@ -41,10 +41,19 @@ create_non_root_user() {
     # Create the non-root user without a home directory, if it doesn't exist
     if ! id "$USERNAME" &>/dev/null; then
         echo "Creating non-root user: $USERNAME"
-        useradd --system --shell /bin/bash --no-create-home "$USERNAME"
+        useradd --system --shell /bin/bash "$USERNAME"
         echo "User '$USERNAME' created successfully."
     else
         echo "User '$USERNAME' already exists. Skipping user creation."
+    fi
+    if [ ! -d "/home/$USERNAME" ]; then
+        echo "Creating home directory for user '$USERNAME'..."
+        mkdir -p "/home/$USERNAME"
+        echo "Home directory created."
+    fi
+    if ! chown "$USERNAME":"$USERNAME" "/home/$USERNAME"; then
+        echo "Failed to set ownership for home directory."
+        exit 1
     fi
 }
 
