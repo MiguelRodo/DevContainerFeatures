@@ -8,7 +8,7 @@ export DEBIAN_FRONTEND=noninteractive
 USERNAME="mermaiduser"
 CONFIG_DIR="/usr/local/share/mermaid-config"
 PUPPETEER_CONFIG="$CONFIG_DIR/puppeteer-config.json"
-WRAPPER_SCRIPT="/usr/local/bin/mermaid-mmdc"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 message_starting() {
     echo "=============================================="
@@ -68,7 +68,6 @@ install_dependencies() {
 install_nodejs() {
     remove_nodejs_conflicts
     detect_ubuntu_codename
-    add_nodejs_source
     install_nodejs_actual
     verify_nodejs_installation
 }
@@ -144,18 +143,28 @@ setup_mermaid() {
 }
 
 install_mermaid_cli() {
-    # Install Mermaid CLI globally
     echo "Installing Mermaid CLI globally using npm..."
     npm install -g @mermaid-js/mermaid-cli
     echo "Mermaid CLI installed successfully."
 
-    # Verify Mermaid CLI installation
     if command -v mmdc &>/dev/null; then
         MMDCLI_VERSION=$(mmdc -V)
         echo "Mermaid CLI installed: $MMDCLI_VERSION"
     else
         echo "Error: Mermaid CLI installation failed."
         exit 1
+    fi
+    
+    # If Node.js was installed via NVM, 'mmdc' might not be in the global PATH outside nvm environment.
+    # To ensure 'mmdc' is accessible system-wide, create a symlink to /usr/local/bin.
+    echo "Ensuring 'mmdc' is accessible system-wide..."
+    NPM_GLOBAL_BIN="$(npm bin -g)"
+    if [ -x "$NPM_GLOBAL_BIN/mmdc" ]; then
+        # Create or update the symlink
+        ln -sf "$NPM_GLOBAL_BIN/mmdc" /usr/local/bin/mmdc
+        echo "Symlinked 'mmdc' to /usr/local/bin/mmdc."
+    else
+        echo "Warning: Could not find 'mmdc' in $NPM_GLOBAL_BIN. Make sure npm bin path is correct."
     fi
 }
 
@@ -182,8 +191,9 @@ copy_and_set_execute_bit() {
     local script_name="$1"
 
     # Copy the script to /usr/local/bin with a prefixed name
-    if ! cp "cmd/$script_name" "/usr/local/bin/mermaid-$script_name"; then
+    if ! cp "$SCRIPT_DIR/cmd/$script_name" "/usr/local/bin/mermaid-$script_name"; then
         echo "Failed to copy cmd/$script_name"
+        exit 1
     fi
 
     # Set execute permissions on the copied script
