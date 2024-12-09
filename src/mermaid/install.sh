@@ -67,9 +67,7 @@ install_dependencies() {
         libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
         fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 sudo
 
-    if apt-cache show libasound2 &>/dev/null; then
-        apt-get install -y libasound2
-    elif apt-cache show libasound2t64 &>/dev/null; then
+    if apt-cache show libasound2t64 &>/dev/null; then
         apt-get install -y libasound2t64
     elif apt-cache show liboss4-salsa-asound2 &>/dev/null; then
         apt-get install -y liboss4-salsa-asound2
