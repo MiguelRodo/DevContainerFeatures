@@ -73,10 +73,14 @@ install_nodejs() {
     verify_nodejs_installation
 }
 
+
 remove_nodejs_conflicts() {
     # Remove conflicting Node.js packages
     echo "Removing conflicting Node.js packages if any..."
-    apt-get purge -y libnode-dev nodejs npm || echo "No conflicting Node.js packages found."
+    pkg_array=(libnode-dev nodejs npm)
+    for pkg in "${pkg_array[@]}"; do
+        apt-get purge -y "$pkg" || echo "Conflict package $pkg not found."
+    done
     apt-get autoremove -y
     echo "Conflicting packages removed."
 }

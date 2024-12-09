@@ -1,7 +1,7 @@
 {
   "name": "Mermaid",
   "id": "mermaid",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "This DevContainer feature installs and configures the Mermaid CLI to generate diagrams from `.mmd` files. It sets up a non-root user and a Puppeteer configuration that allows rendering Mermaid diagrams in headless mode.",
   "options": {}
 }
