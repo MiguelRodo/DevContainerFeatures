@@ -4,11 +4,15 @@ set -e
 # Set non-interactive frontend to avoid debconf prompts
 export DEBIAN_FRONTEND=noninteractive
 
-# Variables
-USERNAME="mermaiduser"
-CONFIG_DIR="/usr/local/share/mermaid-config"
+# Configurable variables (can be overridden by feature options in devcontainer-feature.json)
+USERNAME="${USERNAME:-"mermaiduser"}"
+CONFIG_DIR="${PUPPETEERCONFIGDIR:-"/usr/local/share/mermaid-config"}"
 PUPPETEER_CONFIG="$CONFIG_DIR/puppeteer-config.json"
-WRAPPER_SCRIPT="/usr/local/bin/mermaid-mmdc"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WRAPPER_SCRIPT="$SCRIPT_DIR/cmd/mmdc"
+INSTALL_DIR="/usr/local/bin"
+INSTALL_PATH="$INSTALL_DIR/mermaid-mmdc"
+
 
 message_starting() {
     echo "=============================================="
@@ -16,7 +20,6 @@ message_starting() {
     echo "=============================================="
 }
 
-# Function to detect Ubuntu codename
 get_ubuntu_codename() {
     if command -v lsb_release &>/dev/null; then
         lsb_release -sc
@@ -29,215 +32,181 @@ get_ubuntu_codename() {
 }
 
 check_root() {
-    # Ensure the script is run as root
     if [ "$EUID" -ne 0 ]; then
         echo "Error: install.sh must be run as root."
         exit 1
     fi
-    echo "Verified script is running as root."
+    echo "[INFO] Verified script is running as root."
 }
 
 create_non_root_user() {
-    # Create the non-root user without a home directory, if it doesn't exist
     if ! id "$USERNAME" &>/dev/null; then
-        echo "Creating non-root user: $USERNAME"
+        echo "[INFO] Creating non-root user: $USERNAME"
         useradd --system --shell /bin/bash "$USERNAME"
-        echo "User '$USERNAME' created successfully."
     else
-        echo "User '$USERNAME' already exists. Skipping user creation."
+        echo "[INFO] User '$USERNAME' already exists. Skipping user creation."
     fi
+
     if [ ! -d "/home/$USERNAME" ]; then
-        echo "Creating home directory for user '$USERNAME'..."
+        echo "[INFO] Creating home directory for user '$USERNAME'..."
         mkdir -p "/home/$USERNAME"
-        echo "Home directory created."
     fi
-    if ! chown "$USERNAME":"$USERNAME" "/home/$USERNAME"; then
-        echo "Failed to set ownership for home directory."
-        exit 1
-    fi
-    if ! usermod -d /home/mermaiduser mermaiduser; then
-        echo "Failed to set home directory for user."
-        exit 1
-    fi
+
+    chown "$USERNAME":"$USERNAME" "/home/$USERNAME"
+    usermod -d "/home/$USERNAME" "$USERNAME"
+    echo "[INFO] User '$USERNAME' setup complete."
 }
 
 install_dependencies() {
-    # Update package lists and install dependencies
-    echo "Updating package lists..."
+    echo "[INFO] Updating package lists..."
     apt-get update -y
-    echo "Installing necessary dependencies..."
+
+    echo "[INFO] Installing necessary dependencies..."
     apt-get install -y curl gnupg ca-certificates build-essential libssl-dev \
         libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 \
         libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
-        fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 libasound2
-    echo "Dependencies installed successfully."
-    
-    # Clean up APT cache
-    echo "Cleaning up APT cache to reduce image size..."
+        fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 libasound2 sudo
+
+    # Verify installations
+    for cmd in curl gnupg node npm npx sudo; do
+        if ! command -v $cmd &>/dev/null; then
+            echo "[WARNING] Command '$cmd' not found after installation. Check dependency installation."
+        fi
+    done
+
+    echo "[INFO] Cleaning up APT cache..."
     apt-get clean
     rm -rf /var/lib/apt/lists/*
-    echo "APT cache cleaned."
+    echo "[INFO] Dependencies installation complete."
 }
 
 install_nodejs() {
+    # Before installing Node.js, remove any conflicts
     remove_nodejs_conflicts
     detect_ubuntu_codename
     install_nodejs_actual
     verify_nodejs_installation
 }
 
-
 remove_nodejs_conflicts() {
-    # Remove conflicting Node.js packages
-    echo "Removing conflicting Node.js packages if any..."
+    echo "[INFO] Removing conflicting Node.js packages if any..."
     pkg_array=(libnode-dev nodejs npm)
     for pkg in "${pkg_array[@]}"; do
-        apt-get purge -y "$pkg" || echo "Conflict package $pkg not found."
+        if dpkg -l | grep -q $pkg; then
+            apt-get purge -y "$pkg"
+        fi
     done
     apt-get autoremove -y
-    echo "Conflicting packages removed."
+    echo "[INFO] Conflicting packages removed."
 }
 
 detect_ubuntu_codename() {
-    # Detect Ubuntu codename
     UBUNTU_CODENAME=$(get_ubuntu_codename)
     if [ "$UBUNTU_CODENAME" = "unknown" ]; then
-        echo "Error: Unable to detect Ubuntu codename."
+        echo "[ERROR] Unable to detect Ubuntu codename."
         exit 1
     fi
-    echo "Detected Ubuntu codename: $UBUNTU_CODENAME"
+    echo "[INFO] Detected Ubuntu codename: $UBUNTU_CODENAME"
 }
 
 install_nodejs_actual() {
-    # Attempt Node.js LTS installation via NodeSource using setup_18.x
-    echo "Attempting Node.js 18.x LTS installation via NodeSource..."
+    echo "[INFO] Attempting Node.js 18.x LTS installation via NodeSource..."
     if curl -fsSL https://deb.nodesource.com/setup_18.x | bash -; then
-        echo "Installing Node.js 18.x from NodeSource..."
+        echo "[INFO] Installing Node.js 18.x from NodeSource..."
         apt-get install -y nodejs
     else
-        echo "NodeSource installation failed. Falling back to nvm..."
+        echo "[WARNING] NodeSource installation failed. Falling back to nvm..."
+        # If NodeSource fails, use nvm
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
         export NVM_DIR="$HOME/.nvm"
-        # Load nvm
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-        # Install and use latest LTS
+        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
         nvm install --lts
         nvm use --lts
-        # Ensure npm global bin is accessible
         export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
     fi
 }
 
 verify_nodejs_installation() {
-    # Verify Node.js installation
-    if command -v node &>/dev/null; then
-        NODE_VERSION=$(node -v)
-        echo "Node.js installed: $NODE_VERSION"
-    else
-        echo "Error: Node.js installation failed."
+    if ! command -v node &>/dev/null; then
+        echo "[ERROR] Node.js installation failed."
         exit 1
     fi
+    echo "[INFO] Node.js installed: $(node -v)"
 
-    if command -v npm &>/dev/null; then
-        NPM_VERSION=$(npm -v)
-        echo "npm installed: $NPM_VERSION"
-    else
-        echo "Error: npm installation failed."
+    if ! command -v npm &>/dev/null; then
+        echo "[ERROR] npm installation failed."
         exit 1
     fi
+    echo "[INFO] npm installed: $(npm -v)"
 }
 
 setup_mermaid() {
-    install_mermaid_cli
+    # Check if mmdc is already installed
+    if command -v mmdc &>/dev/null; then
+        echo "[INFO] Mermaid CLI (mmdc) already installed. Skipping re-installation."
+    else
+        install_mermaid_cli
+    fi
     setup_puppeteer
-    copy_and_set_execute_bit mmdc
+    ensure_wrapper_script
 }
 
 install_mermaid_cli() {
-    # Install Mermaid CLI globally
-    echo "Installing Mermaid CLI globally using npm..."
+    echo "[INFO] Installing Mermaid CLI globally using npm..."
     npm install -g @mermaid-js/mermaid-cli
-    echo "Mermaid CLI installed successfully."
+    echo "[INFO] Mermaid CLI installed: $(mmdc -V)"
 
-    # Verify Mermaid CLI installation
-    if command -v mmdc &>/dev/null; then
-        MMDCLI_VERSION=$(mmdc -V)
-        echo "Mermaid CLI installed: $MMDCLI_VERSION"
-    else
-        echo "Error: Mermaid CLI installation failed."
-        exit 1
-    fi
-
-    # If installed via nvm, ensure mmdc is accessible system-wide
-    # Create a symlink from npm global bin to /usr/local/bin
-    echo "Ensuring 'mmdc' is accessible system-wide..."
-    NPM_GLOBAL_BIN="$(npm config get prefix)/bin"
-    echo "Global npm bin directory: $NPM_GLOBAL_BIN"
-    if [ -x "$NPM_GLOBAL_BIN/mmdc" ]; then
-        ln -sf "$NPM_GLOBAL_BIN/mmdc" /usr/local/bin/mmdc
-        echo "Symlinked 'mmdc' to /usr/local/bin/mmdc."
-    else
-        echo "Warning: Could not find 'mmdc' in $NPM_GLOBAL_BIN. Make sure npm bin path is correct."
+    # Create a symlink if not already existing
+    if [ ! -x "$(command -v mmdc)" ]; then
+        echo "[WARNING] 'mmdc' not found in PATH after installation. Attempting to symlink."
+        NPM_GLOBAL_BIN="$(npm config get prefix)/bin"
+        if [ -x "$NPM_GLOBAL_BIN/mmdc" ]; then
+            [ -w "$INSTALL_DIR" ] || (echo "[ERROR] $INSTALL_DIR is not writable." && exit 1)
+            ln -sf "$NPM_GLOBAL_BIN/mmdc" /usr/local/bin/mmdc
+            echo "[INFO] Symlinked 'mmdc' to /usr/local/bin/mmdc."
+        else
+            echo "[ERROR] 'mmdc' not found in $NPM_GLOBAL_BIN. Mermaid CLI may not have installed correctly."
+            exit 1
+        fi
     fi
 }
 
 setup_puppeteer() {
-    su - mermaiduser -c "npx puppeteer browsers install chrome-headless-shell"
+    echo "[INFO] Installing Puppeteer dependencies (Chrome headless shell) for $USERNAME..."
+    su - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell" || {
+        echo "[ERROR] Puppeteer installation failed."
+        exit 1
+    }
     create_puppeteer_config
 }
 
 create_puppeteer_config() {
-    # Create shared configuration directory and Puppeteer config
-    echo "Creating shared configuration directory at $CONFIG_DIR..."
+    echo "[INFO] Creating shared configuration directory at $CONFIG_DIR..."
     mkdir -p "$CONFIG_DIR"
-    echo "Creating Puppeteer configuration file at $PUPPETEER_CONFIG..."
+
+    echo "[INFO] Creating Puppeteer configuration file at $PUPPETEER_CONFIG..."
     cat > "$PUPPETEER_CONFIG" <<EOF
 {
   "args": ["--no-sandbox", "--disable-setuid-sandbox"]
 }
 EOF
-    echo "Puppeteer configuration file created."
 
-    # Set ownership and permissions for Puppeteer config
-    echo "Setting ownership and permissions for Puppeteer config..."
     chown "$USERNAME":"$USERNAME" "$PUPPETEER_CONFIG"
     chmod 644 "$PUPPETEER_CONFIG"
-    echo "Ownership and permissions set."
+    echo "[INFO] Puppeteer configuration file created and permissions set."
 }
 
-copy_and_set_execute_bit() {
-    local script_name="$1"
-
-    # Determine the directory where this script resides
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-    # Path to the source script
-    SOURCE_SCRIPT="$SCRIPT_DIR/cmd/$script_name"
-
-    # Destination path with prefix 'mermaid-'
-    DEST_SCRIPT="/usr/local/bin/mermaid-$script_name"
-
-    # Check if the source script exists
-    if [ ! -f "$SOURCE_SCRIPT" ]; then
-        echo "Error: Source script '$SOURCE_SCRIPT' does not exist."
+ensure_wrapper_script() {
+    echo "[INFO] Ensuring wrapper script exists and is executable..."
+    if [ ! -f "$WRAPPER_SCRIPT" ]; then
+        echo "[ERROR] Wrapper script $WRAPPER_SCRIPT not found."
         exit 1
     fi
 
-    # Copy the script
-    echo "Copying '$SOURCE_SCRIPT' to '$DEST_SCRIPT'..."
-    if ! cp "$SOURCE_SCRIPT" "$DEST_SCRIPT"; then
-        echo "Failed to copy '$SOURCE_SCRIPT' to '$DEST_SCRIPT'."
-        exit 1
-    fi
-
-    # Set execute permissions
-    echo "Setting execute permissions for '$DEST_SCRIPT'..."
-    if ! chmod 755 "$DEST_SCRIPT"; then
-        echo "Failed to set execute permissions for '$DEST_SCRIPT'."
-        exit 1
-    fi
-
-    echo "Wrapper script '$DEST_SCRIPT' created and made executable."
+    [ -w "$INSTALL_DIR" ] || (echo "[ERROR] $INSTALL_DIR is not writable." && exit 1)
+    cp "$WRAPPER_SCRIPT" "$INSTALL_PATH"
+    chmod 755 "$INSTALL_PATH"
+    echo "[INFO] Wrapper script installed at $INSTALL_PATH"
 }
 
 message_ended() {
