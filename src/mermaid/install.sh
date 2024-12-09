@@ -158,7 +158,8 @@ install_mermaid_cli() {
     # If installed via nvm, ensure mmdc is accessible system-wide
     # Create a symlink from npm global bin to /usr/local/bin
     echo "Ensuring 'mmdc' is accessible system-wide..."
-    NPM_GLOBAL_BIN="$(npm bin -g)"
+    NPM_GLOBAL_BIN="$(npm config get prefix)/bin"
+    echo "Global npm bin directory: $NPM_GLOBAL_BIN"
     if [ -x "$NPM_GLOBAL_BIN/mmdc" ]; then
         ln -sf "$NPM_GLOBAL_BIN/mmdc" /usr/local/bin/mmdc
         echo "Symlinked 'mmdc' to /usr/local/bin/mmdc."
