@@ -55,6 +55,10 @@ create_non_root_user() {
         echo "Failed to set ownership for home directory."
         exit 1
     fi
+    if ! usermod -d /home/mermaiduser mermaiduser; then
+        echo "Failed to set home directory for user."
+        exit 1
+    fi
 }
 
 install_dependencies() {
