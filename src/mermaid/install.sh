@@ -8,7 +8,7 @@ export DEBIAN_FRONTEND=noninteractive
 USERNAME="mermaiduser"
 CONFIG_DIR="/usr/local/share/mermaid-config"
 PUPPETEER_CONFIG="$CONFIG_DIR/puppeteer-config.json"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WRAPPER_SCRIPT="/usr/local/bin/mermaid-mmdc"
 
 message_starting() {
     echo "=============================================="
@@ -58,6 +58,7 @@ install_dependencies() {
         libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
         fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 libasound2
     echo "Dependencies installed successfully."
+    
     # Clean up APT cache
     echo "Cleaning up APT cache to reduce image size..."
     apt-get clean
@@ -75,11 +76,10 @@ install_nodejs() {
 remove_nodejs_conflicts() {
     # Remove conflicting Node.js packages
     echo "Removing conflicting Node.js packages if any..."
-    apt-get remove -y libnode-dev nodejs npm || echo "No conflicting Node.js packages found."
+    apt-get purge -y libnode-dev nodejs npm || echo "No conflicting Node.js packages found."
     apt-get autoremove -y
     echo "Conflicting packages removed."
 }
-
 
 detect_ubuntu_codename() {
     # Detect Ubuntu codename
@@ -92,20 +92,24 @@ detect_ubuntu_codename() {
 }
 
 install_nodejs_actual() {
-    # Try NodeSource repository installation
-    echo "Attempting Node.js LTS installation via NodeSource..."
-    if curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -; then
-        echo "Installing Node.js from NodeSource..."
+    # Attempt Node.js LTS installation via NodeSource using setup_18.x
+    echo "Attempting Node.js 18.x LTS installation via NodeSource..."
+    if curl -fsSL https://deb.nodesource.com/setup_18.x | bash -; then
+        echo "Installing Node.js 18.x from NodeSource..."
         apt-get install -y nodejs
     else
         echo "NodeSource installation failed. Falling back to nvm..."
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
         export NVM_DIR="$HOME/.nvm"
+        # Load nvm
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        # Install and use latest LTS
         nvm install --lts
         nvm use --lts
+        # Ensure npm global bin is accessible
+        export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
     fi
-    }
+}
 
 verify_nodejs_installation() {
     # Verify Node.js installation
@@ -126,16 +130,6 @@ verify_nodejs_installation() {
     fi
 }
 
-main() {
-    message_starting
-    check_root
-    create_non_root_user
-    install_dependencies
-    install_nodejs
-    setup_mermaid
-    message_ended
-}
-
 setup_mermaid() {
     install_mermaid_cli
     create_puppeteer_config
@@ -143,10 +137,12 @@ setup_mermaid() {
 }
 
 install_mermaid_cli() {
+    # Install Mermaid CLI globally
     echo "Installing Mermaid CLI globally using npm..."
     npm install -g @mermaid-js/mermaid-cli
     echo "Mermaid CLI installed successfully."
 
+    # Verify Mermaid CLI installation
     if command -v mmdc &>/dev/null; then
         MMDCLI_VERSION=$(mmdc -V)
         echo "Mermaid CLI installed: $MMDCLI_VERSION"
@@ -154,13 +150,12 @@ install_mermaid_cli() {
         echo "Error: Mermaid CLI installation failed."
         exit 1
     fi
-    
-    # If Node.js was installed via NVM, 'mmdc' might not be in the global PATH outside nvm environment.
-    # To ensure 'mmdc' is accessible system-wide, create a symlink to /usr/local/bin.
+
+    # If installed via nvm, ensure mmdc is accessible system-wide
+    # Create a symlink from npm global bin to /usr/local/bin
     echo "Ensuring 'mmdc' is accessible system-wide..."
     NPM_GLOBAL_BIN="$(npm bin -g)"
     if [ -x "$NPM_GLOBAL_BIN/mmdc" ]; then
-        # Create or update the symlink
         ln -sf "$NPM_GLOBAL_BIN/mmdc" /usr/local/bin/mmdc
         echo "Symlinked 'mmdc' to /usr/local/bin/mmdc."
     else
@@ -179,6 +174,7 @@ create_puppeteer_config() {
 }
 EOF
     echo "Puppeteer configuration file created."
+
     # Set ownership and permissions for Puppeteer config
     echo "Setting ownership and permissions for Puppeteer config..."
     chown "$USERNAME":"$USERNAME" "$PUPPETEER_CONFIG"
@@ -186,20 +182,39 @@ EOF
     echo "Ownership and permissions set."
 }
 
-# Function to copy a script and set its execute permissions
 copy_and_set_execute_bit() {
     local script_name="$1"
 
-    # Copy the script to /usr/local/bin with a prefixed name
-    if ! cp "$SCRIPT_DIR/cmd/$script_name" "/usr/local/bin/mermaid-$script_name"; then
-        echo "Failed to copy cmd/$script_name"
+    # Determine the directory where this script resides
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    # Path to the source script
+    SOURCE_SCRIPT="$SCRIPT_DIR/cmd/$script_name"
+
+    # Destination path with prefix 'mermaid-'
+    DEST_SCRIPT="/usr/local/bin/mermaid-$script_name"
+
+    # Check if the source script exists
+    if [ ! -f "$SOURCE_SCRIPT" ]; then
+        echo "Error: Source script '$SOURCE_SCRIPT' does not exist."
         exit 1
     fi
 
-    # Set execute permissions on the copied script
-    if ! chmod 755 "/usr/local/bin/mermaid-$script_name"; then
-        echo "Failed to set execute bit for /usr/local/bin/mermaid-$script_name"
+    # Copy the script
+    echo "Copying '$SOURCE_SCRIPT' to '$DEST_SCRIPT'..."
+    if ! cp "$SOURCE_SCRIPT" "$DEST_SCRIPT"; then
+        echo "Failed to copy '$SOURCE_SCRIPT' to '$DEST_SCRIPT'."
+        exit 1
     fi
+
+    # Set execute permissions
+    echo "Setting execute permissions for '$DEST_SCRIPT'..."
+    if ! chmod 755 "$DEST_SCRIPT"; then
+        echo "Failed to set execute permissions for '$DEST_SCRIPT'."
+        exit 1
+    fi
+
+    echo "Wrapper script '$DEST_SCRIPT' created and made executable."
 }
 
 message_ended() {
@@ -209,5 +224,14 @@ message_ended() {
     echo "Use 'mermaid-mmdc --help' for usage information."
 }
 
+main() {
+    message_starting
+    check_root
+    create_non_root_user
+    install_dependencies
+    install_nodejs
+    setup_mermaid
+    message_ended
+}
 
 main
