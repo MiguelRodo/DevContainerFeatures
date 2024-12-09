@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -e
+
+DEFAULT_USERNAME="mermaiduser"
+DEFAULT_CONFIG="/usr/local/share/mermaid-config/puppeteer-config.json"
+
+USERNAME="$DEFAULT_USERNAME"
+CONFIG_FILE="$DEFAULT_CONFIG"
+
+print_help() {
+    cat <<USAGE
+Usage: mermaid-mmdc [options] -- [mmdc args]
+
+Options:
+  --username=USER      Run as this user (default: $DEFAULT_USERNAME)
+  --config=FILE        Puppeteer config file (default: $DEFAULT_CONFIG)
+  --help               Show this help message
+
+Examples:
+  mermaid-mmdc -i input.mmd -o output.png
+  mermaid-mmdc --username=anotheruser -- -i input.mmd -o output.png
+
+If running as root, this script uses 'su' to run mmdc as USER.
+If not root and 'sudo' is available, 'sudo -u USER' will be used.
+Otherwise, it fails.
+USAGE
+}
+
+# Parse options
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --username=*)
+            USERNAME="${1#*=}"
+            shift
+            ;;
+        --config=*)
+            CONFIG_FILE="${1#*=}"
+            shift
+            ;;
+        --help)
+            print_help
+            exit 0
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            # Unrecognized option, stop parsing
+            break
+            ;;
+        *)
+            # Positional argument, stop parsing
+            break
+            ;;
+    esac
+done
+
+# Ensure mmdc is installed
+if ! command -v mmdc &>/dev/null; then
+    echo "Error: 'mmdc' command not found."
+    exit 1
+fi
+
+# Construct the mmdc command with the provided config and arguments
+CMD="mmdc -c \"$CONFIG_FILE\" $*"
+
+# Execute the command as the specified user
+if [ "$EUID" -eq 0 ]; then
+    # Running as root
+    exec su -s /bin/bash "$USERNAME" -c "$CMD"
+else
+    # Not running as root, check for sudo
+    if command -v sudo &>/dev/null; then
+        exec sudo -u "$USERNAME" bash -c "$CMD"
+    else
+        echo "Error: Not root and no 'sudo' available to switch user."
+        exit 1
+    fi
+fi
