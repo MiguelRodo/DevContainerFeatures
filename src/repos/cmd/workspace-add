@@ -24,6 +24,21 @@ usage() {
   echo "  https://gitlab.com/user4/project4@feature-branch ./GitLabRepos"
 }
 
+get_workspace_file() {
+  # Prefer lower-case, but use CamelCase if that's all there is
+  local current_dir="$1"
+  local workspace_file="$current_dir/entire-project.code-workspace"
+  local workspace_file_camel="$current_dir/EntireProject.code-workspace"
+  if [ -f "$workspace_file" ]; then
+    echo "$workspace_file"
+  elif [ -f "$workspace_file_camel" ]; then
+    echo "$workspace_file_camel"
+  else
+    # If neither exists, will create lower-case one by default
+    echo "$workspace_file"
+  fi
+}
+
 # Default values
 repos_list_file="repos-to-clone.list"
 
@@ -61,7 +76,7 @@ fi
 current_dir="$(pwd)"
 
 # Define the path to the workspace JSON file
-workspace_file="${current_dir}/EntireProject.code-workspace"
+workspace_file="$(get_workspace_file "$current_dir")"
 
 # Create the workspace file if it does not exist and is needed
 if [ ! -f "$workspace_file" ]; then
