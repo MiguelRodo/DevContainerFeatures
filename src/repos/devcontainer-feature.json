@@ -3,7 +3,7 @@
     "id": "repos",
     "version": "1.6.11",
     "description": "Add commands to work with multiple repos",
-    "postCreateCommand": "[ \"$CODESPACES\" = \"true\" ] && /usr/local/bin/repos-post-create || true",
+    "postCreateCommand": "[ \"$CODESPACES\" = \"true\" ] && [ -n \"$GH_TOKEN\" ] && /usr/local/bin/repos-post-create || true",
     "postStartCommand": "/usr/local/bin/repos-post-start",
     "options": {
         "installHuggingFace": {
