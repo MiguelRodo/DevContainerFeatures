@@ -123,10 +123,10 @@ install_hf() {
     if [[ "$HF_SCOPE" == "system" ]]; then
         echo "Installing/Upgrading Hugging Face CLI system-wide..."
         export PIP_BREAK_SYSTEM_PACKAGES=1
-        install_pip_packages huggingface-hub[cli]
+        install_pip_packages huggingface-hub[cli,hf_xet]
     else
         echo "Installing/Upgrading Hugging Face CLI for the user..."
-        install_pip_packages_user huggingface-hub[cli]
+        install_pip_packages_user huggingface-hub[cli,hf_xet]
         
     fi
 }
