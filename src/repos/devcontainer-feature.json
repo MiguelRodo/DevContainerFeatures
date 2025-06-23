@@ -1,10 +1,10 @@
 {
     "name": "Add commands to work with repos",
     "id": "repos",
-    "version": "1.6.8",
+    "version": "1.6.9",
     "description": "Add commands to work with multiple repos",
     "postCreateCommand": "[ \"$CODESPACES\" = \"true\" ] && /usr/local/bin/repos-post-start",
-    "postStartCommand": "[ \"$CODESPACES\" = \"true\" ] && /usr/local/bin/repos-post-start",
+    "postStartCommand": "/usr/local/bin/repos-post-start",
     "options": {
         "installHuggingFace": {
             "type": "boolean",
