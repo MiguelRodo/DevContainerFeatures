@@ -1,7 +1,7 @@
 {
     "name": "Add commands to work with repos",
     "id": "repos",
-    "version": "1.6.14",
+    "version": "1.6.15",
     "description": "Add commands to work with multiple repos",
     "postCreateCommand": "[ \"$CODESPACES\" = \"true\" ] && [ -n \"$GH_TOKEN\" ] && /usr/local/bin/repos-post-create || true",
     "postStartCommand": "/usr/local/bin/repos-post-start",

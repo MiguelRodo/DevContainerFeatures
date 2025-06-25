@@ -35,6 +35,7 @@ get_workspace_file() {
     echo "$workspace_file_camel"
   else
     # If neither exists, will create lower-case one by default
+    touch "$workspace_file"
     echo "$workspace_file"
   fi
 }
