@@ -16,7 +16,6 @@ Add commands to work with multiple repos
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
 | installHuggingFace | Whether to install the Hugging Face CLI. Default is true. | boolean | true |
-| huggingFaceInstallScope | Whether to install the Hugging Face CLI system-wide or just for the current user. Default is user. | string | system |
 
 # TL;DR
 
