@@ -67,9 +67,9 @@ These repositories are lazily cloned.
 This command is also run each time the container starts.
 If `git-xet` is not installed, then it's not run.
 
-#### Create `EntireProject.code-workspace` file
+#### Create `entire-project.code-workspace` file
 
-All repositories listed in `repos-to-clone.list` and `repos-to-clone-xethub.list` are added to the `EntireProject.code-workspace` file.
+All repositories listed in `repos-to-clone.list` and `repos-to-clone-xethub.list` are added to the `entire-project.code-workspace` file.
 
 ### Configure R for use in VS Code
 
