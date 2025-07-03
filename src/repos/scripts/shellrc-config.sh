@@ -1,42 +1,47 @@
 #!/usr/bin/env bash
-
 set -e
 
-## Config shellrc
 config_shellrc_d() {
-  # Determine which shell configuration file to use
-  # Override for specifying the shell to configure (either "bash" or "zsh")
   local shell_override="${1:-}"
+  local shell_rc shell_rc_d_name snippet
 
-  # Determine the configuration file and directory based on override or existing files
-  if [ "$shell_override" = "bash" ]; then
-    shell_rc="$HOME/.bashrc"
-    shell_rc_d_name=".bashrc.d"
-  elif [ "$shell_override" = "zsh" ]; then
-    shell_rc="$HOME/.zshrc"
-    shell_rc_d_name=".zshrc.d"
-  else
-    if [ -e "$HOME/.bashrc" ]; then
+  # 1) Pick RC file and its “.rc.d” directory
+  case "$shell_override" in
+    bash)
       shell_rc="$HOME/.bashrc"
       shell_rc_d_name=".bashrc.d"
-    elif [ -e "$HOME/.zshrc" ]; then
+      ;;
+    zsh)
       shell_rc="$HOME/.zshrc"
       shell_rc_d_name=".zshrc.d"
-    else
-      # Default to .bashrc if neither exists
-      shell_rc="$HOME/.bashrc"
-      shell_rc_d_name=".bashrc.d"
-      touch "$shell_rc"
-    fi
+      ;;
+    *)
+      if   [ -e "$HOME/.bashrc" ]; then
+        shell_rc="$HOME/.bashrc"
+        shell_rc_d_name=".bashrc.d"
+      elif [ -e "$HOME/.zshrc" ];  then
+        shell_rc="$HOME/.zshrc"
+        shell_rc_d_name=".zshrc.d"
+      else
+        shell_rc="$HOME/.bashrc"
+        shell_rc_d_name=".bashrc.d"
+        touch "$shell_rc"
+      fi
+      ;;
+  esac
+
+  # 2) The exact snippet we want to append (with quotes to handle spaces)
+  snippet='for i in "$HOME/'"$shell_rc_d_name"'"/*; do
+    [ -e "$i" ] && source "$i"
+  done'
+
+  # 3) Append it only if it's not already in the RC
+  if ! grep -Fxq "$snippet" "$shell_rc"; then
+    printf "\n%s\n" "$snippet" >> "$shell_rc"
   fi
 
-  # Ensure that the corresponding .rc.d directory is sourced in the shell configuration file
-  if ! grep -qF "$shell_rc_d_name" "$shell_rc"; then
-    echo "for i in \$(ls -A \$HOME/$shell_rc_d_name/); do source \$HOME/$shell_rc_d_name/\$i; done" >> "$shell_rc"
-  fi
-
-  # Create the directory for shell configuration scripts
+  # 4) Create the directory if missing
   mkdir -p "$HOME/$shell_rc_d_name"
 }
 
-config_shellrc_d
+config_shellrc_d "${1:-}"

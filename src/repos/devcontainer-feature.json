@@ -1,15 +1,8 @@
 {
-    "name": "Add commands to work with repos",
+    "name": "Automatically set up multi-repo projects",
     "id": "repos",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "description": "Add commands to work with multiple repos",
     "postCreateCommand": "[ \"$CODESPACES\" = \"true\" ] && [ -n \"$GH_TOKEN\" ] && /usr/local/bin/repos-post-create || true",
-    "postStartCommand": "/usr/local/bin/repos-post-start",
-    "options": {
-        "installHuggingFace": {
-            "type": "boolean",
-            "description": "Whether to install the Hugging Face CLI. Default is true.",
-            "default": true
-        }
-    }
+    "postStartCommand": "/usr/local/bin/repos-post-start"
 }

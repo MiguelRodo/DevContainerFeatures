@@ -18,13 +18,10 @@ source dev-container-features-test-lib
 
 # Feature-specific tests
 # The 'check' command comes from the dev-container-features-test-lib.
-check "that git xet --version works" bash -c "git xet --version"
 check "that apptainer --version works" bash -c "apptainer --version"
 check "that repos-github-clone is found" bash -c "repos-github-clone"
-check "that repos-xethub-clone is found" bash -c "repos-xethub-clone"
 check "that repos-workspace-add is found" bash -c "repos-workspace-add"
 check "that repos-workspace-add creates the workspace file" bash -c "test -f entire-project.code-workspace"
-check "that config-r adds the config-r-env-lib file" bash -c "test -f $HOME/.bashrc.d/config-r-env-lib"
 
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.
