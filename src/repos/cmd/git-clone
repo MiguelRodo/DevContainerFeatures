@@ -5,7 +5,7 @@ usage() {
   echo "Usage: $0 [options]"
   echo
   echo "Options:"
-  echo "  -f, --file <file>          Specify the repository list file (default: 'repos-to-clone.list')."
+  echo "  -f, --file <file>          Specify the repository list file (default: 'repos.list')."
   echo "  -h, --help                 Display this help message."
   echo
   echo "Each line in the repository list file can be in the following formats:"
@@ -24,7 +24,11 @@ usage() {
 }
 
 # Default values
-repos_list_file="repos-to-clone.list"
+if [ ! -f "repos.list" ] && [ -f "repos-to-clone.list" ]; then
+  local repos_list_file="repos.list"
+else
+  local repos_list_file="repos.list"
+fi
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do

@@ -55,7 +55,7 @@ Provides features to work with multiple repositories.
 
 #### Clone GitHub repositories
 
-Adds the command `repos-clone-github` to clone all repositories listed in `repos-to-clone.list`.
+Adds the command `repos-clone-github` to clone all repositories listed in `repos.list`.
 
 This command is run each time the container starts.
 
@@ -69,7 +69,7 @@ If `git-xet` is not installed, then it's not run.
 
 #### Create `entire-project.code-workspace` file
 
-All repositories listed in `repos-to-clone.list` and `repos-to-clone-xethub.list` are added to the `entire-project.code-workspace` file.
+All repositories listed in `repos.list` and `repos-to-clone-xethub.list` are added to the `entire-project.code-workspace` file.
 
 ### Configure R for use in VS Code
 

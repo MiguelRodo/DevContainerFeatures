@@ -19,7 +19,7 @@ Add commands to work with multiple repos
 
 # TL;DR
 
-The **Repos DevContainer Feature** automates the process of working with multiple repositories in your development environment. By default, it clones repositories specified in a `repos-to-clone.list` file and sets up your workspace accordingly. It also provides scripts and commands to set up Git authentication for GitHub and Hugging Face, install necessary tools like Hugging Face CLI and Git LFS, and manage VSCode workspaces automatically.
+The **Repos DevContainer Feature** automates the process of working with multiple repositories in your development environment. By default, it clones repositories specified in a `repos.list` file and sets up your workspace accordingly. It also provides scripts and commands to set up Git authentication for GitHub and Hugging Face, install necessary tools like Hugging Face CLI and Git LFS, and manage VSCode workspaces automatically.
 
 ## Introduction
 
@@ -34,8 +34,8 @@ Managing multiple repositories can be challenging, especially when dealing with 
 
 ### Automatic Repository Cloning
 
-- **Immediate Setup**: By default, the feature automatically clones all repositories specified in the `repos-to-clone.list` file upon creating or starting the devcontainer.
-- **Custom Clone Locations**: You can specify exactly where each repository should be cloned by providing a target directory for each entry in your `repos-to-clone.list` file.
+- **Immediate Setup**: By default, the feature automatically clones all repositories specified in the `repos.list` file upon creating or starting the devcontainer.
+- **Custom Clone Locations**: You can specify exactly where each repository should be cloned by providing a target directory for each entry in your `repos.list` file.
 - **Commands Used**:
   - `repos-workspace-add`: Adds repositories to the VSCode workspace.
   - `repos-git-clone`: Clones the repositories into specified directories.
@@ -52,14 +52,14 @@ Managing multiple repositories can be challenging, especially when dealing with 
 
 ### Cloning Multiple Repositories
 
-- **Batch Cloning**: The `repos-git-clone` script reads a list of repositories from a specified file (defaulting to `repos-to-clone.list`) and clones them into specified directories. This simplifies the process of setting up multiple projects or datasets at once.
+- **Batch Cloning**: The `repos-git-clone` script reads a list of repositories from a specified file (defaulting to `repos.list`) and clones them into specified directories. This simplifies the process of setting up multiple projects or datasets at once.
 - **Flexible Formats**: Supports various repository formats to accommodate different hosting services:
   - **GitHub Repositories**: `owner/repo` or `owner/repo@branch`.
   - **Hugging Face Datasets**: `datasets/owner/repo` or `datasets/owner/repo@branch`.
   - **Full URLs**: `https://host/owner/repo` or `https://host/owner/repo@branch`.
 - **Branch Selection**: You can specify a branch or tag to clone by appending `@branch` to the repository identifier:
   - Example: `owner/repo@develop` will clone the `develop` branch of the repository.
-- **Custom Target Directories**: Specify a target directory for each repository directly in the `repos-to-clone.list` file.
+- **Custom Target Directories**: Specify a target directory for each repository directly in the `repos.list` file.
 
 ## Installation and Usage
 
@@ -90,7 +90,7 @@ By default, the feature includes the following in your `devcontainer.json`:
 
 - **`postCreateCommand`**: Runs after the devcontainer is created.
 - **`postStartCommand`**: Runs each time the devcontainer starts.
-- **Effect**: These commands ensure that the repositories specified in `repos-to-clone.list` are cloned and added to your VSCode workspace automatically.
+- **Effect**: These commands ensure that the repositories specified in `repos.list` are cloned and added to your VSCode workspace automatically.
 
 ### Feature Options
 
@@ -110,7 +110,7 @@ By default, the feature includes the following in your `devcontainer.json`:
 
 #### Create a Repository List File
 
-Create a `repos-to-clone.list` file in your devcontainer:
+Create a `repos.list` file in your devcontainer:
 
 ```bash
 # Example repositories
@@ -163,7 +163,7 @@ Rebuild or reopen your devcontainer to apply the feature:
 
 ### Feature Execution
 
-- **Cloning Repositories**: The feature clones the specified repositories into the directories you've specified in the `repos-to-clone.list` file upon creation or start.
+- **Cloning Repositories**: The feature clones the specified repositories into the directories you've specified in the `repos.list` file upon creation or start.
 - **Git Authentication**: Sets up Git credential helpers for seamless authentication with GitHub and Hugging Face.
 - **Tool Installation**: Installs Hugging Face CLI and Git LFS if specified.
 - **Workspace Configuration**: Adds the repositories to a VSCode workspace file for easy access.
@@ -182,7 +182,7 @@ repos-git-clone [-f|--file <file>]
 
 **Options:**
 
-- `-f, --file <file>`: Specify the repository list file. Defaults to `repos-to-clone.list`.
+- `-f, --file <file>`: Specify the repository list file. Defaults to `repos.list`.
 
 **Repository List File Format:**
 
@@ -207,7 +207,7 @@ repos-workspace-add [-f|--file <file>]
 
 **Options:**
 
-- `-f, --file <file>`: Specify the repository list file. Defaults to `repos-to-clone.list`.
+- `-f, --file <file>`: Specify the repository list file. Defaults to `repos.list`.
 
 ### `repos-git-auth-gitconfig`
 
@@ -237,7 +237,7 @@ repos-hf-install [--hf-scope <system|user>]
 
 ### Cloning Repositories into Specified Directories
 
-- **Custom Target Directories**: You can specify a target directory for each repository in the `repos-to-clone.list` file.
+- **Custom Target Directories**: You can specify a target directory for each repository in the `repos.list` file.
 - **Default Behavior**: If no target directory is specified, repositories are cloned into the parent directory (`..`) of the devcontainer.
 
 **Example Entry with Target Directory:**
@@ -265,7 +265,7 @@ Ensure the following environment variables are set for authentication:
 ## Notes
 
 - **Repository Directory**: You have full control over where repositories are cloned by specifying target directories.
-- **Repository List File**: The `repos-to-clone.list` file supports comments (lines starting with `#`) and ignores empty lines.
+- **Repository List File**: The `repos.list` file supports comments (lines starting with `#`) and ignores empty lines.
 - **Environment Suitability**: The feature is particularly useful in Codespaces or similar development environments.
 
 ## Acknowledgments
