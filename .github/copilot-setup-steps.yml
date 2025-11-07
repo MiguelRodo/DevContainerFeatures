@@ -1,0 +1,5 @@
+name: Setup Development Environment
+
+steps:
+  - name: Install Node.js dependencies
+    run: npm install -g @devcontainers/cli
