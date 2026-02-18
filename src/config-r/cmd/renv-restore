@@ -8,11 +8,12 @@ usage() {
     echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Description:"
-    echo "  This script restores R packages using renvvv::renvvv_restore."
+    echo "  This script restores and/or updates R packages using renvvv functions."
     echo "Options:"
     echo "  -d, --directory DIRECTORY        Project directory containing 'renv.lock' file. Default is current directory."
     echo "  -r, --restore                    Run restoration. Default is true."
-    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
+    echo "  -u, --update                     Run update. Default is false."
+    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore/update."
     echo "  -p, --pak                        Use pak (passed to underlying functions if supported)."
     echo "  -D, --debug                      Enable debug mode."
     echo "  --debug-renv                     Enable debug mode for renv."
@@ -22,6 +23,7 @@ usage() {
 
 PROJECT_DIR="."
 RESTORE=false
+UPDATE=false
 PKG_EXCLUDE=""
 DEBUG=false
 USE_PAK=false
@@ -32,6 +34,10 @@ while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -r|--restore)
             RESTORE=true
+            shift
+            ;;
+        -u|--update)
+            UPDATE=true
             shift
             ;;
         -e|--exclude)
@@ -88,6 +94,7 @@ set_debug_renv() {
 debug "Running renv-restore"
 debug "PROJECT_DIR: $PROJECT_DIR"
 debug "RESTORE: $RESTORE"
+debug "UPDATE: $UPDATE"
 debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 debug "DEBUG_RENV: $DEBUG_RENV"
@@ -146,8 +153,8 @@ install_pak() {
     fi
     local version="stable"
     Rscript -e "
-    tryCatch( 
-        {  
+    tryCatch(
+        {
             if (isFALSE(requireNamespace('pak', quietly = TRUE))) {
                 message('🔍 pak not found. Installing pak...')
                 install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/"${version}"/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
@@ -174,8 +181,8 @@ install_pkg() {
         export RENV_CONFIG_PAK_ENABLED=false
     fi
     Rscript -e "
-    tryCatch( 
-        {  
+    tryCatch(
+        {
             if (isFALSE(requireNamespace('$1', quietly = TRUE))) {
                 message('🔍 $1 not found. Installing $1...')
                 utils::install.packages('$1', repos = 'https://cloud.r-project.org')
@@ -202,18 +209,34 @@ install_pak_bioc() {
 }
 
 restore() {
-    echo "🔄 Attempting to restore packages using renvvv"
+    echo "🔄 Attempting to restore/update packages using renvvv"
     set_debug_renv
-    
+
     # Export PKG_EXCLUDE for use in R script
     export PKG_EXCLUDE
-    
-    # Use renvvv::renvvv_restore() instead of renv::restore()
+
+    # Determine which renvvv function to call
+    local renvvv_function=""
+    if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
+        renvvv_function="renvvv::renvvv_restore_and_update(skip = skip_packages)"
+        echo "ℹ️  Both restore and update requested - using renvvv_restore_and_update()"
+    elif [ "$RESTORE" = "true" ]; then
+        renvvv_function="renvvv::renvvv_restore(skip = skip_packages)"
+        echo "ℹ️  Restore requested - using renvvv_restore()"
+    elif [ "$UPDATE" = "true" ]; then
+        renvvv_function="renvvv::renvvv_update(skip = skip_packages)"
+        echo "ℹ️  Update requested - using renvvv_update()"
+    else
+        echo "⚠️  Neither restore nor update requested. Skipping."
+        return 0
+    fi
+
+    # Use renvvv function
     Rscript -e "
         if (!requireNamespace('renvvv', quietly = TRUE)) {
             stop('renvvv not found. Please ensure it was installed by the feature.')
         }
-        
+
         # Activate the project first to ensure correct paths
         if (file.exists('renv/activate.R')) {
             source('renv/activate.R')
@@ -227,26 +250,26 @@ restore() {
         } else {
             character(0)
         }
-        
+
         if (length(skip_packages) > 0) {
             message('📦 Skipping packages: ', paste(skip_packages, collapse = ', '))
         }
 
         tryCatch(
-            renvvv::renvvv_restore(skip = skip_packages),
+            $renvvv_function,
             error = function(e) {
-                message('⚠️  renvvv restore failed: ', e)
+                message('⚠️  renvvv operation failed: ', e)
                 quit(status = 1)
             }
         )
     "
-    echo "✅ Restore process attempted"
+    echo "✅ Restore/update process attempted"
     echo "---------------------------------------------"
 }
 
 run_custom_scripts() {
     set_debug_renv
-    if [ -f "config-r-renv.sh" ]; then 
+    if [ -f "config-r-renv.sh" ]; then
         echo "🔍 Found shell script"
         if ! ./config-r-renv.sh "$PKG_EXCLUDE"; then
             echo "⚠️  Project-specific shell script failed"
@@ -265,8 +288,8 @@ run_custom_scripts() {
 }
 
 main() {
-    if [ "$RESTORE" = "false" ]; then
-        echo "Skipping restore as requested."
+    if [ "$RESTORE" = "false" ] && [ "$UPDATE" = "false" ]; then
+        echo "Skipping restore and update as both are disabled."
         exit 0
     fi
 
@@ -275,12 +298,12 @@ main() {
     echo "🚀 Processing project: $PROJECT_NAME"
     trap 'cd "$ORIG_DIR"' EXIT
     cd "$PROJECT_DIR"
-    
+
     if [ ! -f "renv.lock" ]; then
         echo "⚠️  No renv.lock found in $PROJECT_DIR. Skipping."
         exit 0
     fi
-    
+
     r_lib_paths
     install_renv
     renv_activate

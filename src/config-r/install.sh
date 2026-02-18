@@ -7,6 +7,7 @@ set -e
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
 ENSURE_GITHUB_PAT_SET="${ENSUREGITHUBPATSET:-true}"
 RESTORE="${RESTORE:-true}"
+UPDATE="${UPDATE:-false}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
@@ -177,6 +178,10 @@ restore() {
     # Append options based on conditions
     if [ "$RESTORE" = "true" ]; then
         command+=("--restore")
+    fi
+
+    if [ "$UPDATE" = "true" ]; then
+        command+=("--update")
     fi
 
     if [ "$DEBUG" = "true" ]; then

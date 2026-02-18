@@ -20,6 +20,11 @@
             "description": "Whether to run package restoration using renvvv::renvvv_restore(). Default is true.",
             "default": true
         },
+        "update": {
+            "type": "boolean",
+            "description": "Whether to run package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used. Default is false.",
+            "default": false
+        },
         "renvDir": {
             "type": "string",
             "description": "Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/config-r/renv` if the environment variable is not set.",

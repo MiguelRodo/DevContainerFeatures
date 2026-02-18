@@ -17,7 +17,8 @@ Configure R
 |-----|-----|-----|-----|
 | setRLibPaths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | boolean | true |
 | ensureGitHubPatSet | If true and GITHUB_PAT is not set, will first try set it from GH_TOKEN and then GITHUB_TOKEN. | boolean | true |
-| restore | Whether to run `renv::restore()`. Default is true. | boolean | true |
+| restore | Whether to run package restoration using `renvvv::renvvv_restore()`. Default is true. | boolean | true |
+| update | Whether to run package update using `renvvv::renvvv_update()`. If both restore and update are true, `renvvv::renvvv_restore_and_update()` is used. Default is false. | boolean | false |
 | renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/config-r/renv` if the environment variable is not set. | string | /usr/local/share/config-r/renv |
 | pkgExclude | Comma-separated list of packages to exclude from the renv snapshot restore process. | string | - |
 | usePak | Whether to use `pak` for package installation. | boolean | false |
