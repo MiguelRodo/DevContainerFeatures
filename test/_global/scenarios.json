@@ -1,9 +1,8 @@
 {
     "all": {
-        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.2",
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
-            "repos": {},
-            "config-r": {}
+            "repos": {}
         }
     }
 }
