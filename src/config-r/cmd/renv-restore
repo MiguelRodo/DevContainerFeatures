@@ -8,12 +8,12 @@ usage() {
     echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Description:"
-    echo "  This script restores R packages for a specified project directory containing an 'renv.lock' file."
+    echo "  This script restores R packages using UtilsProjrMR::projr_renv_restore."
     echo "Options:"
     echo "  -d, --directory DIRECTORY        Project directory containing 'renv.lock' file. Default is current directory."
-    echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within the project. Default is true."
-    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
-    echo "  -p, --pak                        Use pak for package management."
+    echo "  -r, --restore                    Run restoration. Default is true."
+    echo "  -e, --exclude PKG1,PKG2          (Deprecated/Handled by UtilsProjrMR) Comma-separated list of packages to exclude."
+    echo "  -p, --pak                        Use pak (passed to underlying functions if supported)."
     echo "  -D, --debug                      Enable debug mode."
     echo "  --debug-renv                     Enable debug mode for renv."
     echo "  -h, --help                       Display this help message."
@@ -35,12 +35,11 @@ while [[ "$#" -gt 0 ]]; do
             shift
             ;;
         -e|--exclude)
-            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+             if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
                 PKG_EXCLUDE="$2"
                 shift 2
             else
-                echo "❌ --exclude requires a non-empty package name argument."
-                usage
+                shift
             fi
             ;;
         -d|--directory)
@@ -203,39 +202,28 @@ install_pak_bioc() {
 }
 
 restore() {
-    echo "🔄 Attempting to restore packages"
+    echo "🔄 Attempting to restore packages using UtilsProjrMR"
     set_debug_renv
-    if [ -n "$PKG_EXCLUDE" ]; then
-        EXCLUDE_ARRAY=$(echo "$PKG_EXCLUDE" | sed "s/,/\",\"/g")
-        debug "EXCLUDE_ARRAY: $EXCLUDE_ARRAY"
-        Rscript -e "
-            tryCatch(
-                {
-                    if ('transactional' %in% names(formals(renv::restore))) {
-                        renv::restore(exclude = c(\"$EXCLUDE_ARRAY\"), transactional = FALSE)
-                    } else {
-                        renv::restore(exclude = c(\"$EXCLUDE_ARRAY\"))
-                    }
-                },
-                error = function(e) {
-                    message('⚠️  Restore failed: ', e)
-                }
-            )"
-    else
-        Rscript -e "
-            tryCatch(
-                {
-                    if ('transactional' %in% names(formals(renv::restore))) {
-                        renv::restore(transactional = FALSE)
-                    } else {
-                        renv::restore()
-                    }
-                },
-                error = function(e) {
-                    message('⚠️  Restore failed: ', e)
-                }
-            )"
-    fi
+    
+    # Use UtilsProjrMR::projr_renv_restore() instead of renv::restore()
+    Rscript -e "
+        if (!requireNamespace('UtilsProjrMR', quietly = TRUE)) {
+            stop('UtilsProjrMR not found. Please ensure it was installed by the feature.')
+        }
+        
+        # Activate the project first to ensure correct paths
+        if (file.exists('renv/activate.R')) {
+            source('renv/activate.R')
+        }
+
+        tryCatch(
+            UtilsProjrMR::projr_renv_restore(),
+            error = function(e) {
+                message('⚠️  UtilsProjrMR restore failed: ', e)
+                quit(status = 1)
+            }
+        )
+    "
     echo "✅ Restore process attempted"
     echo "---------------------------------------------"
 }
@@ -261,11 +249,22 @@ run_custom_scripts() {
 }
 
 main() {
+    if [ "$RESTORE" = "false" ]; then
+        echo "Skipping restore as requested."
+        exit 0
+    fi
+
     ORIG_DIR=$(pwd)
     PROJECT_NAME=$(basename "$PROJECT_DIR")
     echo "🚀 Processing project: $PROJECT_NAME"
     trap 'cd "$ORIG_DIR"' EXIT
     cd "$PROJECT_DIR"
+    
+    if [ ! -f "renv.lock" ]; then
+        echo "⚠️  No renv.lock found in $PROJECT_DIR. Skipping."
+        exit 0
+    fi
+    
     r_lib_paths
     install_renv
     renv_activate

@@ -102,6 +102,16 @@ set_r_libs() {
     fi
 }
 
+# Function to install UtilsProjrMR
+install_utils_projr_mr() {
+    echo "Installing UtilsProjrMR..."
+    # Ensure remotes is installed
+    Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = 'https://cloud.r-project.org')"
+    
+    # Install UtilsProjrMR
+    Rscript -e "remotes::install_github('MiguelRodo/UtilsProjrMR', upgrade = 'never')"
+}
+
 update_renv_cache() {
     if [ "$SET_R_LIB_PATHS" = "true" ]; then
         # Ensure the R library script is executable
@@ -212,6 +222,7 @@ clean_up() {
 
 # Main function to orchestrate the execution of all tasks
 main() {
+    install_utils_projr_mr
     create_path_post_create_command
     set_r_libs
     ensure_github_pat_set
