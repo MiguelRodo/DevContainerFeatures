@@ -19,6 +19,16 @@
              }
         }
    },
+   "config-r-cache": {
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+        "features": {
+            "config-r": {
+                "restore": true,
+                "debug": true
+             }
+        },
+        "remoteUser": "vscode"
+   },
   "mermaid_default": {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
