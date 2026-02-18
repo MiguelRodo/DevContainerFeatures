@@ -1,6 +1,21 @@
 {
     "name": "Install Apptainer",
     "id": "apptainer",
-    "version": "1.0.0",
-    "description": "Install Apptainer"
+    "version": "1.0.1",
+    "description": "Install Apptainer, a container system for HPC",
+    "options": {
+        "timezone": {
+            "type": "string",
+            "proposals": [
+                "UTC",
+                "Europe/London",
+                "America/New_York"
+            ],
+            "default": "UTC",
+            "description": "Timezone to configure in the container (required for Apptainer mounts)"
+        }
+    },
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ]
 }
