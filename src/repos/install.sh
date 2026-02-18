@@ -139,9 +139,4 @@ fi
 # Make the script executable
 chmod +x "$POST_START_SCRIPT"
 
-# ── Cleanup ──────────────────────────────────────────────────────────────────
-echo "Cleaning up..."
-apt-get clean
-rm -rf /var/lib/apt/lists/*
-
 echo "repos feature installation complete!"
