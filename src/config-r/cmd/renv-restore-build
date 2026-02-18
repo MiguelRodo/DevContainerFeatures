@@ -11,6 +11,7 @@ usage() {
     echo "  -d, --directory                  Directory containing project directories. Default is '/usr/local/share/config-r/renv'."
     echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
     echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within all projects. Default is true."
+    echo "  -u, --update                     Run renv package update within all projects. Default is false."
     echo "  -p, --pak                        Use pak for package management."
     echo "  -D, --debug                      Enable debug mode."
     echo "  --debug-renv                     Enable debug mode for renv."
@@ -18,13 +19,16 @@ usage() {
     echo ""
     echo "Description:"
     echo "  This script processes each top-level subdirectory in the specified directory by:"
-    echo "    - Restoring packages using renv::restore, excluding specified packages (if restore is enabled)."
+    echo "    - Restoring packages using renvvv::renvvv_restore(), excluding specified packages (if restore is enabled)."
+    echo "    - Updating packages using renvvv::renvvv_update() (if update is enabled)."
+    echo "    - Using renvvv::renvvv_restore_and_update() if both restore and update are enabled."
     echo "    - Running project-specific scripts if present (config-r-renv.R and config-r-renv.sh)."
     exit 1
 }
 
 # Initialize variables
 RESTORE=false
+UPDATE=false
 PKG_EXCLUDE=""
 DEBUG=false
 USE_PAK=false
@@ -35,6 +39,10 @@ while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -r|--restore)
             RESTORE=true
+            shift
+            ;;
+        -u|--update)
+            UPDATE=true
             shift
             ;;
         -e|--exclude)
@@ -85,6 +93,7 @@ debug() {
 
 debug "Running renv-restore-build"
 debug "RESTORE: $RESTORE"
+debug "UPDATE: $UPDATE"
 debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 debug "RENV_DIR: $RENV_DIR"
@@ -126,6 +135,10 @@ restore_project() {
     # Append options based on conditions
     if [ "$RESTORE" = "true" ]; then
         command+=("--restore")
+    fi
+
+    if [ "$UPDATE" = "true" ]; then
+        command+=("--update")
     fi
 
     if [ "$DEBUG" = "true" ]; then
