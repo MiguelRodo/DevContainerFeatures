@@ -8,10 +8,11 @@ usage() {
     echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Description:"
-    echo "  This script restores R packages using renvvv::renvvv_restore."
+    echo "  This script restores and/or updates R packages using renvvv functions."
     echo "Options:"
     echo "  -d, --directory DIRECTORY        Project directory containing 'renv.lock' file. Default is current directory."
     echo "  -r, --restore                    Run restoration. Default is true."
+    echo "  -u, --update                     Run update. Default is false."
     echo "  -e, --exclude PKG1,PKG2          (Deprecated/Not used) Comma-separated list of packages to exclude."
     echo "  -p, --pak                        Use pak (passed to underlying functions if supported)."
     echo "  -D, --debug                      Enable debug mode."
@@ -22,6 +23,7 @@ usage() {
 
 PROJECT_DIR="."
 RESTORE=false
+UPDATE=false
 PKG_EXCLUDE=""
 DEBUG=false
 USE_PAK=false
@@ -32,6 +34,10 @@ while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -r|--restore)
             RESTORE=true
+            shift
+            ;;
+        -u|--update)
+            UPDATE=true
             shift
             ;;
         -e|--exclude)
@@ -88,6 +94,7 @@ set_debug_renv() {
 debug "Running renv-restore"
 debug "PROJECT_DIR: $PROJECT_DIR"
 debug "RESTORE: $RESTORE"
+debug "UPDATE: $UPDATE"
 debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 debug "DEBUG_RENV: $DEBUG_RENV"
@@ -202,10 +209,26 @@ install_pak_bioc() {
 }
 
 restore() {
-    echo "🔄 Attempting to restore packages using renvvv"
+    echo "🔄 Attempting to restore/update packages using renvvv"
     set_debug_renv
     
-    # Use renvvv::renvvv_restore() instead of renv::restore()
+    # Determine which renvvv function to call
+    local renvvv_function=""
+    if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
+        renvvv_function="renvvv::renvvv_restore_and_update()"
+        echo "ℹ️  Both restore and update requested - using renvvv_restore_and_update()"
+    elif [ "$RESTORE" = "true" ]; then
+        renvvv_function="renvvv::renvvv_restore()"
+        echo "ℹ️  Restore requested - using renvvv_restore()"
+    elif [ "$UPDATE" = "true" ]; then
+        renvvv_function="renvvv::renvvv_update()"
+        echo "ℹ️  Update requested - using renvvv_update()"
+    else
+        echo "⚠️  Neither restore nor update requested. Skipping."
+        return 0
+    fi
+    
+    # Use renvvv function
     Rscript -e "
         if (!requireNamespace('renvvv', quietly = TRUE)) {
             stop('renvvv not found. Please ensure it was installed by the feature.')
@@ -217,14 +240,14 @@ restore() {
         }
 
         tryCatch(
-            renvvv::renvvv_restore(),
+            $renvvv_function,
             error = function(e) {
-                message('⚠️  renvvv restore failed: ', e)
+                message('⚠️  renvvv operation failed: ', e)
                 quit(status = 1)
             }
         )
     "
-    echo "✅ Restore process attempted"
+    echo "✅ Restore/update process attempted"
     echo "---------------------------------------------"
 }
 
@@ -249,8 +272,8 @@ run_custom_scripts() {
 }
 
 main() {
-    if [ "$RESTORE" = "false" ]; then
-        echo "Skipping restore as requested."
+    if [ "$RESTORE" = "false" ] && [ "$UPDATE" = "false" ]; then
+        echo "Skipping restore and update as both are disabled."
         exit 0
     fi
 
