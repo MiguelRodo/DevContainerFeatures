@@ -1,6 +1,20 @@
 {
     "name": "Install FIt-SNE",
     "id": "fit-sne",
-    "version": "1.0.0",
-    "description": "Install FIt-SNE"
+    "version": "1.0.1",
+    "description": "Installs FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source.",
+    "options": {
+        "version": {
+            "type": "string",
+            "proposals": [
+                "latest",
+                "1.2.1"
+            ],
+            "default": "latest",
+            "description": "FIt-SNE version or commit SHA to install."
+        }
+    },
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ]
 }

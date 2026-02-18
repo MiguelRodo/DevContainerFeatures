@@ -1,16 +1,42 @@
 {
     "all": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-        "features": {
-            "repos": {}
+        "repos": {},
+        "apptainer": {
+            "timezone": "America/New_York"
+        },
+        "fit-sne": {
+            "version": "1.2.1"
         }
     },
     "config-r": {
-        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.3",
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
             "config-r": {
                 "restore": false
-            }
+             }
         }
+   },
+  "mermaid_default": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "mermaid": {}
     }
+  },
+  "mermaid_with_node20": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "mermaid": {
+        "nodeVersion": "20"
+      }
+    }
+  },
+  "mermaid_custom_user": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "mermaid": {
+        "userName": "customuser"
+      }
+    }
+  }
 }

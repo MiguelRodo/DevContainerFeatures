@@ -1,12 +1,36 @@
 #!/usr/bin/env bash
-# source: https://apptainer.org/docs/admin/main/installation.html
 set -e
+
+TIMEZONE="${TIMEZONE:-"UTC"}"
+
+# Ensure we are running as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
+    exit 1
+fi
+
+# Clean up apt cache at the end
+cleanup() {
+    rm -rf /var/lib/apt/lists/*
+}
+trap cleanup EXIT
+
+echo "Installing Apptainer..."
+
 apt-get update
-apt-get install -y software-properties-common
+apt-get install -y --no-install-recommends \
+    software-properties-common \
+    ca-certificates \
+    tzdata
+
+# Add PPA for Apptainer
 add-apt-repository -y ppa:apptainer/ppa
 apt-get update
 apt-get install -y apptainer
-# as singularity mounts localtime
-# source: https://carpentries-incubator.github.io/singularity-introduction/07-singularity-images-building/index.html#using-singularity-run-from-within-the-docker-container
-apt-get install -y tzdata
-cp /usr/share/zoneinfo/Europe/London /etc/localtime
+
+echo "Configuring timezone to ${TIMEZONE}..."
+# Apptainer often requires a valid /etc/localtime to mount properly
+ln -fs "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
+dpkg-reconfigure -f noninteractive tzdata
+
+echo "Apptainer installation complete!"
