@@ -1,52 +1,69 @@
 #!/usr/bin/env bash
-# Source: https://xethub.com/assets/docs/getting-started/install
-
 set -e
 
-# Save current directory
-ORIGINAL_DIR=$(pwd)
+FITSNE_VERSION="${VERSION:-"latest"}"
+FFTW_VERSION="3.3.10"
+
+# Ensure we are running as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e 'Script must be run as root.'
+    exit 1
+fi
+
+# Cleanup function
+cleanup() {
+    echo "Cleaning up..."
+    rm -rf /tmp/fftw-${FFTW_VERSION}
+    rm -rf /tmp/fftw-${FFTW_VERSION}.tar.gz
+    rm -rf /tmp/FIt-SNE
+    rm -rf /var/lib/apt/lists/*
+}
+trap cleanup EXIT
+
+echo "Installing dependencies..."
+apt-get update
+apt-get install -y --no-install-recommends \
+    build-essential \
+    wget \
+    git \
+    ca-certificates
 
 # Switch to /tmp directory
-pushd /tmp
+cd /tmp
 
 # Install FFTW
-wget http://www.fftw.org/fftw-3.3.10.tar.gz
-tar -xzf fftw-3.3.10.tar.gz
-cd fftw-3.3.10
-./configure --prefix=/usr/local  # FFTW will be installed to /usr/local
-make
+echo "Downloading and compiling FFTW ${FFTW_VERSION}..."
+wget "https://www.fftw.org/fftw-${FFTW_VERSION}.tar.gz"
+tar -xzf "fftw-${FFTW_VERSION}.tar.gz"
+cd "fftw-${FFTW_VERSION}"
+./configure --prefix=/usr/local --enable-shared
+make -j$(nproc)
 make install
+ldconfig
 
-# Clean up FFTW files
 cd /tmp
-rm -rf fftw-3.3.10 fftw-3.3.10.tar.gz
-
-# Remove existing FIt-SNE directory if it exists
-if [ -d "FIt-SNE" ]; then
-    rm -rf FIt-SNE
-fi
 
 # Install FIt-SNE
-git clone https://github.com/KlugerLab/FIt-SNE
+echo "Cloning FIt-SNE..."
+git clone https://github.com/KlugerLab/FIt-SNE.git
 cd FIt-SNE
-g++ -std=c++11 -O3 src/sptree.cpp src/tsne.cpp src/nbodyfft.cpp -o fast_tsne -pthread -I/usr/local/include -L/usr/local/lib -lfftw3 -lm -Wno-address-of-packed-member
 
-# Move the fast_tsne executable to /usr/local/bin
-mv fast_tsne /usr/local/bin
-
-# Clean up FIt-SNE files
-cd /tmp
-rm -rf FIt-SNE
-
-# Return to the original directory
-popd
-
-# Verify the return to the original directory
-echo "Back to directory: $(pwd)"
-
-# Verify installation
-if command -v fast_tsne &> /dev/null; then
-    echo "fast_tsne installed successfully"
-else
-    echo "fast_tsne installation failed"
+if [ "${FITSNE_VERSION}" != "latest" ] && [ "${FITSNE_VERSION}" != "" ]; then
+    echo "Checking out version ${FITSNE_VERSION}..."
+    git checkout "${FITSNE_VERSION}"
 fi
+
+echo "Compiling FIt-SNE..."
+g++ -std=c++11 -O3 src/sptree.cpp src/tsne.cpp src/nbodyfft.cpp \
+    -o fast_tsne \
+    -pthread \
+    -I/usr/local/include \
+    -L/usr/local/lib \
+    -lfftw3 -lm \
+    -Wno-address-of-packed-member
+
+# Move binary
+mv fast_tsne /usr/local/bin/fast_tsne
+chmod +x /usr/local/bin/fast_tsne
+
+echo "FIt-SNE installed successfully at /usr/local/bin/fast_tsne"
