@@ -3,6 +3,8 @@
 
 Installs the 'repos' CLI tool to manage multiple Git repositories. By default, it automatically runs 'repos' when the container starts to clone repositories defined in repos.list.
 
+**Now supports Ubuntu, Debian, Alpine, and other Linux distributions!**
+
 ## Example Usage
 
 ```json
@@ -25,7 +27,12 @@ By default, the feature automatically runs `repos` when the container starts, wh
 
 ## Installation
 
-The feature installs the `repos` package from the `apt-miguelrodo` APT repository. The package is automatically configured and ready to use.
+The feature automatically detects your operating system and uses the appropriate installation method:
+
+- **Ubuntu/Debian**: Installs from the `apt-miguelrodo` APT repository
+- **Alpine/RHEL/Fedora/Arch and others**: Installs from source (clones from GitHub and installs to `/usr/local`)
+
+The package is automatically configured and ready to use on all supported platforms.
 
 ### APT Repository Details
 
