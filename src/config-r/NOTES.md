@@ -1,12 +1,14 @@
 ## Package Restoration
 
-This feature uses [`UtilsProjrMR::projr_renv_restore()`](https://github.com/MiguelRodo/UtilsProjrMR) for package restoration instead of the default `renv::restore()`. This provides more robust restoration logic with better handling of:
+This feature uses [`renvvv::renvvv_restore()`](https://github.com/MiguelRodo/renvvv) for package restoration instead of the default `renv::restore()`. This provides more robust restoration logic that:
 
-- GitHub packages
-- Fallback mechanisms
-- Edge cases in package dependencies
+- Continues past individual package failures
+- Retries failed packages individually  
+- Reports what couldn't be installed
+- Handles GitHub, CRAN, and Bioconductor packages
+- Provides better error recovery
 
-The `UtilsProjrMR` package is automatically installed during feature setup.
+The `renvvv` package is automatically installed during feature setup.
 
 ## Acknowledgments
 

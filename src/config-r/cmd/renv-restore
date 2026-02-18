@@ -8,11 +8,11 @@ usage() {
     echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Description:"
-    echo "  This script restores R packages using UtilsProjrMR::projr_renv_restore."
+    echo "  This script restores R packages using renvvv::renvvv_restore."
     echo "Options:"
     echo "  -d, --directory DIRECTORY        Project directory containing 'renv.lock' file. Default is current directory."
     echo "  -r, --restore                    Run restoration. Default is true."
-    echo "  -e, --exclude PKG1,PKG2          (Deprecated/Handled by UtilsProjrMR) Comma-separated list of packages to exclude."
+    echo "  -e, --exclude PKG1,PKG2          (Deprecated/Not used) Comma-separated list of packages to exclude."
     echo "  -p, --pak                        Use pak (passed to underlying functions if supported)."
     echo "  -D, --debug                      Enable debug mode."
     echo "  --debug-renv                     Enable debug mode for renv."
@@ -202,13 +202,13 @@ install_pak_bioc() {
 }
 
 restore() {
-    echo "🔄 Attempting to restore packages using UtilsProjrMR"
+    echo "🔄 Attempting to restore packages using renvvv"
     set_debug_renv
     
-    # Use UtilsProjrMR::projr_renv_restore() instead of renv::restore()
+    # Use renvvv::renvvv_restore() instead of renv::restore()
     Rscript -e "
-        if (!requireNamespace('UtilsProjrMR', quietly = TRUE)) {
-            stop('UtilsProjrMR not found. Please ensure it was installed by the feature.')
+        if (!requireNamespace('renvvv', quietly = TRUE)) {
+            stop('renvvv not found. Please ensure it was installed by the feature.')
         }
         
         # Activate the project first to ensure correct paths
@@ -217,9 +217,9 @@ restore() {
         }
 
         tryCatch(
-            UtilsProjrMR::projr_renv_restore(),
+            renvvv::renvvv_restore(),
             error = function(e) {
-                message('⚠️  UtilsProjrMR restore failed: ', e)
+                message('⚠️  renvvv restore failed: ', e)
                 quit(status = 1)
             }
         )

@@ -102,14 +102,14 @@ set_r_libs() {
     fi
 }
 
-# Function to install UtilsProjrMR
-install_utils_projr_mr() {
-    echo "Installing UtilsProjrMR..."
+# Function to install renvvv
+install_renvvv() {
+    echo "Installing renvvv..."
     # Ensure remotes is installed
     Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = 'https://cloud.r-project.org')"
     
-    # Install UtilsProjrMR
-    Rscript -e "remotes::install_github('MiguelRodo/UtilsProjrMR', upgrade = 'never')"
+    # Install renvvv
+    Rscript -e "remotes::install_github('MiguelRodo/renvvv', upgrade = 'never')"
 }
 
 update_renv_cache() {
@@ -222,7 +222,7 @@ clean_up() {
 
 # Main function to orchestrate the execution of all tasks
 main() {
-    install_utils_projr_mr
+    install_renvvv
     create_path_post_create_command
     set_r_libs
     ensure_github_pat_set
