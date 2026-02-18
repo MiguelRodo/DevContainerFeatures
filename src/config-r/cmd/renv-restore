@@ -12,7 +12,7 @@ usage() {
     echo "Options:"
     echo "  -d, --directory DIRECTORY        Project directory containing 'renv.lock' file. Default is current directory."
     echo "  -r, --restore                    Run restoration. Default is true."
-    echo "  -e, --exclude PKG1,PKG2          (Deprecated/Not used) Comma-separated list of packages to exclude."
+    echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
     echo "  -p, --pak                        Use pak (passed to underlying functions if supported)."
     echo "  -D, --debug                      Enable debug mode."
     echo "  --debug-renv                     Enable debug mode for renv."
@@ -205,6 +205,9 @@ restore() {
     echo "🔄 Attempting to restore packages using renvvv"
     set_debug_renv
     
+    # Export PKG_EXCLUDE for use in R script
+    export PKG_EXCLUDE
+    
     # Use renvvv::renvvv_restore() instead of renv::restore()
     Rscript -e "
         if (!requireNamespace('renvvv', quietly = TRUE)) {
@@ -216,8 +219,21 @@ restore() {
             source('renv/activate.R')
         }
 
+        # Parse packages to skip from environment variable
+        pkg_exclude_str <- Sys.getenv('PKG_EXCLUDE', '')
+        skip_packages <- if (nzchar(pkg_exclude_str)) {
+            # Split by comma and trim whitespace
+            trimws(unlist(strsplit(pkg_exclude_str, ',')))
+        } else {
+            character(0)
+        }
+        
+        if (length(skip_packages) > 0) {
+            message('📦 Skipping packages: ', paste(skip_packages, collapse = ', '))
+        }
+
         tryCatch(
-            renvvv::renvvv_restore(),
+            renvvv::renvvv_restore(skip = skip_packages),
             error = function(e) {
                 message('⚠️  renvvv restore failed: ', e)
                 quit(status = 1)
