@@ -1,8 +1,30 @@
 {
-    "all": {
-        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-        "features": {
-            "repos": {}
-        }
+  "all": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "repos": {}
     }
+  },
+  "mermaid_default": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "mermaid": {}
+    }
+  },
+  "mermaid_with_node20": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "mermaid": {
+        "nodeVersion": "20"
+      }
+    }
+  },
+  "mermaid_custom_user": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "mermaid": {
+        "userName": "customuser"
+      }
+    }
+  }
 }
