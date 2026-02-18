@@ -40,5 +40,17 @@
         "userName": "customuser"
       }
     }
+  },
+  "repos_alpine": {
+    "image": "mcr.microsoft.com/devcontainers/base:alpine",
+    "features": {
+      "repos": {}
+    }
+  },
+  "repos_debian": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+      "repos": {}
+    }
   }
 }
