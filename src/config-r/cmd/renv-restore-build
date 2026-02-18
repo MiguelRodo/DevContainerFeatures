@@ -140,6 +140,10 @@ restore_project() {
         command+=("--exclude" "$PKG_EXCLUDE")
     fi
 
+    if [ "$DEBUG_RENV" = "true" ]; then
+        command+=("--debug-renv")
+    fi
+
     # Log the command for debugging purposes
     echo "🔧 Executing command: ${command[*]}"
 
