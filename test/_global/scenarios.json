@@ -89,5 +89,14 @@
         "update": true
       }
     }
+  },
+  "config-r_restore_and_update": {
+    "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+    "features": {
+      "config-r": {
+        "restore": true,
+        "update": true
+      }
+    }
   }
 }
