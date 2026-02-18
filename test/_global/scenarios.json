@@ -4,5 +4,13 @@
         "features": {
             "repos": {}
         }
+    },
+    "config-r": {
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.3",
+        "features": {
+            "config-r": {
+                "restore": false
+            }
+        }
     }
 }
