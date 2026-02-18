@@ -5,6 +5,9 @@
           "repos": {},
           "apptainer": {
               "timezone": "America/New_York"
+          },
+          "fit-sne": {
+              "version": "1.2.1"
           }
       }
   },
