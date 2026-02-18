@@ -1,9 +1,12 @@
 {
-  "all": {
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-      "repos": {}
-    }
+   "all": {
+      "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+      "features": {
+          "repos": {},
+          "apptainer": {
+              "timezone": "America/New_York"
+          }
+      }
   },
   "mermaid_default": {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
