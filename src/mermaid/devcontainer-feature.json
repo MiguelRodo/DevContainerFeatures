@@ -1,8 +1,8 @@
 {
   "name": "Mermaid",
   "id": "mermaid",
-  "version": "1.2.2",
-  "description": "This DevContainer feature installs and configures the Mermaid CLI to generate diagrams from `.mmd` files. It sets up a non-root user and a Puppeteer configuration that allows rendering Mermaid diagrams in headless mode.",
+  "version": "1.2.3",
+  "description": "Installs Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration.",
   "options": {
     "userName": {
       "type": "string",
@@ -13,6 +13,14 @@
       "type": "string",
       "default": "/usr/local/share/mermaid-config",
       "description": "Directory to store Puppeteer configuration files."
+    },
+    "nodeVersion": {
+      "type": "string",
+      "default": "lts",
+      "description": "Node.js version to install if not present (e.g., 'lts', '20', '18')."
     }
-  }
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/node"
+  ]
 }
