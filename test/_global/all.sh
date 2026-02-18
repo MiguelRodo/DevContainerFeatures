@@ -20,6 +20,12 @@ check "repos help command works" bash -c "repos --help || repos -h || true"
 check "repos-post-start script exists" bash -c "test -f /usr/local/bin/repos-post-start"
 check "repos-post-start script is executable" bash -c "test -x /usr/local/bin/repos-post-start"
 
+# Apptainer tests
+check "apptainer binary is installed" bash -c "which apptainer"
+check "apptainer version command works" bash -c "apptainer --version"
+check "timezone is configured correctly" bash -c "readlink /etc/localtime | grep -q 'America/New_York'"
+check "tzdata package is installed" bash -c "dpkg -l | grep -q tzdata"
+
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.
 reportResults
