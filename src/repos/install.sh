@@ -132,7 +132,7 @@ EOF
 else
   cat > "$POST_START_SCRIPT" << 'EOF'
 #!/usr/bin/env bash
-repos
+repos setup
 EOF
 fi
 

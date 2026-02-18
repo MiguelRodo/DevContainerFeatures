@@ -1,7 +1,7 @@
 
 # Repos - Multi-Repository Management (repos)
 
-Installs the 'repos' CLI tool to manage multiple Git repositories. By default, it automatically runs 'repos' when the container starts to clone repositories defined in repos.list.
+Installs the 'repos' CLI tool to manage multiple Git repositories. By default, it automatically runs 'repos setup' when the container starts to clone repositories defined in repos.list.
 
 **Now supports Ubuntu, Debian, Alpine, and other Linux distributions!**
 
@@ -17,13 +17,13 @@ Installs the 'repos' CLI tool to manage multiple Git repositories. By default, i
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| runOnStart | Automatically run 'repos' when the container starts. | boolean | true |
+| runOnStart | Automatically run 'repos setup' when the container starts. | boolean | true |
 
 ## Overview
 
 The **Repos DevContainer Feature** installs the `repos` CLI tool from the `apt-miguelrodo` APT repository. This tool automates the management of multiple Git repositories in your development environment.
 
-By default, the feature automatically runs `repos` when the container starts, which clones and sets up repositories defined in a `repos.list` file.
+By default, the feature automatically runs `repos setup` when the container starts, which clones and sets up repositories defined in a `repos.list` file.
 
 ## Installation
 
@@ -43,7 +43,7 @@ The package is automatically configured and ready to use on all supported platfo
 
 ### runOnStart Option
 
-By default, the feature runs `repos` automatically when the container starts. You can disable this behavior by setting `runOnStart` to `false`:
+By default, the feature runs `repos setup` automatically when the container starts. You can disable this behavior by setting `runOnStart` to `false`:
 
 ```json
 "features": {
@@ -53,20 +53,20 @@ By default, the feature runs `repos` automatically when the container starts. Yo
 }
 ```
 
-When `runOnStart` is set to `false`, the `repos` command will not execute automatically, but you can still run it manually when needed.
+When `runOnStart` is set to `false`, the `repos setup` command will not execute automatically, but you can still run it manually when needed.
 
 ## Usage
 
 ### Automatic Mode (Default)
 
-When `runOnStart` is `true` (the default), the `repos` tool automatically executes when the container starts. Create a `repos.list` file in your project to define which repositories to clone.
+When `runOnStart` is `true` (the default), the `repos setup` command automatically executes when the container starts. Create a `repos.list` file in your project to define which repositories to clone.
 
 ### Manual Mode
 
-When `runOnStart` is `false`, you can manually run the `repos` command at any time:
+When `runOnStart` is `false`, you can manually run the `repos setup` command at any time:
 
 ```bash
-repos
+repos setup
 ```
 
 ### The repos Command
