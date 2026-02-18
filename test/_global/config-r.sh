@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test file for config-r feature with UtilsProjrMR integration
+# Test file for config-r feature with renvvv integration
 #
 # This test file is executed against a running container constructed
 # from the value of 'config-r' in the tests/_global/scenarios.json file.
@@ -28,10 +28,10 @@ check "config-r-renv-restore is executable" bash -c "test -x /usr/local/bin/conf
 check "config-r-renv-restore-build exists" bash -c "test -f /usr/local/bin/config-r-renv-restore-build"
 check "config-r-renv-restore-build is executable" bash -c "test -x /usr/local/bin/config-r-renv-restore-build"
 
-# Check that UtilsProjrMR is installed
-check "UtilsProjrMR is installed" Rscript -e "if (!requireNamespace('UtilsProjrMR', quietly = TRUE)) quit(status = 1)"
+# Check that renvvv is installed
+check "renvvv is installed" Rscript -e "if (!requireNamespace('renvvv', quietly = TRUE)) quit(status = 1)"
 
-# Check that remotes is installed (required for installing UtilsProjrMR)
+# Check that remotes is installed (required for installing renvvv)
 check "remotes is installed" Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) quit(status = 1)"
 
 # Check that renv is installed

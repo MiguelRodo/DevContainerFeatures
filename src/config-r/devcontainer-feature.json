@@ -1,7 +1,7 @@
 {
     "name": "Configure R",
     "id": "config-r",
-    "version": "2.4.0",
+    "version": "2.5.0",
     "description": "Configure R",
     "postCreateCommand": "/usr/local/bin/config-r-post-create",
     "options": {
@@ -17,7 +17,7 @@
         },
         "restore": {
             "type": "boolean",
-            "description": "Whether to run package restoration using UtilsProjrMR::projr_renv_restore(). Default is true.",
+            "description": "Whether to run package restoration using renvvv::renvvv_restore(). Default is true.",
             "default": true
         },
         "renvDir": {
