@@ -52,5 +52,51 @@
     "features": {
       "repos": {}
     }
+  },
+  "apptainer_default": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "apptainer": {}
+    }
+  },
+  "fit-sne_default": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "fit-sne": {}
+    }
+  },
+  "repos_no_autostart": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "repos": {
+        "runOnStart": false
+      }
+    }
+  },
+  "mermaid_custom_config_dir": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "mermaid": {
+        "puppeteerConfigDir": "/tmp/custom-puppeteer"
+      }
+    }
+  },
+  "config-r_with_update": {
+    "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+    "features": {
+      "config-r": {
+        "restore": false,
+        "update": true
+      }
+    }
+  },
+  "config-r_restore_and_update": {
+    "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+    "features": {
+      "config-r": {
+        "restore": true,
+        "update": true
+      }
+    }
   }
 }
