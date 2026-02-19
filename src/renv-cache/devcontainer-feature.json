@@ -1,7 +1,7 @@
 {
     "name": "renv cache",
     "id": "renv-cache",
-    "version": "2.6.0",
+    "version": "1.0.0",
     "description": "Configure R with renv cache",
     "postCreateCommand": "/usr/local/bin/renv-cache-post-create",
     "options": {
