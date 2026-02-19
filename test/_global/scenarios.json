@@ -11,27 +11,27 @@
             }
         }
     },
-    "config-r": {
+    "renv-cache": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
-            "config-r": {
+            "renv-cache": {
                 "restore": false
              }
         }
    },
-   "config-r-cache": {
+   "renv-cache-restore": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
-            "config-r": {
+            "renv-cache": {
                 "restore": true,
                 "debug": true
              }
         }
    },
-   "config-r-token-elevate": {
+   "renv-cache-token-elevate": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
-            "config-r": {
+            "renv-cache": {
                 "restore": false,
                 "elevateGitHubToken": true,
                 "overrideGitHubToken": false
@@ -42,10 +42,10 @@
             "GH_TOKEN": "ghp_permissive_token"
         }
    },
-   "config-r-token-override": {
+   "renv-cache-token-override": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
-            "config-r": {
+            "renv-cache": {
                 "restore": false,
                 "elevateGitHubToken": false,
                 "overrideGitHubToken": true
@@ -56,10 +56,10 @@
             "GITHUB_PAT": "ghp_pat_token"
         }
    },
-   "config-r-token-disabled": {
+   "renv-cache-token-disabled": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
-            "config-r": {
+            "renv-cache": {
                 "restore": false,
                 "ensureGitHubPatSet": false,
                 "elevateGitHubToken": false,

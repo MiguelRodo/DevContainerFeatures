@@ -8,7 +8,7 @@ usage() {
     echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  -d, --directory                  Directory containing project directories. Default is '/usr/local/share/config-r/renv'."
+    echo "  -d, --directory                  Directory containing project directories. Default is '/usr/local/share/renv-cache/renv'."
     echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore."
     echo "  -r, --restore                    Run renv::restore(transactional = TRUE) within all projects. Default is true."
     echo "  -u, --update                     Run renv package update within all projects. Default is false."
@@ -22,7 +22,7 @@ usage() {
     echo "    - Restoring packages using renvvv::renvvv_restore(), excluding specified packages (if restore is enabled)."
     echo "    - Updating packages using renvvv::renvvv_update() (if update is enabled)."
     echo "    - Using renvvv::renvvv_restore_and_update() if both restore and update are enabled."
-    echo "    - Running project-specific scripts if present (config-r-renv.R and config-r-renv.sh)."
+    echo "    - Running project-specific scripts if present (renv-cache-renv.R and renv-cache-renv.sh)."
     exit "${1:-0}"
 }
 
@@ -32,7 +32,7 @@ UPDATE=false
 PKG_EXCLUDE=""
 DEBUG=false
 USE_PAK=false
-RENV_DIR="/usr/local/share/config-r/renv"
+RENV_DIR="/usr/local/share/renv-cache/renv"
 DEBUG_RENV=false
 
 while [[ "$#" -gt 0 ]]; do
@@ -130,7 +130,7 @@ restore_project() {
     debug "project_dir: $project_dir"
     
     # Construct the command as an array
-    local command=(/usr/local/bin/config-r-renv-restore --directory "$project_dir")
+    local command=(/usr/local/bin/renv-cache-renv-restore --directory "$project_dir")
 
     # Append options based on conditions
     if [ "$RESTORE" = "true" ]; then
@@ -162,7 +162,7 @@ restore_project() {
 
     # Execute the command with error handling
     if ! "${command[@]}"; then
-        echo "❌ config-r-renv-restore-build failed with command: ${command[*]}"
+        echo "❌ renv-cache-renv-restore failed with command: ${command[*]}"
     fi
 }
 

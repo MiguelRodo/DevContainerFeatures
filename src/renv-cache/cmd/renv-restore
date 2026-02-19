@@ -208,6 +208,54 @@ install_pak_bioc() {
     install_pkg BiocManager
 }
 
+install_gitcreds() {
+    echo "🔍 Installing gitcreds for authentication"
+    set_debug_renv
+    
+    # Check if gitcreds is already installed in the project library
+    local gitcreds_installed=$(Rscript -e "cat(isTRUE(requireNamespace('gitcreds', quietly = TRUE)))" 2>/dev/null || echo "FALSE")
+    
+    if [ "$gitcreds_installed" = "TRUE" ]; then
+        echo "✅ gitcreds is already installed."
+        return 0
+    fi
+    
+    echo "📦 gitcreds not found. Installing gitcreds..."
+    
+    # Temporarily disable pak for gitcreds installation to avoid conflicts
+    local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
+    if [ "$renv_config_pak_orig" = "true" ]; then
+        export RENV_CONFIG_PAK_ENABLED=false
+    fi
+    
+    # Install gitcreds - don't fail if this doesn't work
+    Rscript -e "
+    tryCatch(
+        {
+            if (isFALSE(requireNamespace('gitcreds', quietly = TRUE))) {
+                message('🔍 Installing gitcreds from CRAN...')
+                utils::install.packages('gitcreds', repos = 'https://cloud.r-project.org')
+                message('✅ gitcreds installed successfully.')
+            } else {
+                message('✅ gitcreds is already installed.')
+            }
+        },
+        error = function(e) {
+            message('⚠️  gitcreds installation failed: ', e)
+            message('⚠️  Continuing without gitcreds - GitHub token authentication will still be attempted.')
+        }
+    )" || {
+        echo "⚠️  gitcreds installation encountered an error, but continuing..."
+    }
+    
+    # Restore original pak setting
+    if [ "$renv_config_pak_orig" = "true" ]; then
+        export RENV_CONFIG_PAK_ENABLED=true
+    fi
+    
+    echo "---------------------------------------------"
+}
+
 restore() {
     echo "🔄 Attempting to restore/update packages using renvvv"
     set_debug_renv
@@ -269,18 +317,18 @@ restore() {
 
 run_custom_scripts() {
     set_debug_renv
-    if [ -f "config-r-renv.sh" ]; then
+    if [ -f "renv-cache-renv.sh" ]; then
         echo "🔍 Found shell script"
-        if ! ./config-r-renv.sh "$PKG_EXCLUDE"; then
+        if ! ./renv-cache-renv.sh "$PKG_EXCLUDE"; then
             echo "⚠️  Project-specific shell script failed"
             echo "---------------------------------------------"
         fi
     fi
 
-    if [ -f "config-r-renv.R" ]; then
+    if [ -f "renv-cache-renv.R" ]; then
         echo "🔍 Found R script"
         cd "$PROJECT_DIR"
-        if ! Rscript config-r-renv.R "$PKG_EXCLUDE"; then
+        if ! Rscript renv-cache-renv.R "$PKG_EXCLUDE"; then
             echo "⚠️  Project-specific R script failed"
             echo "---------------------------------------------"
         fi
@@ -308,6 +356,7 @@ main() {
     install_renv
     renv_activate
     r_lib_paths
+    install_gitcreds
     install_pak_bioc
     restore
     run_custom_scripts

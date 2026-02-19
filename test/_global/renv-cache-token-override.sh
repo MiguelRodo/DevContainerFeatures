@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test file for config-r feature with overrideGitHubToken option
+# Test file for renv-cache feature with overrideGitHubToken option
 #
 # This test verifies that when overrideGitHubToken is enabled,
 # GITHUB_TOKEN is forced to use GH_TOKEN or GITHUB_PAT regardless
@@ -11,19 +11,19 @@ set -e
 # Optional: Import test library bundled with the devcontainer CLI
 source dev-container-features-test-lib
 
-echo "🧪 Testing config-r overrideGitHubToken functionality"
+echo "🧪 Testing renv-cache overrideGitHubToken functionality"
 
 # Check that the github-pat script exists and is executable
-check "config-r-github-pat exists" test -f /usr/local/bin/config-r-github-pat
-check "config-r-github-pat is executable" test -x /usr/local/bin/config-r-github-pat
+check "renv-cache-github-pat exists" test -f /usr/local/bin/renv-cache-github-pat
+check "renv-cache-github-pat is executable" test -x /usr/local/bin/renv-cache-github-pat
 
 # Check that bashrc.d is configured
 check "bashrc.d directory exists" test -d "$HOME/.bashrc.d"
-check "github-pat in bashrc.d" test -f "$HOME/.bashrc.d/config-r-github-pat"
+check "github-pat in bashrc.d" test -f "$HOME/.bashrc.d/renv-cache-github-pat"
 
 # Source the github-pat script to set environment variables
 echo "🔧 Running github-pat script..."
-source /usr/local/bin/config-r-github-pat
+source /usr/local/bin/renv-cache-github-pat
 
 # Verify that GITHUB_PAT is set (should be set from GITHUB_PAT since it has highest priority)
 echo "🔍 Checking GITHUB_PAT: ${GITHUB_PAT:0:20}..."

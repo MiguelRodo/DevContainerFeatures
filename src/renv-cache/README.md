@@ -1,13 +1,13 @@
 
-# Configure R (config-r)
+# renv cache (renv-cache)
 
-Configure R
+Configure R with renv cache
 
 ## Example Usage
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {}
 }
 ```
 
@@ -21,7 +21,7 @@ Configure R
 | overrideGitHubToken | If true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of existing value. Use only if you always want to override GITHUB_TOKEN. | boolean | false |
 | restore | Whether to run package restoration using `renvvv::renvvv_restore()`. Default is true. | boolean | true |
 | update | Whether to run package update using `renvvv::renvvv_update()`. If both restore and update are true, `renvvv::renvvv_restore_and_update()` is used. Default is false. | boolean | false |
-| renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/config-r/renv` if the environment variable is not set. | string | /usr/local/share/config-r/renv |
+| renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set. | string | /usr/local/share/renv-cache/renv |
 | pkgExclude | Comma-separated list of packages to exclude from the renv snapshot restore process. | string | - |
 | usePak | Whether to use `pak` for package installation. | boolean | false |
 | debug | Whether to print debug information during package restore. | boolean | false |
@@ -110,7 +110,7 @@ When the container starts:
    ```json
    {
      "features": {
-       "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+       "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
          "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv"
        }
      }
@@ -121,7 +121,7 @@ When the container starts:
    ```json
    {
      "mounts": [
-       "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/config-r/renv,type=bind"
+       "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/renv,type=bind"
      ]
    }
    ```
@@ -133,7 +133,7 @@ When the container starts:
        "source=${localWorkspaceFolder}/.devcontainer/renv,target=${containerWorkspaceFolder}/.devcontainer/renv,type=bind"
      ],
      "features": {
-       "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+       "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
          "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv"
        }
      }
@@ -152,8 +152,8 @@ When the container starts:
 #### Advanced: Custom Scripts
 
 You can place custom scripts in your renv subdirectories:
-- `config-r-renv.R` - R script executed after restore
-- `config-r-renv.sh` - Bash script executed after restore
+- `renv-cache-renv.R` - R script executed after restore
+- `renv-cache-renv.sh` - Bash script executed after restore
 
 These scripts receive the `pkgExclude` parameter and run in the project directory context.
 
@@ -176,7 +176,7 @@ You can exclude specific packages from being restored by using the `pkgExclude` 
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
         "pkgExclude": "package1,package2,package3"
     }
 }
@@ -194,4 +194,4 @@ This project incorporates code from [AwesomeProject](https://github.com/rocker-o
 
 ---
 
-_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/MiguelRodo/DevContainerFeatures/blob/main/src/config-r/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
+_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/MiguelRodo/DevContainerFeatures/blob/main/src/renv-cache/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Test file for config-r feature with renv cache verification
+# Test file for renv-cache feature with renv cache verification
 #
 # This test file is executed against a running container constructed
-# from the value of 'config-r-cache' in the tests/_global/scenarios.json file.
+# from the value of 'renv-cache-restore' in the tests/_global/scenarios.json file.
 #
 # This test can be run with the following command (from the root of this repo)
 #    devcontainer features test --global-scenarios-only .
@@ -16,7 +16,7 @@ source dev-container-features-test-lib
 # Feature-specific tests
 # The 'check' command comes from the dev-container-features-test-lib.
 
-echo "🧪 Testing config-r renv cache functionality"
+echo "🧪 Testing renv-cache renv cache functionality"
 
 # Check that R is available
 check "R is installed" bash -c "which R"
