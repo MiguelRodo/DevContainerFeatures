@@ -5,7 +5,7 @@ set -e
 
 # Function to display usage information
 usage() {
-    echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
+    echo "  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Description:"
     echo "  This script restores and/or updates R packages using renvvv functions."
@@ -30,7 +30,7 @@ USE_PAK=false
 DEBUG_RENV=false
 
 # Parse command-line arguments
-while [[ "$#" -gt 0 ]]; do
+while [ "$#" -gt 0 ]; do
     case "$1" in
         -r|--restore)
             RESTORE=true
@@ -41,7 +41,7 @@ while [[ "$#" -gt 0 ]]; do
             shift
             ;;
         -e|--exclude)
-             if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+             if [ -n "${2:-}" ] && case "$2" in -*) false;; *) true;; esac; then
                 PKG_EXCLUDE="$2"
                 shift 2
             else
@@ -49,11 +49,11 @@ while [[ "$#" -gt 0 ]]; do
             fi
             ;;
         -d|--directory)
-            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+            if [ -n "${2:-}" ] && case "$2" in -*) false;; *) true;; esac; then
                 PROJECT_DIR="$2"
                 shift 2
             else
-                echo "❌ --directory requires a directory path argument."
+                echo "[ERROR] --directory requires a directory path argument."
                 usage 1
             fi
             ;;
@@ -73,7 +73,7 @@ while [[ "$#" -gt 0 ]]; do
             usage
             ;;
         *)
-            echo "❌ Unknown parameter passed: $1"
+            echo "[ERROR] Unknown parameter passed: $1"
             usage 1
             ;;
     esac
@@ -81,7 +81,7 @@ done
 
 debug() {
     if [ "$DEBUG" = true ]; then
-        echo "🐛 DEBUG: $1"
+        echo "DEBUG: $1"
     fi
 }
 
@@ -106,16 +106,16 @@ install_renv() {
 
 # Activate project
 renv_activate() {
-    echo "🔍 Activating project"
+    echo "Activating project"
     set_debug_renv
     Rscript -e "
         tryCatch(
             renv::activate(),
             error = function(e) {
-                message('⚠️  Activation threw error: ', e)
+                message('[WARN] Activation threw error: ', e)
             }
         )"
-    echo "✅ Activation process attempted"
+    echo "[OK] Activation process attempted"
     echo "---------------------------------------------"
 }
 
@@ -139,13 +139,13 @@ restore_renv() {
         tryCatch(
             renv::restore(packages = 'renv', transactional = TRUE),
             error = function(e) {
-                message('⚠️  Restore failed: ', e)
+                message('[WARN] Restore failed: ', e)
             }
         )"
 }
 
 install_pak() {
-    echo "🔍 Installing pak"
+    echo "Installing pak"
     set_debug_renv
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
     if [ "$renv_config_pak_orig" = "true" ]; then
@@ -156,25 +156,25 @@ install_pak() {
     tryCatch(
         {
             if (isFALSE(requireNamespace('pak', quietly = TRUE))) {
-                message('🔍 pak not found. Installing pak...')
+                message('pak not found. Installing pak...')
                 install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/"${version}"/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
             } else {
-                message('✅ pak is already installed.')
+                message('[OK] pak is already installed.')
             }
         },
         error = function(e) {
-            message('⚠️  Installation failed: ', e)
+            message('[WARN] Installation failed: ', e)
         }
     )"
     if [ "$renv_config_pak_orig" = "true" ]; then
         export RENV_CONFIG_PAK_ENABLED=true
     fi
-    echo "✅ Installation process attempted"
+    echo "[OK] Installation process attempted"
     echo "---------------------------------------------"
 }
 
 install_pkg() {
-    echo "🔍 Installing $1"
+    echo "Installing $1"
     set_debug_renv
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
     if [ "$renv_config_pak_orig" = "true" ]; then
@@ -184,43 +184,43 @@ install_pkg() {
     tryCatch(
         {
             if (isFALSE(requireNamespace('$1', quietly = TRUE))) {
-                message('🔍 $1 not found. Installing $1...')
+                message('$1 not found. Installing $1...')
                 utils::install.packages('$1', repos = 'https://cloud.r-project.org')
             } else {
-                message('✅ $1 is already installed.')
+                message('[OK] $1 is already installed.')
             }
         },
         error = function(e) {
-            message('⚠️  Installation failed: ', e)
+            message('[WARN] Installation failed: ', e)
         }
     )"
     if [ "$renv_config_pak_orig" = "true" ]; then
         export RENV_CONFIG_PAK_ENABLED=true
     fi
-    echo "✅ Installation process attempted"
+    echo "[OK] Installation process attempted"
     echo "---------------------------------------------"
 }
 
 install_pak_bioc() {
-    echo "🔍 Installing pak and BiocManager"
+    echo "Installing pak and BiocManager"
     set_debug_renv
     install_pak
     install_pkg BiocManager
 }
 
 install_gitcreds() {
-    echo "🔍 Installing gitcreds for authentication"
+    echo "Installing gitcreds for authentication"
     set_debug_renv
     
     # Check if gitcreds is already installed in the project library
     local gitcreds_installed=$(Rscript -e "cat(isTRUE(requireNamespace('gitcreds', quietly = TRUE)))" 2>/dev/null || echo "FALSE")
     
     if [ "$gitcreds_installed" = "TRUE" ]; then
-        echo "✅ gitcreds is already installed."
+        echo "[OK] gitcreds is already installed."
         return 0
     fi
     
-    echo "📦 gitcreds not found. Installing gitcreds..."
+    echo "gitcreds not found. Installing gitcreds..."
     
     # Temporarily disable pak for gitcreds installation to avoid conflicts
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
@@ -233,19 +233,19 @@ install_gitcreds() {
     tryCatch(
         {
             if (isFALSE(requireNamespace('gitcreds', quietly = TRUE))) {
-                message('🔍 Installing gitcreds from CRAN...')
+                message('Installing gitcreds from CRAN...')
                 utils::install.packages('gitcreds', repos = 'https://cloud.r-project.org')
-                message('✅ gitcreds installed successfully.')
+                message('[OK] gitcreds installed successfully.')
             } else {
-                message('✅ gitcreds is already installed.')
+                message('[OK] gitcreds is already installed.')
             }
         },
         error = function(e) {
-            message('⚠️  gitcreds installation failed: ', e)
-            message('⚠️  Continuing without gitcreds - GitHub token authentication will still be attempted.')
+            message('[WARN] gitcreds installation failed: ', e)
+            message('[WARN] Continuing without gitcreds - GitHub token authentication will still be attempted.')
         }
     )" || {
-        echo "⚠️  gitcreds installation encountered an error, but continuing..."
+        echo "[WARN] gitcreds installation encountered an error, but continuing..."
     }
     
     # Restore original pak setting
@@ -257,7 +257,7 @@ install_gitcreds() {
 }
 
 restore() {
-    echo "🔄 Attempting to restore/update packages using renvvv"
+    echo "Attempting to restore/update packages using renvvv"
     set_debug_renv
 
     # Export PKG_EXCLUDE for use in R script
@@ -267,15 +267,15 @@ restore() {
     local renvvv_function=""
     if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
         renvvv_function="renvvv::renvvv_restore_and_update(skip = skip_packages)"
-        echo "ℹ️  Both restore and update requested - using renvvv_restore_and_update()"
+        echo "[INFO] Both restore and update requested - using renvvv_restore_and_update()"
     elif [ "$RESTORE" = "true" ]; then
         renvvv_function="renvvv::renvvv_restore(skip = skip_packages)"
-        echo "ℹ️  Restore requested - using renvvv_restore()"
+        echo "[INFO] Restore requested - using renvvv_restore()"
     elif [ "$UPDATE" = "true" ]; then
         renvvv_function="renvvv::renvvv_update(skip = skip_packages)"
-        echo "ℹ️  Update requested - using renvvv_update()"
+        echo "[INFO] Update requested - using renvvv_update()"
     else
-        echo "⚠️  Neither restore nor update requested. Skipping."
+        echo "[WARN] Neither restore nor update requested. Skipping."
         return 0
     fi
 
@@ -300,36 +300,36 @@ restore() {
         }
 
         if (length(skip_packages) > 0) {
-            message('📦 Skipping packages: ', paste(skip_packages, collapse = ', '))
+            message('Skipping packages: ', paste(skip_packages, collapse = ', '))
         }
 
         tryCatch(
             $renvvv_function,
             error = function(e) {
-                message('⚠️  renvvv operation failed: ', e)
+                message('[WARN] renvvv operation failed: ', e)
                 quit(status = 1)
             }
         )
     "
-    echo "✅ Restore/update process attempted"
+    echo "[OK] Restore/update process attempted"
     echo "---------------------------------------------"
 }
 
 run_custom_scripts() {
     set_debug_renv
     if [ -f "renv-cache-renv.sh" ]; then
-        echo "🔍 Found shell script"
+        echo "Found shell script"
         if ! ./renv-cache-renv.sh "$PKG_EXCLUDE"; then
-            echo "⚠️  Project-specific shell script failed"
+            echo "[WARN] Project-specific shell script failed"
             echo "---------------------------------------------"
         fi
     fi
 
     if [ -f "renv-cache-renv.R" ]; then
-        echo "🔍 Found R script"
+        echo "Found R script"
         cd "$PROJECT_DIR"
         if ! Rscript renv-cache-renv.R "$PKG_EXCLUDE"; then
-            echo "⚠️  Project-specific R script failed"
+            echo "[WARN] Project-specific R script failed"
             echo "---------------------------------------------"
         fi
     fi
@@ -343,12 +343,12 @@ main() {
 
     ORIG_DIR=$(pwd)
     PROJECT_NAME=$(basename "$PROJECT_DIR")
-    echo "🚀 Processing project: $PROJECT_NAME"
+    echo "Processing project: $PROJECT_NAME"
     trap 'cd "$ORIG_DIR"' EXIT
     cd "$PROJECT_DIR"
 
     if [ ! -f "renv.lock" ]; then
-        echo "⚠️  No renv.lock found in $PROJECT_DIR. Skipping."
+        echo "[WARN] No renv.lock found in $PROJECT_DIR. Skipping."
         exit 0
     fi
 
@@ -360,7 +360,7 @@ main() {
     install_pak_bioc
     restore
     run_custom_scripts
-    echo "✅ Finished processing project: $PROJECT_NAME"
+    echo "[OK] Finished processing project: $PROJECT_NAME"
     echo "---------------------------------------------"
 }
 

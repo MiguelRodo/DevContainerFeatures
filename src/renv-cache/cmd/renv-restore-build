@@ -5,7 +5,7 @@ set -e
 
 # Function to display usage information
 usage() {
-    echo "ℹ️  Usage: $(basename "$0") [OPTIONS]"
+    echo "  Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Options:"
     echo "  -d, --directory                  Directory containing project directories. Default is '/usr/local/share/renv-cache/renv'."
@@ -35,7 +35,7 @@ USE_PAK=false
 RENV_DIR="/usr/local/share/renv-cache/renv"
 DEBUG_RENV=false
 
-while [[ "$#" -gt 0 ]]; do
+while [ "$#" -gt 0 ]; do
     case "$1" in
         -r|--restore)
             RESTORE=true
@@ -46,11 +46,11 @@ while [[ "$#" -gt 0 ]]; do
             shift
             ;;
         -e|--exclude)
-            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+            if [ -n "${2:-}" ] && case "$2" in -*) false;; *) true;; esac; then
                 PKG_EXCLUDE="$2"
                 shift 2
             else
-                echo "❌ --exclude requires a non-empty package name argument."
+                echo "[ERROR] --exclude requires a non-empty package name argument."
                 usage 1
             fi
             ;;
@@ -59,11 +59,11 @@ while [[ "$#" -gt 0 ]]; do
             shift
             ;;
         -d|--directory)
-            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+            if [ -n "${2:-}" ] && case "$2" in -*) false;; *) true;; esac; then
                 RENV_DIR="$2"
                 shift 2
             else
-                echo "❌ --directory requires a directory path argument."
+                echo "[ERROR] --directory requires a directory path argument."
                 usage 1
             fi
             ;;
@@ -79,7 +79,7 @@ while [[ "$#" -gt 0 ]]; do
             usage
             ;;
         *)
-            echo "❌ Unknown parameter passed: $1"
+            echo "[ERROR] Unknown parameter passed: $1"
             usage 1
             ;;
     esac
@@ -87,7 +87,7 @@ done
 
 debug() {
     if [ "$DEBUG" = true ]; then
-        echo "🐛 DEBUG: $1"
+        echo "DEBUG: $1"
     fi
 }
 
@@ -101,13 +101,13 @@ debug "DEBUG_RENV: $DEBUG_RENV"
 
 exit_early_if_needed() {
     if [ ! -d "$RENV_DIR" ]; then
-        echo "ℹ️ No 'renv/' directory found in '$RENV_DIR'."
+        echo "[INFO] No 'renv/' directory found in '$RENV_DIR'."
         exit 0
     fi
 
     # Check if there are subdirectories within `RENV_DIR`
     if [ -z "$(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d)" ]; then
-        echo "ℹ️ No projects found in '$RENV_DIR'."
+        echo "[INFO] No projects found in '$RENV_DIR'."
         exit 0
     fi
 }
@@ -158,18 +158,18 @@ restore_project() {
     fi
 
     # Log the command for debugging purposes
-    echo "🔧 Executing command: ${command[*]}"
+    echo "Executing command: ${command[*]}"
 
     # Execute the command with error handling
     if ! "${command[@]}"; then
-        echo "❌ renv-cache-renv-restore failed with command: ${command[*]}"
+        echo "[ERROR] renv-cache-renv-restore failed with command: ${command[*]}"
     fi
 }
 
 main() {
     exit_early_if_needed
     restore_projects
-    echo "🎉 All projects have had restoration attempted."
+    echo "[OK] All projects have had restoration attempted."
 }
 
 main

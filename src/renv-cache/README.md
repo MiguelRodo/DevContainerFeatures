@@ -187,6 +187,27 @@ This is useful when:
 - You want to manually manage specific package versions
 - Some packages are not needed for your workflow
 
+## Supported Linux Distributions
+
+This feature is designed to work on any Linux distribution where R and bash are available. The install script will automatically install bash if it is not already present, using the system's package manager.
+
+**Tested:**
+- Ubuntu/Debian (including Rocker R containers)
+
+**Supported (bash auto-installed if missing):**
+- Alpine Linux (via `apk`)
+- Ubuntu/Debian (via `apt-get`)
+- RHEL/CentOS/Fedora (via `dnf` or `yum`)
+
+**Requirements:**
+- R must be installed and available in `PATH`
+- One of the supported package managers must be available (for bash auto-installation)
+- Internet access during image build (for package installation)
+
+**Notes:**
+- The `Renviron.site` path is determined dynamically via `Rscript`, so non-standard R installation paths are supported.
+- Output uses plain text markers instead of emojis for compatibility with minimal containers that may lack UTF-8 locale support.
+
 ## Acknowledgments
 
 This project incorporates code from [AwesomeProject](https://github.com/rocker-org/devcontainer-features), which is licensed under the MIT License.
