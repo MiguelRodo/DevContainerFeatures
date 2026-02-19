@@ -30,8 +30,8 @@
 #    GITHUB_TOKEN from GitHub Actions.
 
 # Load configuration from environment file if it exists
-if [ -f /usr/local/etc/config-r-github-pat.env ]; then
-    source /usr/local/etc/config-r-github-pat.env
+if [ -f /usr/local/etc/renv-cache-github-pat.env ]; then
+    source /usr/local/etc/renv-cache-github-pat.env
 fi
 
 # Set defaults if not provided

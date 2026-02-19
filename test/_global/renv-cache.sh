@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Test file for config-r feature with renvvv integration
+# Test file for renv-cache feature with renvvv integration
 #
 # This test file is executed against a running container constructed
-# from the value of 'config-r' in the tests/_global/scenarios.json file.
+# from the value of 'renv-cache' in the tests/_global/scenarios.json file.
 #
 # This test can be run with the following command (from the root of this repo)
 #    devcontainer features test --global-scenarios-only .
@@ -20,13 +20,13 @@ source dev-container-features-test-lib
 check "R is installed" bash -c "which R"
 check "Rscript is available" bash -c "which Rscript"
 
-# Check that config-r scripts are installed
-check "config-r-post-create exists" bash -c "test -f /usr/local/bin/config-r-post-create"
-check "config-r-post-create is executable" bash -c "test -x /usr/local/bin/config-r-post-create"
-check "config-r-renv-restore exists" bash -c "test -f /usr/local/bin/config-r-renv-restore"
-check "config-r-renv-restore is executable" bash -c "test -x /usr/local/bin/config-r-renv-restore"
-check "config-r-renv-restore-build exists" bash -c "test -f /usr/local/bin/config-r-renv-restore-build"
-check "config-r-renv-restore-build is executable" bash -c "test -x /usr/local/bin/config-r-renv-restore-build"
+# Check that renv-cache scripts are installed
+check "renv-cache-post-create exists" bash -c "test -f /usr/local/bin/renv-cache-post-create"
+check "renv-cache-post-create is executable" bash -c "test -x /usr/local/bin/renv-cache-post-create"
+check "renv-cache-renv-restore exists" bash -c "test -f /usr/local/bin/renv-cache-renv-restore"
+check "renv-cache-renv-restore is executable" bash -c "test -x /usr/local/bin/renv-cache-renv-restore"
+check "renv-cache-renv-restore-build exists" bash -c "test -f /usr/local/bin/renv-cache-renv-restore-build"
+check "renv-cache-renv-restore-build is executable" bash -c "test -x /usr/local/bin/renv-cache-renv-restore-build"
 
 # Check that renvvv is installed
 check "renvvv is installed" Rscript -e "if (!requireNamespace('renvvv', quietly = TRUE)) quit(status = 1)"
@@ -38,10 +38,10 @@ check "remotes is installed" Rscript -e "if (!requireNamespace('remotes', quietl
 check "renv is installed" Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) quit(status = 1)"
 
 # Test that renv-restore help works
-check "renv-restore help works" bash -c "/usr/local/bin/config-r-renv-restore --help"
+check "renv-restore help works" bash -c "/usr/local/bin/renv-cache-renv-restore --help"
 
 # Test that renv-restore-build help works
-check "renv-restore-build help works" bash -c "/usr/local/bin/config-r-renv-restore-build --help"
+check "renv-restore-build help works" bash -c "/usr/local/bin/renv-cache-renv-restore-build --help"
 
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.

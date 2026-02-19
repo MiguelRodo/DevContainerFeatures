@@ -2,11 +2,28 @@
 
 This repository contains a collection of DevContainer Features - reusable development container configuration modules that can be referenced in `devcontainer.json` files.
 
+## Important: Keeping These Instructions Updated
+
+**These copilot instructions should always be considered for updates when:**
+- New features are added to the repository
+- Existing features are renamed, modified, or removed
+- Feature behavior changes significantly
+- New development patterns or best practices emerge
+- Common errors or troubleshooting scenarios are discovered
+
+When updating these instructions, follow best practices for writing copilot instructions:
+- Be concise and specific
+- Use clear examples with code snippets
+- Organize information hierarchically (most important/common first)
+- Include actual commands that can be copy-pasted
+- Document common pitfalls and their solutions
+- Keep the structure consistent and navigable
+
 ## Quick Reference
 
 ### Available Features
 - `apptainer` - Install Apptainer for HPC containerization
-- `config-r` - Configure R for VS Code development with renv support
+- `renv-cache` - Configure R with renv cache for VS Code development
 - `fit-sne` - Install FIt-SNE for dimensionality reduction
 - `mermaid` - Install Mermaid CLI for diagram generation
 - `repos` - Manage multiple Git repositories automatically
@@ -167,7 +184,7 @@ devcontainer features test --global-scenarios-only .
 
 **Filter specific scenarios**:
 ```bash
-devcontainer features test --global-scenarios-only . --filter config-r
+devcontainer features test --global-scenarios-only . --filter renv-cache
 ```
 
 ### Writing Tests
@@ -379,16 +396,16 @@ echo "tzdata tzdata/Zones/America select New_York" | debconf-set-selections
 apt-get install -y tzdata
 ```
 
-### Error: renv cache or library path issues (config-r feature)
+### Error: renv cache or library path issues (renv-cache feature)
 **Cause**: renv paths need to persist across container rebuilds
 
-**Solution**: The config-r feature uses a two-phase configuration:
+**Solution**: The renv-cache feature uses a two-phase configuration:
 1. **Build phase**: Cache in `/renv/cache` (persists in image)
 2. **Runtime phase**: Cache in `/workspaces/.cache/renv:/renv/cache` (workspace + image)
 
 Paths are configured via `Renviron.site` at `$R_HOME/lib/R/etc/Renviron.site`
 
-See `src/config-r/NOTES.md` for detailed documentation.
+See `src/renv-cache/NOTES.md` for detailed documentation.
 
 ## CI/CD Workflows
 
@@ -411,8 +428,8 @@ See `src/config-r/NOTES.md` for detailed documentation.
 
 ## Feature-Specific Notes
 
-### config-r
-- Complex renv caching mechanism - see `src/config-r/NOTES.md`
+### renv-cache
+- Complex renv caching mechanism - see `src/renv-cache/NOTES.md`
 - Requires R base image (e.g., `ghcr.io/rocker-org/devcontainer/r-ver:4.4`)
 - Modifies system-wide R configuration files
 - Uses `postCreateCommand` for package restoration

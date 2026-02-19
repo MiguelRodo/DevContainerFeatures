@@ -13,7 +13,7 @@ UPDATE="${UPDATE:-false}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
-RENV_DIR="${RENVDIR:-"/usr/local/share/config-r/renv"}"
+RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 
 
@@ -26,7 +26,7 @@ debug() {
 
 # Function to create the post-create command path and initialize the command file
 create_path_post_create_command() {
-    PATH_POST_CREATE_COMMAND=/usr/local/bin/config-r-post-create
+    PATH_POST_CREATE_COMMAND=/usr/local/bin/renv-cache-post-create
     initialize_command_file "$PATH_POST_CREATE_COMMAND"
 }
 
@@ -51,13 +51,13 @@ copy_and_set_execute_bit() {
     local script_name="$1"
 
     # Copy the script to /usr/local/bin with a prefixed name
-    if ! cp "cmd/$script_name" "/usr/local/bin/config-r-$script_name"; then
+    if ! cp "cmd/$script_name" "/usr/local/bin/renv-cache-$script_name"; then
         echo "Failed to copy cmd/$script_name"
     fi
 
     # Set execute permissions on the copied script
-    if ! chmod 755 "/usr/local/bin/config-r-$script_name"; then
-        echo "Failed to set execute bit for /usr/local/bin/config-r-$script_name"
+    if ! chmod 755 "/usr/local/bin/renv-cache-$script_name"; then
+        echo "Failed to set execute bit for /usr/local/bin/renv-cache-$script_name"
     fi
 }
 
@@ -135,29 +135,29 @@ ensure_github_pat_set() {
         copy_and_set_execute_bit bashrc-d
 
         # Append command to post-create file with error handling
-        echo -e "/usr/local/bin/config-r-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/config-r-bashrc-d'}\n" >> "$PATH_POST_CREATE_COMMAND"
+        echo -e "/usr/local/bin/renv-cache-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/renv-cache-bashrc-d'}\n" >> "$PATH_POST_CREATE_COMMAND"
 
         # Copy and set execute permissions for github-pat script
         copy_and_set_execute_bit github-pat
 
         # Create environment file for github-pat options
         mkdir -p /usr/local/etc
-        cat > /usr/local/etc/config-r-github-pat.env << EOF
+        cat > /usr/local/etc/renv-cache-github-pat.env << EOF
 ELEVATE_GITHUB_TOKEN=$ELEVATE_GITHUB_TOKEN
 OVERRIDE_GITHUB_TOKEN=$OVERRIDE_GITHUB_TOKEN
 EOF
 
         # Append command to post-create file with sudo and error handling
-        if ! echo -e "sudo /usr/local/bin/config-r-github-pat || \n    {echo 'Failed to run /usr/local/bin/config-r-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
-            echo "❌ Failed to add config-r-github-pat to post-create"
+        if ! echo -e "sudo /usr/local/bin/renv-cache-github-pat || \n    {echo 'Failed to run /usr/local/bin/renv-cache-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
+            echo "❌ Failed to add renv-cache-github-pat to post-create"
         else
-            echo "✅ Added config-r-github-pat to post-create"
+            echo "✅ Added renv-cache-github-pat to post-create"
         fi
 
-        if ! echo -e 'mkdir -p "$HOME"/.bashrc.d; cp /usr/local/bin/config-r-github-pat "$HOME"/.bashrc.d/' >> "$PATH_POST_CREATE_COMMAND"; then
-            echo "❌ Failed to add config-r-github-pat to post-create"
+        if ! echo -e 'mkdir -p "$HOME"/.bashrc.d; cp /usr/local/bin/renv-cache-github-pat "$HOME"/.bashrc.d/' >> "$PATH_POST_CREATE_COMMAND"; then
+            echo "❌ Failed to add renv-cache-github-pat to post-create"
         else
-            echo "✅ Added config-r-github-pat to post-create"
+            echo "✅ Added renv-cache-github-pat to post-create"
         fi
     fi
 }
@@ -182,7 +182,7 @@ restore() {
     fi
 
     # Construct the command as an array
-    local command=(/usr/local/bin/config-r-renv-restore-build)
+    local command=(/usr/local/bin/renv-cache-renv-restore-build)
 
     # Append options based on conditions
     if [ "$RESTORE" = "true" ]; then
@@ -220,7 +220,7 @@ restore() {
 
     # Execute the command with error handling
     if ! "${command[@]}"; then
-        echo "❌ config-r-renv-restore-build failed with command: ${command[*]}"
+        echo "❌ renv-cache-renv-restore-build failed with command: ${command[*]}"
         exit 0
     fi
 }

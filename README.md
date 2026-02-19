@@ -7,7 +7,7 @@ A collection of reusable DevContainer Features for various development tools and
 This repository contains the following DevContainer Features:
 
 - **[apptainer](#apptainer)** - Install Apptainer for HPC containerization
-- **[config-r](#config-r)** - Configure R for VS Code development
+- **[renv-cache](#renv-cache)** - Configure R with renv cache
 - **[fit-sne](#fit-sne)** - Install FIt-SNE for dimensionality reduction
 - **[mermaid](#mermaid)** - Install Mermaid CLI for diagram generation
 - **[repos](#repos)** - Manage multiple Git repositories
@@ -48,9 +48,9 @@ Installs [Apptainer](https://apptainer.org/), a container system widely used in 
 
 ---
 
-## config-r
+## renv-cache
 
-Configures R for development in VS Code, including library paths, GitHub tokens, and package restoration.
+Configures R for development in VS Code, including library paths, GitHub tokens, and package restoration with renv cache.
 
 ### Example
 
@@ -58,7 +58,7 @@ Configures R for development in VS Code, including library paths, GitHub tokens,
 {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+        "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
             "setRLibPaths": true,
             "restore": true
         }
@@ -74,7 +74,7 @@ Configures R for development in VS Code, including library paths, GitHub tokens,
 | `ensureGitHubPatSet` | boolean | `true` | If GITHUB_PAT is not set, attempt to set it from GH_TOKEN or GITHUB_TOKEN |
 | `restore` | boolean | `true` | Whether to run package restoration using `renvvv::renvvv_restore()` |
 | `update` | boolean | `false` | Whether to run package update using `renvvv::renvvv_update()`. If both restore and update are true, `renvvv::renvvv_restore_and_update()` is used |
-| `renvDir` | string | `"/usr/local/share/config-r/renv"` | Path to directory containing subdirectories with `renv.lock` files |
+| `renvDir` | string | `"/usr/local/share/renv-cache/renv"` | Path to directory containing subdirectories with `renv.lock` files |
 | `pkgExclude` | string | `""` | Comma-separated list of packages to exclude from renv snapshot restore |
 | `usePak` | boolean | `false` | Whether to use `pak` for package installation |
 | `debug` | boolean | `false` | Print debug information during package restore |

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test file for config-r feature with token management disabled
+# Test file for renv-cache feature with token management disabled
 #
 # This test verifies that when all token management options are disabled,
 # the github-pat script doesn't modify any environment variables.
@@ -10,13 +10,13 @@ set -e
 # Optional: Import test library bundled with the devcontainer CLI
 source dev-container-features-test-lib
 
-echo "🧪 Testing config-r with token management disabled"
+echo "🧪 Testing renv-cache with token management disabled"
 
 # When ensureGitHubPatSet is false, the github-pat script should not be installed
-check "config-r-github-pat should not exist" bash -c "! test -f /usr/local/bin/config-r-github-pat"
+check "renv-cache-github-pat should not exist" bash -c "! test -f /usr/local/bin/renv-cache-github-pat"
 
 # The bashrc.d directory should still not have the github-pat script
-check "github-pat should not be in bashrc.d" bash -c "! test -f $HOME/.bashrc.d/config-r-github-pat"
+check "github-pat should not be in bashrc.d" bash -c "! test -f $HOME/.bashrc.d/renv-cache-github-pat"
 
 # Verify that GH_TOKEN is still set (from remoteEnv)
 echo "🔍 Checking GH_TOKEN: ${GH_TOKEN:0:20}..."

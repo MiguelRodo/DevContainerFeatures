@@ -1,9 +1,9 @@
 {
-    "name": "Configure R",
-    "id": "config-r",
+    "name": "renv cache",
+    "id": "renv-cache",
     "version": "2.6.0",
-    "description": "Configure R",
-    "postCreateCommand": "/usr/local/bin/config-r-post-create",
+    "description": "Configure R with renv cache",
+    "postCreateCommand": "/usr/local/bin/renv-cache-post-create",
     "options": {
         "setRLibPaths": {
             "type": "boolean",
@@ -37,8 +37,8 @@
         },
         "renvDir": {
             "type": "string",
-            "description": "Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/config-r/renv` if the environment variable is not set.",
-            "default": "/usr/local/share/config-r/renv"
+            "description": "Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set.",
+            "default": "/usr/local/share/renv-cache/renv"
         },
         "pkgExclude": {
             "type": "string",
