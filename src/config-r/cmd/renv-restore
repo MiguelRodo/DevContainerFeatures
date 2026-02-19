@@ -18,7 +18,7 @@ usage() {
     echo "  -D, --debug                      Enable debug mode."
     echo "  --debug-renv                     Enable debug mode for renv."
     echo "  -h, --help                       Display this help message."
-    exit 1
+    exit "${1:-0}"
 }
 
 PROJECT_DIR="."
@@ -54,7 +54,7 @@ while [[ "$#" -gt 0 ]]; do
                 shift 2
             else
                 echo "❌ --directory requires a directory path argument."
-                usage
+                usage 1
             fi
             ;;
         -p|--pak)
@@ -74,7 +74,7 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         *)
             echo "❌ Unknown parameter passed: $1"
-            usage
+            usage 1
             ;;
     esac
 done
