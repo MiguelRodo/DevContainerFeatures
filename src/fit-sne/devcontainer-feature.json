@@ -1,7 +1,7 @@
 {
     "name": "Install FIt-SNE",
     "id": "fit-sne",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Installs FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source.",
     "options": {
         "version": {
