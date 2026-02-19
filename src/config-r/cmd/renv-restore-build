@@ -23,7 +23,7 @@ usage() {
     echo "    - Updating packages using renvvv::renvvv_update() (if update is enabled)."
     echo "    - Using renvvv::renvvv_restore_and_update() if both restore and update are enabled."
     echo "    - Running project-specific scripts if present (config-r-renv.R and config-r-renv.sh)."
-    exit 1
+    exit "${1:-0}"
 }
 
 # Initialize variables
@@ -51,7 +51,7 @@ while [[ "$#" -gt 0 ]]; do
                 shift 2
             else
                 echo "❌ --exclude requires a non-empty package name argument."
-                usage
+                usage 1
             fi
             ;;
         -p|--pak)
@@ -64,7 +64,7 @@ while [[ "$#" -gt 0 ]]; do
                 shift 2
             else
                 echo "❌ --directory requires a directory path argument."
-                usage
+                usage 1
             fi
             ;;
         -D|--debug)
@@ -80,7 +80,7 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         *)
             echo "❌ Unknown parameter passed: $1"
-            usage
+            usage 1
             ;;
     esac
 done
