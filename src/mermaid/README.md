@@ -1,6 +1,7 @@
+
 # Mermaid (mermaid)
 
-Installs Mermaid CLI to generate diagrams from `.mmd` files. Sets up a non-root user and Puppeteer configuration for headless rendering.
+Installs Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration.
 
 ## Example Usage
 
@@ -12,13 +13,14 @@ Installs Mermaid CLI to generate diagrams from `.mmd` files. Sets up a non-root 
 
 ## Options
 
-| Option | Description | Type | Default |
-|---|---|---|---|
-| userName | Specify the username under which Mermaid CLI will run. | string | "mermaiduser" |
-| puppeteerConfigDir | Directory to store Puppeteer configuration files. | string | "/usr/local/share/mermaid-config" |
-| nodeVersion | Node.js version to install if missing (e.g. "lts", "20"). | string | "lts" |
+| Options Id | Description | Type | Default Value |
+|-----|-----|-----|-----|
+| userName | Specify the username under which Mermaid CLI will run. | string | mermaiduser |
+| puppeteerConfigDir | Directory to store Puppeteer configuration files. | string | /usr/local/share/mermaid-config |
+| nodeVersion | Node.js version to install if not present (e.g., 'lts', '20', '18'). | string | lts |
 
-## Notes
 
-- This feature requires Node.js. If not present, it will attempt to install the specified version.
-- It installs system dependencies required for Puppeteer.
+
+---
+
+_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/MiguelRodo/DevContainerFeatures/blob/main/src/mermaid/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
