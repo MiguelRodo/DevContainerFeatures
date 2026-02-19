@@ -31,7 +31,7 @@ if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
     # Setup APT repository
     echo "Setting up APT repository..."
     curl -fsSL https://raw.githubusercontent.com/MiguelRodo/apt-miguelrodo/main/KEY.gpg \
-      -o /usr/share/keyrings/miguelrodo-repos.gpg
+    | gpg --dearmor -o /usr/share/keyrings/miguelrodo-repos.gpg
     
     echo "deb [signed-by=/usr/share/keyrings/miguelrodo-repos.gpg] https://raw.githubusercontent.com/MiguelRodo/apt-miguelrodo/main/ ./" \
       > /etc/apt/sources.list.d/miguelrodo-repos.list
@@ -132,7 +132,7 @@ EOF
 else
   cat > "$POST_START_SCRIPT" << 'EOF'
 #!/usr/bin/env bash
-repos
+repos setup
 EOF
 fi
 

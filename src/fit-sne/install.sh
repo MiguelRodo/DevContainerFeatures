@@ -50,7 +50,10 @@ cd FIt-SNE
 
 if [ "${FITSNE_VERSION}" != "latest" ] && [ "${FITSNE_VERSION}" != "" ]; then
     echo "Checking out version ${FITSNE_VERSION}..."
-    git checkout "${FITSNE_VERSION}"
+    # Try with 'v' prefix first, then without
+    if ! git checkout "v${FITSNE_VERSION}" 2>/dev/null; then
+        git checkout "${FITSNE_VERSION}"
+    fi
 fi
 
 echo "Compiling FIt-SNE..."
