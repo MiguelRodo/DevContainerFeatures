@@ -132,7 +132,14 @@ EOF
 else
   cat > "$POST_START_SCRIPT" << 'EOF'
 #!/usr/bin/env bash
-repos setup
+# Check if repos.list exists in the workspace
+REPOS_LIST="${REPOS_LIST:-repos.list}"
+if [ -f "$REPOS_LIST" ]; then
+  repos setup
+else
+  echo "Info: No repos.list file found. Skipping repository setup."
+  echo "Create a repos.list file and run 'repos setup' to clone repositories."
+fi
 EOF
 fi
 
