@@ -161,3 +161,155 @@ This is useful when:
 ## Acknowledgments
 
 This project incorporates code from [AwesomeProject](https://github.com/rocker-org/devcontainer-features), which is licensed under the MIT License.
+
+## GitHub Token Management
+
+### The Problem
+
+R development tools (`renv`, `remotes`, `pak`, etc.) search for GitHub authentication tokens in a specific order:
+
+1. `GITHUB_TOKEN`
+2. `GH_TOKEN`
+3. `GITHUB_PAT`
+
+This precedence causes problems in GitHub Actions and Codespaces because:
+
+- GitHub Actions automatically provides a `GITHUB_TOKEN` environment variable
+- This automatic token has **limited permissions** (typically read-only for public repos)
+- It often **cannot access private repositories** or install private packages
+- Even when a more permissive token (`GH_TOKEN` or `GITHUB_PAT`) is available in the environment, R tools will use the restricted `GITHUB_TOKEN` first
+- This leads to confusing failures where package installation fails despite having a valid token available
+
+### The Solution
+
+This feature provides three complementary strategies to manage GitHub tokens:
+
+#### 1. `ensureGitHubPatSet` (default: `true`)
+
+Always sets `GITHUB_PAT` from the best available token if it's not already set.
+
+**Token priority:** `GITHUB_PAT` (if already set) > `GH_TOKEN` > `GITHUB_TOKEN`
+
+**Use case:** Ensures R tools can fall back to `GITHUB_PAT` if they check it (though most prioritize `GITHUB_TOKEN`).
+
+#### 2. `elevateGitHubToken` (default: `true`)
+
+When a more permissive token (`GH_TOKEN` or `GITHUB_PAT`) is available, override `GITHUB_TOKEN` to match it.
+
+**How it works:**
+- If `GH_TOKEN` or `GITHUB_PAT` exists, set `GITHUB_TOKEN` to that value
+- This ensures R tools find the better token first (since they check `GITHUB_TOKEN` before others)
+- Does not override if only `GITHUB_TOKEN` is available
+
+**Use case:** **Recommended for most scenarios.** Automatically "elevates" the GitHub Actions automatic token to a more permissive one when available.
+
+**Example:**
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+      "elevateGitHubToken": true
+    }
+  }
+}
+```
+
+#### 3. `overrideGitHubToken` (default: `false`)
+
+Force `GITHUB_TOKEN` to always use `GH_TOKEN` or `GITHUB_PAT`, regardless of what `GITHUB_TOKEN` is currently set to.
+
+**How it works:**
+- Always replaces `GITHUB_TOKEN` with `GH_TOKEN` or `GITHUB_PAT` (in that priority order)
+- More aggressive than `elevateGitHubToken`
+- Use when you **always** want to override the automatic GitHub Actions token
+
+**Use case:** When you need to guarantee that the automatic `GITHUB_TOKEN` is never used, even if it's the only token available.
+
+**Example:**
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+      "overrideGitHubToken": true
+    }
+  }
+}
+```
+
+### Common Scenarios
+
+#### GitHub Actions with Private Packages
+
+**Problem:** Need to install private R packages from GitHub, but the automatic `GITHUB_TOKEN` doesn't have access.
+
+**Solution:**
+1. Create a Personal Access Token (PAT) with `repo` scope
+2. Add it as a repository secret (e.g., `MY_GITHUB_PAT`)
+3. Pass it to the devcontainer:
+
+```yaml
+# .github/workflows/build.yml
+- name: Build devcontainer
+  env:
+    GH_TOKEN: ${{ secrets.MY_GITHUB_PAT }}
+  run: |
+    devcontainer build
+```
+
+```json
+// .devcontainer/devcontainer.json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+      "elevateGitHubToken": true  // Will use GH_TOKEN instead of automatic GITHUB_TOKEN
+    }
+  }
+}
+```
+
+#### Codespaces
+
+**Problem:** Codespaces provides a limited `GITHUB_TOKEN` that can't access private repos.
+
+**Solution:**
+1. Create a PAT with necessary scopes
+2. Add it as a Codespaces secret named `GH_TOKEN`
+3. The feature will automatically elevate `GITHUB_TOKEN` to use your PAT
+
+#### Interactive Development
+
+**Problem:** Want to ensure the best token is always used during interactive R sessions.
+
+**Solution:**
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+      "ensureGitHubPatSet": true,
+      "elevateGitHubToken": true
+    }
+  }
+}
+```
+
+### Disabling Token Management
+
+If you want to manage tokens manually:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+      "ensureGitHubPatSet": false,
+      "elevateGitHubToken": false,
+      "overrideGitHubToken": false
+    }
+  }
+}
+```
+
+### References
+
+- [renv issue #1285: Token lookup order and private packages](https://github.com/r-lib/renv/issues/1285)
+- [GitHub Actions: Automatic token authentication](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
+- [GitHub Actions: Permissions for the GITHUB_TOKEN](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
