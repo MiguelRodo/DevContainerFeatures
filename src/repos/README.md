@@ -5,6 +5,8 @@ Installs the 'repos' CLI tool to manage multiple Git repositories. By default, i
 
 **Now supports Ubuntu, Debian, Alpine, and other Linux distributions!**
 
+**Now supports Ubuntu, Debian, Alpine, and other Linux distributions!**
+
 ## Example Usage
 
 ```json
