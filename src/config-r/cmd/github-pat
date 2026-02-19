@@ -1,9 +1,90 @@
 #!/usr/bin/env bash
 
+# GitHub Token Management for R Tools
+#
+# This script manages GitHub authentication tokens for R development tools.
+# Many R packages (renv, remotes, etc.) search for tokens in this order:
+#   1. GITHUB_TOKEN
+#   2. GH_TOKEN
+#   3. GITHUB_PAT
+#
+# However, GitHub Actions provides an automatic GITHUB_TOKEN with limited 
+# permissions that often cannot access private repositories or packages.
+# When a more permissive token is available (like GH_TOKEN or GITHUB_PAT),
+# we need to ensure R tools use it instead.
+#
+# This script implements three strategies:
+#
+# 1. ensureGitHubPatSet (always runs when enabled):
+#    Sets GITHUB_PAT from the best available token if it's not already set.
+#    Priority: GITHUB_PAT (if set) > GH_TOKEN > GITHUB_TOKEN
+#
+# 2. elevateGitHubToken (default: true):
+#    If a more permissive token (GH_TOKEN or GITHUB_PAT) exists,
+#    override GITHUB_TOKEN to match it. This ensures R tools find the
+#    better token first.
+#
+# 3. overrideGitHubToken (default: false):
+#    Force GITHUB_TOKEN to use GH_TOKEN or GITHUB_PAT, even if GITHUB_TOKEN
+#    is already set. Use only when you always want to override the automatic
+#    GITHUB_TOKEN from GitHub Actions.
+
+# Load configuration from environment file if it exists
+if [ -f /usr/local/etc/config-r-github-pat.env ]; then
+    source /usr/local/etc/config-r-github-pat.env
+fi
+
+# Set defaults if not provided
+ELEVATE_GITHUB_TOKEN="${ELEVATE_GITHUB_TOKEN:-true}"
+OVERRIDE_GITHUB_TOKEN="${OVERRIDE_GITHUB_TOKEN:-false}"
+
+# Determine the best available token in priority order
+# Priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN
+get_best_token() {
+    if [ -n "$GITHUB_PAT" ]; then
+        echo "$GITHUB_PAT"
+    elif [ -n "$GH_TOKEN" ]; then
+        echo "$GH_TOKEN"
+    elif [ -n "$GITHUB_TOKEN" ]; then
+        echo "$GITHUB_TOKEN"
+    else
+        echo ""
+    fi
+}
+
+# Determine the best non-GITHUB_TOKEN token
+# Priority: GITHUB_PAT > GH_TOKEN
+get_elevated_token() {
+    if [ -n "$GITHUB_PAT" ]; then
+        echo "$GITHUB_PAT"
+    elif [ -n "$GH_TOKEN" ]; then
+        echo "$GH_TOKEN"
+    else
+        echo ""
+    fi
+}
+
+# Main logic
+
+# 1. Always ensure GITHUB_PAT is set to the best available token
 if [ -z "$GITHUB_PAT" ]; then
-   if [ -n "$GH_TOKEN" ]; then
-       export GITHUB_PAT="$GH_TOKEN"
-   elif [ -n "$GITHUB_TOKEN" ]; then
-       export GITHUB_PAT="$GITHUB_TOKEN"
-   fi
+    BEST_TOKEN=$(get_best_token)
+    if [ -n "$BEST_TOKEN" ]; then
+        export GITHUB_PAT="$BEST_TOKEN"
+    fi
+fi
+
+# 2. Handle GITHUB_TOKEN elevation/override
+if [ "$OVERRIDE_GITHUB_TOKEN" = "true" ]; then
+    # Force override: always set GITHUB_TOKEN to GH_TOKEN or GITHUB_PAT if available
+    ELEVATED_TOKEN=$(get_elevated_token)
+    if [ -n "$ELEVATED_TOKEN" ]; then
+        export GITHUB_TOKEN="$ELEVATED_TOKEN"
+    fi
+elif [ "$ELEVATE_GITHUB_TOKEN" = "true" ]; then
+    # Elevate only: override GITHUB_TOKEN if a more permissive token exists
+    ELEVATED_TOKEN=$(get_elevated_token)
+    if [ -n "$ELEVATED_TOKEN" ]; then
+        export GITHUB_TOKEN="$ELEVATED_TOKEN"
+    fi
 fi

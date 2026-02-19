@@ -28,6 +28,48 @@
              }
         }
    },
+   "config-r-token-elevate": {
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+        "features": {
+            "config-r": {
+                "restore": false,
+                "elevateGitHubToken": true,
+                "overrideGitHubToken": false
+             }
+        },
+        "remoteEnv": {
+            "GITHUB_TOKEN": "gha_restricted_token",
+            "GH_TOKEN": "ghp_permissive_token"
+        }
+   },
+   "config-r-token-override": {
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+        "features": {
+            "config-r": {
+                "restore": false,
+                "elevateGitHubToken": false,
+                "overrideGitHubToken": true
+             }
+        },
+        "remoteEnv": {
+            "GITHUB_TOKEN": "gha_restricted_token",
+            "GITHUB_PAT": "ghp_pat_token"
+        }
+   },
+   "config-r-token-disabled": {
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+        "features": {
+            "config-r": {
+                "restore": false,
+                "ensureGitHubPatSet": false,
+                "elevateGitHubToken": false,
+                "overrideGitHubToken": false
+             }
+        },
+        "remoteEnv": {
+            "GH_TOKEN": "ghp_permissive_token"
+        }
+   },
   "mermaid_default": {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {

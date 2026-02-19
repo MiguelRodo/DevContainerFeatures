@@ -6,6 +6,8 @@ set -e
 # Configuration variables with default values
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
 ENSURE_GITHUB_PAT_SET="${ENSUREGITHUBPATSET:-true}"
+ELEVATE_GITHUB_TOKEN="${ELEVATEGITHUBTOKEN:-true}"
+OVERRIDE_GITHUB_TOKEN="${OVERRIDEGITHUBTOKEN:-false}"
 RESTORE="${RESTORE:-true}"
 UPDATE="${UPDATE:-false}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
@@ -137,6 +139,13 @@ ensure_github_pat_set() {
 
         # Copy and set execute permissions for github-pat script
         copy_and_set_execute_bit github-pat
+
+        # Create environment file for github-pat options
+        mkdir -p /usr/local/etc
+        cat > /usr/local/etc/config-r-github-pat.env << EOF
+ELEVATE_GITHUB_TOKEN=$ELEVATE_GITHUB_TOKEN
+OVERRIDE_GITHUB_TOKEN=$OVERRIDE_GITHUB_TOKEN
+EOF
 
         # Append command to post-create file with sudo and error handling
         if ! echo -e "sudo /usr/local/bin/config-r-github-pat || \n    {echo 'Failed to run /usr/local/bin/config-r-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
