@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-export DEBIAN_FRONTEND=noninteractive
-
 USERNAME="${USERNAME:-"mermaiduser"}"
 CONFIG_DIR="${PUPPETEERCONFIGDIR:-"/usr/local/share/mermaid-config"}"
 PUPPETEER_CONFIG="$CONFIG_DIR/puppeteer-config.json"
@@ -11,6 +9,16 @@ WRAPPER_SCRIPT="$SCRIPT_DIR/cmd/mmdc"
 INSTALL_DIR="/usr/local/bin"
 INSTALL_PATH="$INSTALL_DIR/mermaid-mmdc"
 NODE_VERSION="${NODEVERSION:-"lts"}"
+
+# Detect OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS_ID="$ID"
+else
+    OS_ID="unknown"
+fi
+
+echo "[INFO] Detected OS: $OS_ID"
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then
@@ -22,7 +30,12 @@ check_root() {
 create_non_root_user() {
     if ! id "$USERNAME" &>/dev/null; then
         echo "[INFO] Creating non-root user: $USERNAME"
-        useradd --system --shell /bin/bash "$USERNAME"
+        if command -v useradd >/dev/null 2>&1; then
+            useradd --system --shell /bin/bash "$USERNAME"
+        else
+            # Alpine Linux uses adduser
+            adduser -D -s /bin/sh "$USERNAME"
+        fi
         mkdir -p "/home/$USERNAME"
         chown "$USERNAME":"$USERNAME" "/home/$USERNAME"
     else
@@ -32,37 +45,115 @@ create_non_root_user() {
 
 install_dependencies() {
     echo "[INFO] Installing system dependencies..."
-    apt-get update -y
-    apt-get install -y --no-install-recommends \
-        curl gnupg ca-certificates build-essential libssl-dev \
-        libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 \
-        libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
-        fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 sudo
+    case "$OS_ID" in
+        ubuntu|debian)
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -y
+            apt-get install -y --no-install-recommends \
+                curl gnupg ca-certificates build-essential libssl-dev \
+                libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 \
+                libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
+                fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 sudo
 
-    # Handle libasound2 variants for different Ubuntu versions
-    if apt-cache show libasound2t64 &>/dev/null; then
-        apt-get install -y libasound2t64
-    else
-        apt-get install -y libasound2
-    fi
+            # Handle libasound2 variants for different Ubuntu versions
+            if apt-cache show libasound2t64 &>/dev/null; then
+                apt-get install -y libasound2t64
+            else
+                apt-get install -y libasound2
+            fi
+            ;;
+        fedora)
+            dnf install -y \
+                curl ca-certificates gcc gcc-c++ make openssl-devel \
+                libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
+                libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo
+            ;;
+        centos|rhel|rocky|almalinux)
+            yum install -y epel-release || true
+            yum install -y \
+                curl ca-certificates gcc gcc-c++ make openssl-devel \
+                libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
+                libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo
+            ;;
+        alpine)
+            apk add --no-cache \
+                bash curl ca-certificates nodejs npm \
+                chromium nss freetype harfbuzz \
+                ttf-freefont font-noto-emoji sudo
+            ;;
+        opensuse*|sles)
+            zypper install -y \
+                curl ca-certificates gcc gcc-c++ make libopenssl-devel \
+                libX11-xcb1 libXcomposite1 libXcursor1 libXdamage1 libXext6 libXfixes3 \
+                libXi6 libXrandr2 libXrender1 libXss1 libXtst6 mozilla-nss libgbm1 \
+                liberation-fonts at-spi2-atk gtk3 alsa sudo
+            ;;
+        *)
+            echo "[ERROR] Unsupported OS: $OS_ID"
+            echo "Supported: ubuntu, debian, fedora, centos, rhel, rocky, almalinux, alpine, opensuse, sles"
+            exit 1
+            ;;
+    esac
 }
 
 install_nodejs() {
     if command -v node &>/dev/null; then
         echo "[INFO] Node.js is already installed: $(node -v)"
-    else
-        echo "[INFO] Installing Node.js ${NODE_VERSION}..."
-        if [ "${NODE_VERSION}" = "lts" ]; then
-             curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-        else
-             curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-        fi
-        apt-get install -y nodejs
+        return
     fi
+
+    echo "[INFO] Installing Node.js ${NODE_VERSION}..."
+    case "$OS_ID" in
+        ubuntu|debian)
+            if [ "${NODE_VERSION}" = "lts" ]; then
+                 curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+            else
+                 curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
+            fi
+            apt-get install -y nodejs
+            ;;
+        fedora)
+            if [ "${NODE_VERSION}" = "lts" ]; then
+                dnf install -y nodejs
+            else
+                dnf module reset -y nodejs || true
+                dnf module enable -y "nodejs:${NODE_VERSION}" || dnf install -y nodejs
+                dnf install -y nodejs
+            fi
+            ;;
+        centos|rhel|rocky|almalinux)
+            if [ "${NODE_VERSION}" = "lts" ]; then
+                curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
+            else
+                curl -fsSL "https://rpm.nodesource.com/setup_${NODE_VERSION}.x" | bash -
+            fi
+            yum install -y nodejs
+            ;;
+        alpine)
+            # Node.js already installed in install_dependencies for Alpine
+            echo "[INFO] Node.js should already be installed via apk."
+            ;;
+        opensuse*|sles)
+            zypper install -y nodejs npm
+            ;;
+        *)
+            echo "[ERROR] Cannot install Node.js on unsupported OS: $OS_ID"
+            exit 1
+            ;;
+    esac
 }
 
 setup_mermaid() {
     echo "[INFO] Installing Mermaid CLI..."
+
+    # On Alpine, configure Puppeteer to use system Chromium
+    if [ "$OS_ID" = "alpine" ]; then
+        export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+        export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    fi
+
     npm install -g @mermaid-js/mermaid-cli
 
     # Symlink if needed
@@ -74,19 +165,29 @@ setup_mermaid() {
         fi
     fi
 
-    # Install Chrome for Puppeteer
-    echo "[INFO] Installing Chrome Headless Shell for $USERNAME..."
-    # Ensure the user can write to their npm/npx cache if needed, or run as that user
-    su - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell"
+    # Install Chrome for Puppeteer (skip on Alpine - uses system Chromium)
+    if [ "$OS_ID" != "alpine" ]; then
+        echo "[INFO] Installing Chrome Headless Shell for $USERNAME..."
+        su - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell"
+    fi
 }
 
 configure_puppeteer() {
     mkdir -p "$CONFIG_DIR"
-    cat > "$PUPPETEER_CONFIG" <<EOF
+    if [ "$OS_ID" = "alpine" ]; then
+        cat > "$PUPPETEER_CONFIG" <<EOF
+{
+  "args": ["--no-sandbox", "--disable-setuid-sandbox"],
+  "executablePath": "/usr/bin/chromium-browser"
+}
+EOF
+    else
+        cat > "$PUPPETEER_CONFIG" <<EOF
 {
   "args": ["--no-sandbox", "--disable-setuid-sandbox"]
 }
 EOF
+    fi
     chown "$USERNAME":"$USERNAME" "$PUPPETEER_CONFIG"
     chmod 644 "$PUPPETEER_CONFIG"
 }
@@ -102,8 +203,21 @@ install_wrapper() {
 }
 
 cleanup() {
-    apt-get clean
-    rm -rf /var/lib/apt/lists/*
+    case "$OS_ID" in
+        ubuntu|debian)
+            apt-get clean
+            rm -rf /var/lib/apt/lists/*
+            ;;
+        fedora)
+            dnf clean all
+            ;;
+        centos|rhel|rocky|almalinux)
+            yum clean all
+            ;;
+        opensuse*|sles)
+            zypper clean
+            ;;
+    esac
 }
 
 main() {

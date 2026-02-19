@@ -1,7 +1,7 @@
 {
     "name": "Install Apptainer",
     "id": "apptainer",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "description": "Install Apptainer, a container system for HPC",
     "options": {
         "timezone": {
