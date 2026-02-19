@@ -39,6 +39,11 @@ case "$OS_ID" in
         ARCH=$(dpkg --print-architecture)
         APPTAINER_VERSION=$(curl -s https://api.github.com/repos/apptainer/apptainer/releases/latest \
             | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [ -z "$APPTAINER_VERSION" ]; then
+            echo "Error: Could not determine latest Apptainer version from GitHub API."
+            exit 1
+        fi
+        echo "Downloading Apptainer ${APPTAINER_VERSION} for ${ARCH}..."
         curl -L -o /tmp/apptainer.deb \
             "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_${ARCH}.deb"
         dpkg -i /tmp/apptainer.deb || apt-get install -f -y
