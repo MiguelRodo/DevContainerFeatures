@@ -3,13 +3,9 @@
 # Exit immediately if an error occurs
 set -e
 
-# Determine the path to the R executable
-R_PATH=$(which R)
-
-# Define the path to the system-wide Renviron file based on the R installation path
-if [[ -n "$R_PATH" ]]; then
-    R_BASE_DIR=$(dirname $(dirname "$R_PATH"))
-    RENVSITE="$R_BASE_DIR/lib/R/etc/Renviron.site"
+# Determine the path to the system-wide Renviron.site using R itself
+if command -v Rscript >/dev/null 2>&1; then
+    RENVSITE=$(Rscript -e "cat(file.path(R.home(), 'etc', 'Renviron.site'))")
 else
     echo "R is not installed or not found in PATH"
     exit 1
@@ -38,4 +34,4 @@ mkdir -p "${workspace_dir}/.cache/renv"
 # The updateUID step may change the remote user's UID after this script runs
 chmod -R 777 "/renv/cache" "${workspace_dir}/.cache" "${workspace_dir}/.local"
 
-echo "✅ R library paths and renv variables have been set in $RENVSITE"
+echo "[OK] R library paths and renv variables have been set in $RENVSITE"

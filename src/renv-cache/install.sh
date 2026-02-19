@@ -1,6 +1,29 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# POSIX-compatible bootstrap: ensure bash is available before proceeding
+set -e
 
-# Exit immediately if a command exits with a non-zero status
+# Install bash if not present (e.g. Alpine Linux)
+if ! command -v bash >/dev/null 2>&1; then
+    echo "[INFO] bash not found, attempting to install..."
+    if command -v apk >/dev/null 2>&1; then
+        apk add --no-cache bash
+    elif command -v apt-get >/dev/null 2>&1; then
+        apt-get update && apt-get install -y --no-install-recommends bash && rm -rf /var/lib/apt/lists/*
+    elif command -v dnf >/dev/null 2>&1; then
+        dnf install -y bash
+    elif command -v yum >/dev/null 2>&1; then
+        yum install -y bash
+    else
+        echo "[ERROR] Could not install bash: no supported package manager found"
+        exit 1
+    fi
+fi
+
+# Re-exec under bash if not already running under bash
+if [ -z "$BASH_VERSION" ]; then
+    exec bash "$0" "$@"
+fi
+# --- Everything below runs under bash ---
 set -e
 
 # Configuration variables with default values
@@ -20,7 +43,7 @@ DEBUG_RENV="${DEBUGRENV:-false}"
 # Function to log debug messages if enabled
 debug() {
     if [ "$DEBUG" = true ]; then
-        echo "🐛 DEBUG: $1"
+        echo "DEBUG: $1"
     fi
 }
 
@@ -37,9 +60,11 @@ initialize_command_file() {
         # Create the file with shebang if it does not exist
         printf '#!/usr/bin/env bash\n' > "$file_path"
     else
-        # Check if shebang exists; add if missing
+        # Check if shebang exists; add if missing (POSIX-safe, no GNU sed)
         if ! grep -q '^#!/usr/bin/env bash' "$file_path"; then
-            sed -i '1i#!/usr/bin/env bash' "$file_path"
+            tmp_file=$(mktemp)
+            { echo '#!/usr/bin/env bash'; cat "$file_path"; } > "$tmp_file"
+            mv "$tmp_file" "$file_path"
         fi
     fi
     # Set execute permissions
@@ -66,13 +91,10 @@ empty_dir() {
     local directory="$1"
 
     if [ -d "$directory" ]; then
-        # Remove all visible files and directories
-        rm -rf "$directory"/*
-
-        # Remove hidden files and directories
-        rm -rf "$directory"/.[!.]* "$directory"/..?*
+        # Remove all contents including hidden files (POSIX-safe)
+        find "$directory" -mindepth 1 -delete 2>/dev/null || rm -rf "$directory"/* 
     else
-        echo "🔍 Directory '$directory' does not exist."
+        echo "Directory '$directory' does not exist."
     fi
 }
 
@@ -85,9 +107,9 @@ rm_dirs() {
     for dir in "$@"; do
         if [ -d "$dir" ]; then
             rm -rf "$dir"
-            echo "🗑️ Removed directory: $dir"
+            echo "Removed directory: $dir"
         else
-            echo "🔍 Directory '$dir' does not exist."
+            echo "Directory '$dir' does not exist."
         fi
     done
 }
@@ -149,15 +171,15 @@ EOF
 
         # Append command to post-create file with sudo and error handling
         if ! echo -e "sudo /usr/local/bin/renv-cache-github-pat || \n    {echo 'Failed to run /usr/local/bin/renv-cache-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
-            echo "❌ Failed to add renv-cache-github-pat to post-create"
+            echo "[ERROR] Failed to add renv-cache-github-pat to post-create"
         else
-            echo "✅ Added renv-cache-github-pat to post-create"
+            echo "[OK] Added renv-cache-github-pat to post-create"
         fi
 
         if ! echo -e 'mkdir -p "$HOME"/.bashrc.d; cp /usr/local/bin/renv-cache-github-pat "$HOME"/.bashrc.d/' >> "$PATH_POST_CREATE_COMMAND"; then
-            echo "❌ Failed to add renv-cache-github-pat to post-create"
+            echo "[ERROR] Failed to add renv-cache-github-pat to post-create"
         else
-            echo "✅ Added renv-cache-github-pat to post-create"
+            echo "[OK] Added renv-cache-github-pat to post-create"
         fi
     fi
 }
@@ -216,11 +238,11 @@ restore() {
     fi
 
     # Log the command for debugging purposes
-    echo "🔧 Executing command: ${command[*]}"
+    echo "Executing command: ${command[*]}"
 
     # Execute the command with error handling
     if ! "${command[@]}"; then
-        echo "❌ renv-cache-renv-restore-build failed with command: ${command[*]}"
+        echo "[ERROR] renv-cache-renv-restore-build failed with command: ${command[*]}"
         exit 0
     fi
 }
