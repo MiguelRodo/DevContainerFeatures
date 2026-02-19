@@ -141,6 +141,7 @@ ensure_github_pat_set() {
         copy_and_set_execute_bit github-pat
 
         # Create environment file for github-pat options
+        mkdir -p /usr/local/etc
         cat > /usr/local/etc/config-r-github-pat.env << EOF
 ELEVATE_GITHUB_TOKEN=$ELEVATE_GITHUB_TOKEN
 OVERRIDE_GITHUB_TOKEN=$OVERRIDE_GITHUB_TOKEN
