@@ -28,11 +28,16 @@
              }
         }
    },
-   "renv-cache-token-elevate": {
-        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+   "github-tokens": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
-            "renv-cache": {
-                "restore": false,
+            "github-tokens": {}
+        }
+   },
+   "github-tokens-elevate": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "github-tokens": {
                 "elevateGitHubToken": true,
                 "overrideGitHubToken": false
              }
@@ -42,11 +47,10 @@
             "GH_TOKEN": "ghp_permissive_token"
         }
    },
-   "renv-cache-token-override": {
-        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+   "github-tokens-override": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
-            "renv-cache": {
-                "restore": false,
+            "github-tokens": {
                 "elevateGitHubToken": false,
                 "overrideGitHubToken": true
              }
@@ -56,12 +60,10 @@
             "GITHUB_PAT": "ghp_pat_token"
         }
    },
-   "renv-cache-token-disabled": {
-        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+   "github-tokens-disabled": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
-            "renv-cache": {
-                "restore": false,
-                "ensureGitHubPatSet": false,
+            "github-tokens": {
                 "elevateGitHubToken": false,
                 "overrideGitHubToken": false
              }

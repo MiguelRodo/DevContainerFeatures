@@ -28,6 +28,11 @@ check "renv-cache-renv-restore is executable" bash -c "test -x /usr/local/bin/re
 check "renv-cache-renv-restore-build exists" bash -c "test -f /usr/local/bin/renv-cache-renv-restore-build"
 check "renv-cache-renv-restore-build is executable" bash -c "test -x /usr/local/bin/renv-cache-renv-restore-build"
 
+# Verify that session-time token management scripts are NOT installed by renv-cache
+# (this functionality is now provided by the separate github-tokens feature)
+check "renv-cache-github-pat not installed by renv-cache" bash -c "! test -f /usr/local/bin/renv-cache-github-pat"
+check "renv-cache-bashrc-d not installed by renv-cache" bash -c "! test -f /usr/local/bin/renv-cache-bashrc-d"
+
 # Check that renvvv is installed
 check "renvvv is installed" Rscript -e "if (!requireNamespace('renvvv', quietly = TRUE)) quit(status = 1)"
 

@@ -28,9 +28,7 @@ set -e
 
 # Configuration variables with default values
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
-ENSURE_GITHUB_PAT_SET="${ENSUREGITHUBPATSET:-true}"
-ELEVATE_GITHUB_TOKEN="${ELEVATEGITHUBTOKEN:-true}"
-OVERRIDE_GITHUB_TOKEN="${OVERRIDEGITHUBTOKEN:-false}"
+OVERRIDE_TOKENS_AT_INSTALL="${OVERRIDETOKENSATINSTALL:-true}"
 RESTORE="${RESTORE:-true}"
 UPDATE="${UPDATE:-false}"
 PKG_EXCLUDE="${PKGEXCLUDE:-}"
@@ -150,37 +148,59 @@ update_renv_cache() {
     
 }
 
-# Function to ensure GitHub Personal Access Token (PAT) is set
-ensure_github_pat_set() {
-    if [ "$ENSURE_GITHUB_PAT_SET" = "true" ]; then
-        # Copy and set execute permissions for bashrc-d script
-        copy_and_set_execute_bit bashrc-d
+# Save original token values (used for restoring after install)
+_ORIG_GITHUB_TOKEN=""
+_ORIG_GITHUB_PAT=""
 
-        # Append command to post-create file with error handling
-        echo -e "/usr/local/bin/renv-cache-bashrc-d || \n    {echo 'Failed to run /usr/local/bin/renv-cache-bashrc-d'}\n" >> "$PATH_POST_CREATE_COMMAND"
+# Function to temporarily set tokens for the install phase only.
+# Saves original values, then sets GITHUB_PAT and GITHUB_TOKEN to the
+# best available token so renv package installation can authenticate.
+# Call reset_tokens_after_install() after restore completes.
+set_tokens_for_install() {
+    if [ "$OVERRIDE_TOKENS_AT_INSTALL" != "true" ]; then
+        return
+    fi
 
-        # Copy and set execute permissions for github-pat script
-        copy_and_set_execute_bit github-pat
+    # Save originals so we can restore them afterwards
+    _ORIG_GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+    _ORIG_GITHUB_PAT="${GITHUB_PAT:-}"
 
-        # Create environment file for github-pat options
-        mkdir -p /usr/local/etc
-        cat > /usr/local/etc/renv-cache-github-pat.env << EOF
-ELEVATE_GITHUB_TOKEN=$ELEVATE_GITHUB_TOKEN
-OVERRIDE_GITHUB_TOKEN=$OVERRIDE_GITHUB_TOKEN
-EOF
-
-        # Append command to post-create file with sudo and error handling
-        if ! echo -e "sudo /usr/local/bin/renv-cache-github-pat || \n    {echo 'Failed to run /usr/local/bin/renv-cache-github-pat'}" >> "$PATH_POST_CREATE_COMMAND"; then
-            echo "[ERROR] Failed to add renv-cache-github-pat to post-create"
-        else
-            echo "[OK] Added renv-cache-github-pat to post-create"
+    # Set GITHUB_PAT from the best available token if not already set
+    # Priority: GITHUB_PAT (keep if set) > GH_TOKEN > GITHUB_TOKEN
+    if [ -z "$GITHUB_PAT" ]; then
+        if [ -n "$GH_TOKEN" ]; then
+            export GITHUB_PAT="$GH_TOKEN"
+        elif [ -n "$GITHUB_TOKEN" ]; then
+            export GITHUB_PAT="$GITHUB_TOKEN"
         fi
+    fi
 
-        if ! echo -e 'mkdir -p "$HOME"/.bashrc.d; cp /usr/local/bin/renv-cache-github-pat "$HOME"/.bashrc.d/' >> "$PATH_POST_CREATE_COMMAND"; then
-            echo "[ERROR] Failed to add renv-cache-github-pat to post-create"
-        else
-            echo "[OK] Added renv-cache-github-pat to post-create"
-        fi
+    # Override GITHUB_TOKEN with the most permissive non-GITHUB_TOKEN token
+    # Priority: GITHUB_PAT > GH_TOKEN
+    if [ -n "$GITHUB_PAT" ]; then
+        export GITHUB_TOKEN="$GITHUB_PAT"
+    elif [ -n "$GH_TOKEN" ]; then
+        export GITHUB_TOKEN="$GH_TOKEN"
+    fi
+}
+
+# Function to restore token environment variables to their pre-install values.
+# Must be called after restore() to avoid leaking elevated tokens.
+reset_tokens_after_install() {
+    if [ "$OVERRIDE_TOKENS_AT_INSTALL" != "true" ]; then
+        return
+    fi
+
+    if [ -n "$_ORIG_GITHUB_TOKEN" ]; then
+        export GITHUB_TOKEN="$_ORIG_GITHUB_TOKEN"
+    else
+        unset GITHUB_TOKEN
+    fi
+
+    if [ -n "$_ORIG_GITHUB_PAT" ]; then
+        export GITHUB_PAT="$_ORIG_GITHUB_PAT"
+    else
+        unset GITHUB_PAT
     fi
 }
 
@@ -261,8 +281,9 @@ main() {
     install_renvvv
     create_path_post_create_command
     set_r_libs
-    ensure_github_pat_set
+    set_tokens_for_install
     restore
+    reset_tokens_after_install
     clean_up
 }
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test file for renv-cache feature with elevateGitHubToken option
+# Test file for github-tokens feature with elevateGitHubToken option
 #
 # This test verifies that when elevateGitHubToken is enabled and a more
 # permissive token (GH_TOKEN or GITHUB_PAT) is available, GITHUB_TOKEN
@@ -11,19 +11,15 @@ set -e
 # Optional: Import test library bundled with the devcontainer CLI
 source dev-container-features-test-lib
 
-echo "🧪 Testing renv-cache elevateGitHubToken functionality"
+echo "🧪 Testing github-tokens elevateGitHubToken functionality"
 
 # Check that the github-pat script exists and is executable
-check "renv-cache-github-pat exists" test -f /usr/local/bin/renv-cache-github-pat
-check "renv-cache-github-pat is executable" test -x /usr/local/bin/renv-cache-github-pat
-
-# Check that bashrc.d is configured
-check "bashrc.d directory exists" test -d "$HOME/.bashrc.d"
-check "github-pat in bashrc.d" test -f "$HOME/.bashrc.d/renv-cache-github-pat"
+check "github-tokens-github-pat exists" test -f /usr/local/bin/github-tokens-github-pat
+check "github-tokens-github-pat is executable" test -x /usr/local/bin/github-tokens-github-pat
 
 # Source the github-pat script to set environment variables
-echo "🔧 Running github-pat script..."
-source /usr/local/bin/renv-cache-github-pat
+echo "🔧 Running github-tokens-github-pat script..."
+source /usr/local/bin/github-tokens-github-pat
 
 # Verify that GITHUB_PAT is set (should be set from GH_TOKEN since it has priority)
 echo "🔍 Checking GITHUB_PAT: ${GITHUB_PAT:0:20}..."

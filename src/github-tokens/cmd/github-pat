@@ -1,37 +1,38 @@
 #!/usr/bin/env bash
 
-# GitHub Token Management for R Tools
+# GitHub Token Management
 #
-# This script manages GitHub authentication tokens for R development tools.
+# This script manages GitHub authentication tokens for R development tools
+# and other tools that need to authenticate with GitHub.
+#
 # Many R packages (renv, remotes, etc.) search for tokens in this order:
 #   1. GITHUB_TOKEN
 #   2. GH_TOKEN
 #   3. GITHUB_PAT
 #
-# However, GitHub Actions provides an automatic GITHUB_TOKEN with limited 
+# However, GitHub Actions provides an automatic GITHUB_TOKEN with limited
 # permissions that often cannot access private repositories or packages.
 # When a more permissive token is available (like GH_TOKEN or GITHUB_PAT),
-# we need to ensure R tools use it instead.
+# this script ensures R tools use it instead.
 #
-# This script implements three strategies:
+# This script implements two strategies:
 #
-# 1. ensureGitHubPatSet (always runs when enabled):
+# 1. ensureGitHubPatSet (always runs when sourced):
 #    Sets GITHUB_PAT from the best available token if it's not already set.
 #    Priority: GITHUB_PAT (if set) > GH_TOKEN > GITHUB_TOKEN
 #
 # 2. elevateGitHubToken (default: true):
 #    If a more permissive token (GH_TOKEN or GITHUB_PAT) exists,
-#    override GITHUB_TOKEN to match it. This ensures R tools find the
-#    better token first.
+#    override GITHUB_TOKEN to match it.
 #
 # 3. overrideGitHubToken (default: false):
 #    Force GITHUB_TOKEN to use GH_TOKEN or GITHUB_PAT, even if GITHUB_TOKEN
-#    is already set. Use only when you always want to override the automatic
-#    GITHUB_TOKEN from GitHub Actions.
+#    is already set.
 
 # Load configuration from environment file if it exists
-if [ -f /usr/local/etc/renv-cache-github-pat.env ]; then
-    source /usr/local/etc/renv-cache-github-pat.env
+if [ -f /usr/local/etc/github-tokens-github-pat.env ]; then
+    # shellcheck source=/dev/null
+    source /usr/local/etc/github-tokens-github-pat.env
 fi
 
 # Set defaults if not provided

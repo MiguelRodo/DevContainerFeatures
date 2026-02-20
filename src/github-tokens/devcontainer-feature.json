@@ -1,0 +1,19 @@
+{
+    "name": "GitHub Tokens",
+    "id": "github-tokens",
+    "version": "1.0.0",
+    "description": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup",
+    "postCreateCommand": "/usr/local/bin/github-tokens-post-create",
+    "options": {
+        "elevateGitHubToken": {
+            "description": "If true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. This helps R tools like renv that prioritize GITHUB_TOKEN over other tokens.",
+            "type": "boolean",
+            "default": true
+        },
+        "overrideGitHubToken": {
+            "description": "If true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of existing value. Use only if you always want to override GITHUB_TOKEN.",
+            "type": "boolean",
+            "default": false
+        }
+    }
+}

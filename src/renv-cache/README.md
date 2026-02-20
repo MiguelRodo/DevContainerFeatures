@@ -16,9 +16,7 @@ Configure R with renv cache
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
 | setRLibPaths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | boolean | true |
-| ensureGitHubPatSet | If true and GITHUB_PAT is not set, will first try set it from GH_TOKEN and then GITHUB_TOKEN. | boolean | true |
-| elevateGitHubToken | If true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. This helps R tools like renv that prioritize GITHUB_TOKEN over other tokens. | boolean | true |
-| overrideGitHubToken | If true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of existing value. Use only if you always want to override GITHUB_TOKEN. | boolean | false |
+| overrideTokensAtInstall | If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token during the renv package install phase. Tokens are reset to their original values after install completes. | boolean | true |
 | restore | Whether to run package restoration using renvvv::renvvv_restore(). Default is true. | boolean | true |
 | update | Whether to run package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used. Default is false. | boolean | false |
 | renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set. | string | /usr/local/share/renv-cache/renv |
@@ -193,149 +191,49 @@ This project incorporates code from [AwesomeProject](https://github.com/rocker-o
 
 ## GitHub Token Management
 
-### The Problem
+### Build-Time Token Override (`overrideTokensAtInstall`)
 
-R development tools (`renv`, `remotes`, `pak`, etc.) search for GitHub authentication tokens in a specific order:
+During the image build phase, `renv-cache` temporarily overrides GitHub authentication tokens so that `renv` package installation can authenticate with GitHub. This is controlled by the `overrideTokensAtInstall` option (default: `true`).
 
-1. `GITHUB_TOKEN`
-2. `GH_TOKEN`
-3. `GITHUB_PAT`
+**What it does:**
 
-This precedence causes problems in GitHub Actions and Codespaces because:
+1. **Saves** the current values of `GITHUB_TOKEN` and `GITHUB_PAT`
+2. **Sets `GITHUB_PAT`** from the best available token (priority: `GITHUB_PAT` > `GH_TOKEN` > `GITHUB_TOKEN`) if not already set
+3. **Overrides `GITHUB_TOKEN`** with the most permissive token available (priority: `GITHUB_PAT` > `GH_TOKEN`) so R tools find it first
+4. **Runs** the renv package restore/install
+5. **Resets** `GITHUB_TOKEN` and `GITHUB_PAT` to their original values (or unsets them if they were not set before)
 
-- GitHub Actions automatically provides a `GITHUB_TOKEN` environment variable
-- This automatic token has **limited permissions** (typically read-only for public repos)
-- It often **cannot access private repositories** or install private packages
-- Even when a more permissive token (`GH_TOKEN` or `GITHUB_PAT`) is available in the environment, R tools will use the restricted `GITHUB_TOKEN` first
-- This leads to confusing failures where package installation fails despite having a valid token available
+This is a simple, blunt approach: it applies only during the feature install step and has no persistent effect on the container.
 
-### The Solution
-
-This feature provides three complementary strategies to manage GitHub tokens:
-
-#### 1. `ensureGitHubPatSet` (default: `true`)
-
-Always sets `GITHUB_PAT` from the best available token if it's not already set.
-
-**Token priority:** `GITHUB_PAT` (if already set) > `GH_TOKEN` > `GITHUB_TOKEN`
-
-**Use case:** Ensures R tools can fall back to `GITHUB_PAT` if they check it (though most prioritize `GITHUB_TOKEN`).
-
-#### 2. `elevateGitHubToken` (default: `true`)
-
-When a more permissive token (`GH_TOKEN` or `GITHUB_PAT`) is available, override `GITHUB_TOKEN` to match it.
-
-**How it works:**
-- If `GH_TOKEN` or `GITHUB_PAT` exists, set `GITHUB_TOKEN` to that value
-- This ensures R tools find the better token first (since they check `GITHUB_TOKEN` before others)
-- Does not override if only `GITHUB_TOKEN` is available
-
-**Use case:** **Recommended for most scenarios.** Automatically "elevates" the GitHub Actions automatic token to a more permissive one when available.
-
-**Example:**
+**To opt out:**
 ```json
 {
   "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
-      "elevateGitHubToken": true
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
+      "overrideTokensAtInstall": false
     }
   }
 }
 ```
 
-#### 3. `overrideGitHubToken` (default: `false`)
+### Session-Time Token Management
 
-Force `GITHUB_TOKEN` to always use `GH_TOKEN` or `GITHUB_PAT`, regardless of what `GITHUB_TOKEN` is currently set to.
-
-**How it works:**
-- Always replaces `GITHUB_TOKEN` with `GH_TOKEN` or `GITHUB_PAT` (in that priority order)
-- More aggressive than `elevateGitHubToken`
-- Use when you **always** want to override the automatic GitHub Actions token
-
-**Use case:** When you need to guarantee that the automatic `GITHUB_TOKEN` is never used, even if it's the only token available.
-
-**Example:**
-```json
-{
-  "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
-      "overrideGitHubToken": true
-    }
-  }
-}
-```
-
-### Common Scenarios
-
-#### GitHub Actions with Private Packages
-
-**Problem:** Need to install private R packages from GitHub, but the automatic `GITHUB_TOKEN` doesn't have access.
-
-**Solution:**
-1. Create a Personal Access Token (PAT) with `repo` scope
-2. Add it as a repository secret (e.g., `MY_GITHUB_PAT`)
-3. Pass it to the devcontainer:
-
-```yaml
-# .github/workflows/build.yml
-- name: Build devcontainer
-  env:
-    GH_TOKEN: ${{ secrets.MY_GITHUB_PAT }}
-  run: |
-    devcontainer build
-```
-
-```json
-// .devcontainer/devcontainer.json
-{
-  "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
-      "elevateGitHubToken": true  // Will use GH_TOKEN instead of automatic GITHUB_TOKEN
-    }
-  }
-}
-```
-
-#### Codespaces
-
-**Problem:** Codespaces provides a limited `GITHUB_TOKEN` that can't access private repos.
-
-**Solution:**
-1. Create a PAT with necessary scopes
-2. Add it as a Codespaces secret named `GH_TOKEN`
-3. The feature will automatically elevate `GITHUB_TOKEN` to use your PAT
-
-#### Interactive Development
-
-**Problem:** Want to ensure the best token is always used during interactive R sessions.
-
-**Solution:**
-```json
-{
-  "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
-      "ensureGitHubPatSet": true,
-      "elevateGitHubToken": true
-    }
-  }
-}
-```
-
-### Disabling Token Management
-
-If you want to manage tokens manually:
+If you also want GitHub token elevation on every shell startup (e.g., for interactive R sessions), use the companion `github-tokens` feature:
 
 ```json
 {
   "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
-      "ensureGitHubPatSet": false,
-      "elevateGitHubToken": false,
-      "overrideGitHubToken": false
-    }
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {},
+    "ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1": {}
   }
 }
 ```
+
+The `github-tokens` feature installs a script into `~/.bashrc.d/` that sets `GITHUB_PAT` and optionally elevates `GITHUB_TOKEN` on every interactive shell startup.
+
+### Architectural Note
+
+`renv-cache` only manages tokens **during the image build phase** (feature install). It does not modify `~/.bashrc`, `~/.bashrc.d/`, or any other shell startup files. This keeps `renv-cache` non-invasive and avoids unexpected side-effects at container start or in interactive sessions.
 
 ### References
 

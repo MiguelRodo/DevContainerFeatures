@@ -10,20 +10,10 @@
             "description": "Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild.", 
             "default": true
         },
-        "ensureGitHubPatSet": {
-            "description": "If true and GITHUB_PAT is not set, will first try set it from GH_TOKEN and then GITHUB_TOKEN.",
+        "overrideTokensAtInstall": {
+            "description": "If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually.",
             "type": "boolean",
             "default": true
-        },
-        "elevateGitHubToken": {
-            "description": "If true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. This helps R tools like renv that prioritize GITHUB_TOKEN over other tokens.",
-            "type": "boolean",
-            "default": true
-        },
-        "overrideGitHubToken": {
-            "description": "If true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of existing value. Use only if you always want to override GITHUB_TOKEN.",
-            "type": "boolean",
-            "default": false
         },
         "restore": {
             "type": "boolean",
