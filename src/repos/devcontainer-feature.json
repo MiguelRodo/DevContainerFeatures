@@ -1,7 +1,7 @@
 {
     "name": "Automatically set up multi-repo projects",
     "id": "repos",
-    "version": "2.2.1",
+    "version": "2.2.2",
     "description": "Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos setup' when the container starts to clone repositories defined in repos.list.",
     "options": {
         "runOnStart": {
