@@ -1,7 +1,7 @@
 
 # Automatically set up multi-repo projects (repos)
 
-Installs the 'repos' CLI tool to manage multiple Git repositories. By default, it automatically runs 'repos setup' when the container starts to clone repositories defined in repos.list.
+Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos setup' when the container starts to clone repositories defined in repos.list.
 
 ## Example Usage
 
@@ -15,7 +15,7 @@ Installs the 'repos' CLI tool to manage multiple Git repositories. By default, i
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| runOnStart | Automatically run 'repos setup' when the container starts. | boolean | true |
+| runOnStart | Automatically run 'repos setup' when the container starts. | boolean | false |
 
 # TL;DR
 
@@ -34,7 +34,7 @@ Managing multiple repositories can be challenging, especially when dealing with 
 
 ### Automatic Repository Cloning
 
-- **Immediate Setup**: By default, the feature automatically clones all repositories specified in the `repos.list` file upon creating or starting the devcontainer.
+- **Immediate Setup**: When `runOnStart` is set to `true`, the feature automatically clones all repositories specified in the `repos.list` file upon creating or starting the devcontainer. By default, this is disabled.
 - **Custom Clone Locations**: You can specify exactly where each repository should be cloned by providing a target directory for each entry in your `repos.list` file.
 - **Commands Used**:
   - `repos-workspace-add`: Adds repositories to the VSCode workspace.

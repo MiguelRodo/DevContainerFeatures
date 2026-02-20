@@ -123,13 +123,8 @@ fi
 echo "Configuring post-start script..."
 POST_START_SCRIPT="/usr/local/bin/repos-post-start"
 
-# Check RUNONSTART environment variable (defaults to true if not set)
-if [ "${RUNONSTART}" = "false" ]; then
-  cat > "$POST_START_SCRIPT" << 'EOF'
-#!/usr/bin/env bash
-echo "repos start-up skipped"
-EOF
-else
+# Check RUNONSTART environment variable (defaults to false if not set)
+if [ "${RUNONSTART}" = "true" ]; then
   cat > "$POST_START_SCRIPT" << 'EOF'
 #!/usr/bin/env bash
 # Check if repos.list exists in the workspace
@@ -140,6 +135,10 @@ else
   echo "Info: No repos.list file found. Skipping repository setup."
   echo "Create a repos.list file and run 'repos setup' to clone repositories."
 fi
+EOF
+else
+  cat > "$POST_START_SCRIPT" << 'EOF'
+#!/usr/bin/env bash
 EOF
 fi
 
