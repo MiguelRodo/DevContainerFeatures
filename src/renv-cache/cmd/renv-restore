@@ -104,6 +104,16 @@ install_renv() {
     Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) install.packages('renv', repos = 'https://cloud.r-project.org')"
 }
 
+# Function to install renvvv
+install_renvvv() {
+    echo "Installing renvvv..."
+    # Ensure remotes is installed
+    Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = 'https://cloud.r-project.org')"
+    
+    # Install renvvv
+    Rscript -e "remotes::install_github('MiguelRodo/renvvv', upgrade = 'never')"
+}
+
 # Activate project
 renv_activate() {
     echo "Activating project"
@@ -358,6 +368,7 @@ main() {
     r_lib_paths
     install_gitcreds
     install_pak_bioc
+    install_renvvv
     restore
     run_custom_scripts
     echo "[OK] Finished processing project: $PROJECT_NAME"
