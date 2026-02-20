@@ -100,14 +100,16 @@ debug "RENV_DIR: $RENV_DIR"
 debug "DEBUG_RENV: $DEBUG_RENV"
 
 exit_early_if_needed() {
+    local no_lock_msg="[INFO] No 'renv.lock' files found in '$RENV_DIR'. Skipping renv package caching. This is not an error if you do not wish to pre-populate the cache. If you expected the cache to be populated, please ensure your project or its renv.lock files are present at build-time."
+
     if [ ! -d "$RENV_DIR" ]; then
-        echo "[INFO] No 'renv/' directory found in '$RENV_DIR'."
+        echo "$no_lock_msg"
         exit 0
     fi
 
     # Check if there are subdirectories within `RENV_DIR`
     if [ -z "$(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d)" ]; then
-        echo "[INFO] No projects found in '$RENV_DIR'."
+        echo "$no_lock_msg"
         exit 0
     fi
 }
