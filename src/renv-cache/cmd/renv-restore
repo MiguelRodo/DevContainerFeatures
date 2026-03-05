@@ -99,9 +99,58 @@ debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 debug "DEBUG_RENV: $DEBUG_RENV"
 
-install_renv() {
-    echo "Restoring original renv version"
-    Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) install.packages('renv', repos = 'https://cloud.r-project.org')"
+sync_renv_version() {
+    local lock_file="renv.lock"
+    local target_version=""
+
+    # Extract target renv version from renv.lock if jq is available.
+    # renv.lock stores renv itself under .Packages.renv.Version (standard renv lockfile format).
+    if command -v jq >/dev/null 2>&1 && [ -f "$lock_file" ]; then
+        target_version=$(jq -r '.Packages.renv.Version // empty' "$lock_file" 2>/dev/null || true)
+    fi
+
+    if [ -n "$target_version" ]; then
+        echo "[INFO] renv.lock requires renv version: $target_version"
+        Rscript -e "
+            target <- '${target_version}'
+            current <- tryCatch(
+                as.character(packageVersion('renv')),
+                error = function(e) ''
+            )
+            if (identical(current, target)) {
+                message('[OK] renv version ', current, ' already matches target. No sync needed.')
+                quit(status = 0)
+            }
+            message('[INFO] Current renv version: ', if (nzchar(current)) current else 'not installed')
+            message('[INFO] Target renv version: ', target)
+            if (!requireNamespace('remotes', quietly = TRUE)) {
+                message('[INFO] Installing remotes package...')
+                install.packages('remotes', repos = 'https://cloud.r-project.org')
+            }
+            installed <- tryCatch({
+                remotes::install_version('renv', version = target, upgrade = FALSE, repos = 'https://cloud.r-project.org')
+                message('[OK] renv version ', target, ' installed successfully.')
+                TRUE
+            }, error = function(e) {
+                message('[WARN] Failed to install renv version ', target, ': ', e)
+                FALSE
+            })
+            if (!installed) {
+                message('[INFO] Falling back to latest renv version...')
+                tryCatch(
+                    install.packages('renv', repos = 'https://cloud.r-project.org'),
+                    error = function(e) message('[WARN] Failed to install latest renv: ', e)
+                )
+            }
+            if (!requireNamespace('renv', quietly = TRUE)) {
+                message('[ERROR] renv is not installed after all attempts.')
+                quit(status = 1)
+            }
+        "
+    else
+        echo "[INFO] No renv version found in renv.lock (or jq unavailable). Installing latest renv."
+        Rscript -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
+    fi
 }
 
 # Function to install renvvv
@@ -363,7 +412,7 @@ main() {
     fi
 
     r_lib_paths
-    install_renv
+    sync_renv_version
     renv_activate
     r_lib_paths
     install_gitcreds

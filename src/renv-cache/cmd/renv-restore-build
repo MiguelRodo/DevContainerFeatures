@@ -114,14 +114,25 @@ exit_early_if_needed() {
     fi
 }
 
-install_renv() {
-    echo "Restoring original renv version"
-    Rscript -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
+ensure_jq() {
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "[INFO] jq not found. Installing jq..."
+        if command -v apt-get >/dev/null 2>&1; then
+            apt-get update && apt-get install -y --no-install-recommends jq && rm -rf /var/lib/apt/lists/*
+        elif command -v apk >/dev/null 2>&1; then
+            apk add --no-cache jq
+        elif command -v dnf >/dev/null 2>&1; then
+            dnf install -y jq
+        elif command -v yum >/dev/null 2>&1; then
+            yum install -y jq
+        else
+            echo "[WARN] Could not install jq: no supported package manager found. Renv version syncing may not work correctly."
+        fi
+    fi
 }
 
 restore_projects() {
     # Loop over each top-level subdirectory in 'renv/', excluding 'self'
-    install_renv
     while IFS= read -r PROJECT_DIR; do
         restore_project "$PROJECT_DIR"
     done < <(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d)
@@ -170,6 +181,7 @@ restore_project() {
 
 main() {
     exit_early_if_needed
+    ensure_jq
     restore_projects
     echo "[OK] All projects have had restoration attempted."
 }
