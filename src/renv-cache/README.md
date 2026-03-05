@@ -16,7 +16,7 @@ Configure R with renv cache
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
 | setRLibPaths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | boolean | true |
-| overrideTokensAtInstall | If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token during the renv package install phase. Tokens are reset to their original values after install completes. | boolean | true |
+| overrideTokensAtInstall | If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually. | boolean | true |
 | restore | Whether to run package restoration using renvvv::renvvv_restore(). Default is true. | boolean | true |
 | update | Whether to run package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used. Default is false. | boolean | false |
 | renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set. | string | /usr/local/share/renv-cache/renv |
@@ -229,11 +229,9 @@ If you also want GitHub token elevation on every shell startup (e.g., for intera
 }
 ```
 
-The `github-tokens` feature installs a script into `~/.bashrc.d/` that sets `GITHUB_PAT` and optionally elevates `GITHUB_TOKEN` on every interactive shell startup.
-
 ### Architectural Note
 
-`renv-cache` only manages tokens **during the image build phase** (feature install). It does not modify `~/.bashrc`, `~/.bashrc.d/`, or any other shell startup files. This keeps `renv-cache` non-invasive and avoids unexpected side-effects at container start or in interactive sessions.
+`renv-cache` only manages tokens **during the image build phase** (feature install). It does not modify `~/.bashrc`, `~/.bashrc.d/`, or any other shell startup files.
 
 ### References
 
