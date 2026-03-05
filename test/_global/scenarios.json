@@ -28,6 +28,16 @@
              }
         }
    },
+   "renv-cache-pak": {
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+        "features": {
+            "renv-cache": {
+                "restore": true,
+                "usePak": true,
+                "debug": true
+             }
+        }
+   },
    "github-tokens": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {

@@ -361,12 +361,34 @@ install_gitcreds() {
     echo "---------------------------------------------"
 }
 
+# Restore RENV_CONFIG_PAK_ENABLED to its value before enable_pak_backend() was called.
+# Pass the saved original value as the first argument.
+reset_pak_backend() {
+    local orig="$1"
+    if [ -n "$orig" ]; then
+        export RENV_CONFIG_PAK_ENABLED="$orig"
+    else
+        unset RENV_CONFIG_PAK_ENABLED
+    fi
+}
+
 restore() {
     echo "Attempting to restore/update packages using renvvv"
     set_debug_renv
 
     # Export PKG_EXCLUDE for use in R script
     export PKG_EXCLUDE
+
+    # Enable pak backend if requested.
+    # In renv < 1.0, pak-installed packages bypassed the renv cache; renv 1.x
+    # fixed this by calling renv_cache_synchronize() after pak installation.
+    # Setting RENV_CONFIG_PAK_ENABLED=TRUE here makes renv use pak as the
+    # installation backend for this restore call.
+    local renv_config_pak_orig="${RENV_CONFIG_PAK_ENABLED:-}"
+    if [ "$USE_PAK" = "true" ]; then
+        echo "[INFO] Enabling pak backend for renv restore (RENV_CONFIG_PAK_ENABLED=TRUE)"
+        export RENV_CONFIG_PAK_ENABLED=TRUE
+    fi
 
     # Determine which renvvv function to call
     local renvvv_function=""
@@ -381,6 +403,7 @@ restore() {
         echo "[INFO] Update requested - using renvvv_update()"
     else
         echo "[WARN] Neither restore nor update requested. Skipping."
+        reset_pak_backend "$renv_config_pak_orig"
         return 0
     fi
 
@@ -418,6 +441,28 @@ restore() {
     "
     echo "[OK] Restore/update process attempted"
     echo "---------------------------------------------"
+
+    # After a pak-based restore, explicitly rehash the renv cache.
+    # This ensures packages installed via pak are always present in the
+    # renv cache (RENV_PATHS_CACHE), even on renv versions that may not
+    # call cache_synchronize() automatically after pak installation.
+    if [ "$USE_PAK" = "true" ]; then
+        echo "[INFO] Rehashing renv cache to ensure pak-installed packages are cached..."
+        Rscript -e "
+            tryCatch(
+                {
+                    renv::rehash()
+                    message('[OK] renv cache rehash complete.')
+                },
+                error = function(e) {
+                    message('[WARN] renv::rehash() failed: ', e)
+                }
+            )
+        " || echo "[WARN] renv::rehash() encountered an error, but continuing..."
+        echo "---------------------------------------------"
+    fi
+
+    reset_pak_backend "$renv_config_pak_orig"
 }
 
 run_custom_scripts() {
