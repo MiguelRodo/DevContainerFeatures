@@ -146,7 +146,8 @@ install_nodejs() {
             else
                  curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
             fi
-            apt-get install -y nodejs npm
+            # NodeSource nodejs bundles npm; installing Ubuntu's npm package conflicts
+            apt-get install -y nodejs
             ;;
         fedora)
             if [ "${NODE_VERSION}" = "lts" ]; then
