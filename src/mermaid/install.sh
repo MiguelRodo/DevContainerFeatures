@@ -146,15 +146,15 @@ install_nodejs() {
             else
                  curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
             fi
-            apt-get install -y nodejs
+            apt-get install -y nodejs npm
             ;;
         fedora)
             if [ "${NODE_VERSION}" = "lts" ]; then
-                dnf install -y nodejs
+                dnf install -y nodejs npm
             else
                 dnf module reset -y nodejs || true
                 dnf module enable -y "nodejs:${NODE_VERSION}" || dnf install -y nodejs
-                dnf install -y nodejs
+                dnf install -y nodejs npm
             fi
             ;;
         centos|rhel|rocky|almalinux)
@@ -163,7 +163,7 @@ install_nodejs() {
             else
                 curl -fsSL "https://rpm.nodesource.com/setup_${NODE_VERSION}.x" | bash -
             fi
-            yum install -y nodejs
+            yum install -y nodejs npm
             ;;
         alpine)
             # Node.js already installed in install_dependencies for Alpine
