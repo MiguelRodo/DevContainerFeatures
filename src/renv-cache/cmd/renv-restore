@@ -99,14 +99,60 @@ debug "PKG_EXCLUDE: $PKG_EXCLUDE"
 debug "USE_PAK: $USE_PAK"
 debug "DEBUG_RENV: $DEBUG_RENV"
 
+extract_renv_version_from_lock() {
+    # Attempts to extract the renv version from renv.lock using multiple strategies,
+    # trying the most reliable tool first and falling back to progressively more
+    # portable approaches. Returns the version string, or empty string on failure.
+    local lock_file="$1"
+    local version=""
+
+    # Strategy 1: jq with standard capitalization (.Packages) — covers renv 0.12+ and all 1.x
+    if command -v jq >/dev/null 2>&1; then
+        version=$(jq -r '.Packages.renv.Version // empty' "$lock_file" 2>/dev/null || true)
+        if [ -n "$version" ]; then echo "$version"; return 0; fi
+
+        # Strategy 2: jq with lowercase key (.packages) — hypothetical older/variant format
+        version=$(jq -r '.packages.renv.Version // empty' "$lock_file" 2>/dev/null || true)
+        if [ -n "$version" ]; then echo "$version"; return 0; fi
+    fi
+
+    # Strategy 3: python3 JSON parsing — reliable fallback when jq is absent
+    if command -v python3 >/dev/null 2>&1; then
+        version=$(RENV_LOCK_FILE="$lock_file" python3 -c "
+import json, os
+with open(os.environ['RENV_LOCK_FILE']) as fh:
+    d = json.load(fh)
+v = d.get('Packages', d.get('packages', {})).get('renv', {}).get('Version', '')
+print(v)
+" 2>/dev/null || true)
+        if [ -n "$version" ]; then echo "$version"; return 0; fi
+    fi
+
+    # Strategy 4: grep + sed — most portable, no JSON parser required
+    # Finds the "Package": "renv" line, then reads the "Version" field within the next 15 lines.
+    # 15 lines is sufficient because a single package entry in renv.lock typically has fewer
+    # than 10 fields; 15 provides a comfortable margin without crossing into the next package.
+    if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
+        local renv_line
+        renv_line=$(grep -n '"Package"[[:space:]]*:[[:space:]]*"renv"' "$lock_file" 2>/dev/null | head -1 | cut -d: -f1)
+        if [ -n "$renv_line" ]; then
+            version=$(awk "NR>$renv_line && NR<=$((renv_line+15)) && /\"Version\"/" "$lock_file" 2>/dev/null \
+                | head -1 \
+                | sed 's/.*"Version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+            if [ -n "$version" ]; then echo "$version"; return 0; fi
+        fi
+    fi
+
+    echo ""
+    return 0
+}
+
 sync_renv_version() {
     local lock_file="renv.lock"
     local target_version=""
 
-    # Extract target renv version from renv.lock if jq is available.
-    # renv.lock stores renv itself under .Packages.renv.Version (standard renv lockfile format).
-    if command -v jq >/dev/null 2>&1 && [ -f "$lock_file" ]; then
-        target_version=$(jq -r '.Packages.renv.Version // empty' "$lock_file" 2>/dev/null || true)
+    if [ -f "$lock_file" ]; then
+        target_version=$(extract_renv_version_from_lock "$lock_file")
     fi
 
     if [ -n "$target_version" ]; then
@@ -148,7 +194,7 @@ sync_renv_version() {
             }
         "
     else
-        echo "[INFO] No renv version found in renv.lock (or jq unavailable). Installing latest renv."
+        echo "[INFO] No renv version found in renv.lock. Installing latest renv."
         Rscript -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
     fi
 }
