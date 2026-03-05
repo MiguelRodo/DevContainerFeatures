@@ -99,9 +99,43 @@ install_dependencies() {
 }
 
 install_nodejs() {
-    if command -v node &>/dev/null; then
+    if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
         echo "[INFO] Node.js is already installed: $(node -v)"
+        echo "[INFO] npm is already installed: $(npm -v)"
         return
+    fi
+
+    # Node exists but npm is missing: install npm only
+    if command -v node >/dev/null 2>&1 && ! command -v npm >/dev/null 2>&1; then
+        echo "[WARN] Node.js is installed ($(node -v)) but npm is missing; installing npm..."
+        case "$OS_ID" in
+            ubuntu|debian)
+                export DEBIAN_FRONTEND=noninteractive
+                apt-get update -y
+                apt-get install -y --no-install-recommends npm
+                return
+                ;;
+            fedora)
+                dnf install -y npm
+                return
+                ;;
+            centos|rhel|rocky|almalinux)
+                yum install -y npm
+                return
+                ;;
+            opensuse*|sles)
+                zypper install -y npm
+                return
+                ;;
+            alpine)
+                apk add --no-cache npm
+                return
+                ;;
+            *)
+                echo "[ERROR] Unsupported OS for npm install: $OS_ID"
+                exit 1
+                ;;
+        esac
     fi
 
     echo "[INFO] Installing Node.js ${NODE_VERSION}..."
@@ -147,6 +181,8 @@ install_nodejs() {
 
 setup_mermaid() {
     echo "[INFO] Installing Mermaid CLI..."
+
+    command -v npm >/dev/null 2>&1 || { echo "[ERROR] npm not found; cannot install Mermaid CLI"; exit 1; }
 
     # On Alpine, configure Puppeteer to use system Chromium
     if [ "$OS_ID" = "alpine" ]; then
