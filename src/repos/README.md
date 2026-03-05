@@ -34,7 +34,7 @@ Managing multiple repositories can be challenging, especially when dealing with 
 
 ### Automatic Repository Cloning
 
-- **Immediate Setup**: When `runOnStart` is set to `true`, the feature automatically clones all repositories specified in the `repos.list` file upon creating or starting the devcontainer. By default, this is disabled.
+- **Immediate Setup**: By default, the feature automatically clones all repositories specified in the `repos.list` file upon creating or starting the devcontainer.
 - **Custom Clone Locations**: You can specify exactly where each repository should be cloned by providing a target directory for each entry in your `repos.list` file.
 - **Commands Used**:
   - `repos-workspace-add`: Adds repositories to the VSCode workspace.
