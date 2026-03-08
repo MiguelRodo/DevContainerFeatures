@@ -38,6 +38,6 @@ mkdir -p ${workspace_dir}/.local/lib/R/library
 
 # Note: Set permissive permissions to allow access regardless of UID changes
 # The updateUID step may change the remote user's UID after this script runs
-chmod -R 777 "/renv/local" "/renv/cache" "${workspace_dir}/.cache" "${workspace_dir}/.local"
+chmod -R a+rwX "/renv/local" "/renv/cache" "${workspace_dir}/.cache" "${workspace_dir}/.local"
 
 echo "[OK] R library paths and renv variables have been set in $RENVSITE"
