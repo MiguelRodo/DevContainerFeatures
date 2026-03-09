@@ -88,9 +88,15 @@ copy_and_set_execute_bit() {
 empty_dir() {
     local directory="$1"
 
+    # 🛡️ Sentinel: Security fix to prevent accidental rm -rf /*
+    if [ -z "$directory" ] || [ "$directory" = "/" ]; then
+        echo "[ERROR] Refusing to empty directory: '$directory'"
+        return 1
+    fi
+
     if [ -d "$directory" ]; then
         # Remove all contents including hidden files (POSIX-safe)
-        find "$directory" -mindepth 1 -delete 2>/dev/null || rm -rf "$directory"/* 
+        find "$directory" -mindepth 1 -delete 2>/dev/null || rm -rf "${directory:?}"/*
     else
         echo "Directory '$directory' does not exist."
     fi
