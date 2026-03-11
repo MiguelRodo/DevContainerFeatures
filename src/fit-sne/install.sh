@@ -23,8 +23,8 @@ echo "Detected OS: $OS_ID"
 # Cleanup function
 cleanup() {
     echo "Cleaning up..."
-    rm -rf /tmp/fftw-${FFTW_VERSION}
-    rm -rf /tmp/fftw-${FFTW_VERSION}.tar.gz
+    rm -rf "/tmp/fftw-${FFTW_VERSION:?}"
+    rm -rf "/tmp/fftw-${FFTW_VERSION:?}.tar.gz"
     rm -rf /tmp/FIt-SNE
 }
 trap cleanup EXIT

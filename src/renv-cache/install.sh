@@ -109,8 +109,13 @@ rm_dirs() {
     fi
 
     for dir in "$@"; do
+        if [ -z "$dir" ] || [ "$dir" = "/" ]; then
+            echo "[ERROR] Refusing to remove directory: '$dir'"
+            continue
+        fi
+
         if [ -d "$dir" ]; then
-            rm -rf "$dir"
+            rm -rf "${dir:?}"
             echo "Removed directory: $dir"
         else
             echo "Directory '$dir' does not exist."

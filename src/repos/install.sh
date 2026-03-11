@@ -116,7 +116,7 @@ WRAPPER_EOF
     
     # Cleanup
     echo "Cleaning up..."
-    rm -rf "$TEMP_DIR"
+    rm -rf "${TEMP_DIR:?}"
 fi
 
 # ── Configure start script ───────────────────────────────────────────────────
