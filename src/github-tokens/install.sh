@@ -66,6 +66,11 @@ main() {
 
     # Write configuration for the github-pat script
     mkdir -p /usr/local/etc
+
+    # 🛡️ Sentinel: Prevent command injection when file is sourced by validating booleans
+    if [ "$ELEVATE_GITHUB_TOKEN" != "true" ]; then ELEVATE_GITHUB_TOKEN="false"; fi
+    if [ "$OVERRIDE_GITHUB_TOKEN" != "true" ]; then OVERRIDE_GITHUB_TOKEN="false"; fi
+
     cat > /usr/local/etc/github-tokens-github-pat.env << EOF
 ELEVATE_GITHUB_TOKEN=$ELEVATE_GITHUB_TOKEN
 OVERRIDE_GITHUB_TOKEN=$OVERRIDE_GITHUB_TOKEN
