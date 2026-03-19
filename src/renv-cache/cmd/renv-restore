@@ -157,8 +157,8 @@ sync_renv_version() {
 
     if [ -n "$target_version" ]; then
         echo "[INFO] renv.lock requires renv version: $target_version"
-        Rscript -e "
-            target <- '${target_version}'
+        RENV_TARGET_VERSION="$target_version" Rscript -e "
+            target <- Sys.getenv('RENV_TARGET_VERSION')
             current <- tryCatch(
                 as.character(packageVersion('renv')),
                 error = function(e) ''
