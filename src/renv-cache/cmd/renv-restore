@@ -257,12 +257,13 @@ install_pak() {
         export RENV_CONFIG_PAK_ENABLED=false
     fi
     local version="stable"
-    Rscript -e "
+    PAK_VERSION="$version" Rscript -e "
     tryCatch(
         {
             if (isFALSE(requireNamespace('pak', quietly = TRUE))) {
                 message('pak not found. Installing pak...')
-                install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/"${version}"/%s/%s/%s\", .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
+                version <- Sys.getenv('PAK_VERSION')
+                install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/%s/%s/%s/%s\", version, .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
             } else {
                 message('[OK] pak is already installed.')
             }
@@ -285,14 +286,15 @@ install_pkg() {
     if [ "$renv_config_pak_orig" = "true" ]; then
         export RENV_CONFIG_PAK_ENABLED=false
     fi
-    Rscript -e "
+    PKG_TO_INSTALL="$1" Rscript -e "
     tryCatch(
         {
-            if (isFALSE(requireNamespace('$1', quietly = TRUE))) {
-                message('$1 not found. Installing $1...')
-                utils::install.packages('$1', repos = 'https://cloud.r-project.org')
+            pkg <- Sys.getenv('PKG_TO_INSTALL')
+            if (isFALSE(requireNamespace(pkg, quietly = TRUE))) {
+                message(pkg, ' not found. Installing ', pkg, '...')
+                utils::install.packages(pkg, repos = 'https://cloud.r-project.org')
             } else {
-                message('[OK] $1 is already installed.')
+                message('[OK] ', pkg, ' is already installed.')
             }
         },
         error = function(e) {
@@ -408,7 +410,7 @@ restore() {
     fi
 
     # Use renvvv function
-    Rscript -e "
+    RENVVV_FUNCTION="$renvvv_function" Rscript -e "
         if (!requireNamespace('renvvv', quietly = TRUE)) {
             stop('renvvv not found. Please ensure it was installed by the feature.')
         }
@@ -431,13 +433,18 @@ restore() {
             message('Skipping packages: ', paste(skip_packages, collapse = ', '))
         }
 
-        tryCatch(
-            $renvvv_function,
-            error = function(e) {
-                message('[WARN] renvvv operation failed: ', e)
-                quit(status = 1)
-            }
-        )
+        fn_str <- Sys.getenv('RENVVV_FUNCTION')
+        if (nzchar(fn_str)) {
+            tryCatch(
+                eval(parse(text = fn_str)),
+                error = function(e) {
+                    message('[WARN] renvvv operation failed: ', e)
+                    quit(status = 1)
+                }
+            )
+        } else {
+            message('[WARN] No renvvv function provided.')
+        }
     "
     echo "[OK] Restore/update process attempted"
     echo "---------------------------------------------"
