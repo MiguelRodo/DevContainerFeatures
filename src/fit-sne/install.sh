@@ -95,6 +95,11 @@ git clone https://github.com/KlugerLab/FIt-SNE.git
 cd FIt-SNE
 
 if [ "${FITSNE_VERSION}" != "latest" ] && [ "${FITSNE_VERSION}" != "" ]; then
+    # 🛡️ Sentinel: Prevent git checkout option injection
+    if [[ "${FITSNE_VERSION}" == -* ]]; then
+        echo "Error: Invalid FITSNE_VERSION. Cannot start with a dash."
+        exit 1
+    fi
     echo "Checking out version ${FITSNE_VERSION}..."
     # Try with 'v' prefix first, then without
     if ! git checkout "v${FITSNE_VERSION}" 2>/dev/null; then
