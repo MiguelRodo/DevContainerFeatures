@@ -71,6 +71,13 @@ case "$OS_ID" in
 esac
 
 echo "Configuring timezone to ${TIMEZONE}..."
+
+# 🛡️ Sentinel: Validate TIMEZONE to prevent path traversal
+if [[ "${TIMEZONE}" == *".."* ]] || [[ "${TIMEZONE}" == *"/"* && ! "${TIMEZONE}" =~ ^[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+)+$ ]]; then
+    echo "Error: Invalid or dangerous TIMEZONE provided."
+    exit 1
+fi
+
 # Apptainer often requires a valid /etc/localtime to mount properly
 ln -fs "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
 echo "${TIMEZONE}" > /etc/timezone
