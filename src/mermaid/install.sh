@@ -2,6 +2,13 @@
 set -e
 
 USERNAME="${USERNAME:-"mermaiduser"}"
+
+# 🛡️ Sentinel: Prevent option injection in user-supplied commands
+if [[ "${USERNAME}" == -* ]]; then
+    echo "Error: Invalid USERNAME. Cannot start with a dash."
+    exit 1
+fi
+
 CONFIG_DIR="${PUPPETEERCONFIGDIR:-"/usr/local/share/mermaid-config"}"
 PUPPETEER_CONFIG="$CONFIG_DIR/puppeteer-config.json"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
