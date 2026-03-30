@@ -56,6 +56,12 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# 🛡️ Sentinel: Prevent option injection in user-supplied commands
+if [[ "${USERNAME}" == -* ]]; then
+    echo "Error: Invalid USERNAME. Cannot start with a dash."
+    exit 1
+fi
+
 # Ensure mmdc is installed
 if ! command -v mmdc &>/dev/null; then
     echo "Error: 'mmdc' command not found."
