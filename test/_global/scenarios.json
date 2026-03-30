@@ -115,5 +115,41 @@
     "features": {
       "repos": {}
     }
+  },
+  "apptainer_debian": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+      "apptainer": {
+        "timezone": "America/New_York"
+      }
+    }
+  },
+  "fit_sne_alpine": {
+    "image": "mcr.microsoft.com/devcontainers/base:alpine",
+    "features": {
+      "fit-sne": {
+        "version": "1.2.1"
+      }
+    }
+  },
+  "fit_sne_debian": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+      "fit-sne": {
+        "version": "1.2.1"
+      }
+    }
+  },
+  "mermaid_debian": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+      "mermaid": {}
+    }
+  },
+  "mermaid_alpine": {
+    "image": "mcr.microsoft.com/devcontainers/base:alpine",
+    "features": {
+      "mermaid": {}
+    }
   }
 }
