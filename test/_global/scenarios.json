@@ -151,5 +151,27 @@
     "features": {
       "mermaid": {}
     }
+  },
+  "apptainer_fedora": {
+    "image": "fedora:latest",
+    "features": {
+      "apptainer": {
+        "timezone": "America/New_York"
+      }
+    }
+  },
+  "fit_sne_fedora": {
+    "image": "fedora:latest",
+    "features": {
+      "fit-sne": {
+        "version": "1.2.1"
+      }
+    }
+  },
+  "mermaid_fedora": {
+    "image": "fedora:latest",
+    "features": {
+      "mermaid": {}
+    }
   }
 }
