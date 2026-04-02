@@ -19,8 +19,8 @@ source dev-container-features-test-lib
 echo "🧪 Testing renv-cache renv cache functionality"
 
 # Check that R is available
-check "R is installed" bash -c "which R"
-check "Rscript is available" bash -c "which Rscript"
+check "R is installed" bash -c "command -v R"
+check "Rscript is available" bash -c "command -v Rscript"
 
 # Check that renv is installed
 check "renv is installed" Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) quit(status = 1)"

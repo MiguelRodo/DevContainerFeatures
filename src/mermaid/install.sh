@@ -38,10 +38,10 @@ create_non_root_user() {
     if ! id "$USERNAME" &>/dev/null; then
         echo "[INFO] Creating non-root user: $USERNAME"
         if command -v useradd >/dev/null 2>&1; then
-            useradd --system --shell /bin/bash "$USERNAME"
+            useradd --system --shell /sbin/nologin "$USERNAME" 2>/dev/null || useradd --system --shell /bin/false "$USERNAME"
         else
             # Alpine Linux uses adduser
-            adduser -D -s /bin/sh "$USERNAME"
+            adduser -D -s /sbin/nologin "$USERNAME" 2>/dev/null || adduser -D -s /bin/false "$USERNAME"
         fi
         mkdir -p "/home/$USERNAME"
         chown "$USERNAME":"$USERNAME" "/home/$USERNAME"
@@ -74,7 +74,7 @@ install_dependencies() {
                 curl ca-certificates gcc gcc-c++ make openssl-devel \
                 libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
                 libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
-                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux
             ;;
         centos|rhel|rocky|almalinux)
             yum install -y epel-release || true
@@ -82,7 +82,7 @@ install_dependencies() {
                 curl ca-certificates gcc gcc-c++ make openssl-devel \
                 libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
                 libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
-                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux
             ;;
         alpine)
             apk add --no-cache \
@@ -95,7 +95,7 @@ install_dependencies() {
                 curl ca-certificates gcc gcc-c++ make libopenssl-devel \
                 libX11-xcb1 libXcomposite1 libXcursor1 libXdamage1 libXext6 libXfixes3 \
                 libXi6 libXrandr2 libXrender1 libXss1 libXtst6 mozilla-nss libgbm1 \
-                liberation-fonts at-spi2-atk gtk3 alsa sudo
+                liberation-fonts at-spi2-atk gtk3 alsa sudo util-linux
             ;;
         *)
             echo "[ERROR] Unsupported OS: $OS_ID"
@@ -212,7 +212,7 @@ setup_mermaid() {
     # Install Chrome for Puppeteer (skip on Alpine - uses system Chromium)
     if [ "$OS_ID" != "alpine" ]; then
         echo "[INFO] Installing Chrome Headless Shell for $USERNAME..."
-        su - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell"
+        su -s /bin/bash - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell"
     fi
 }
 
