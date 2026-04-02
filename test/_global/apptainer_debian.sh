@@ -6,7 +6,7 @@ set -e
 
 source dev-container-features-test-lib
 
-check "apptainer binary is installed" bash -c "which apptainer"
+check "apptainer binary is installed" bash -c "command -v apptainer"
 check "apptainer version command works" bash -c "apptainer --version"
 check "apptainer is installed via dpkg" bash -c "dpkg -l | grep -q apptainer"
 check "timezone is configured correctly" bash -c "readlink /etc/localtime | grep -q 'America/New_York'"
