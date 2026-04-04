@@ -7,7 +7,7 @@ source dev-container-features-test-lib
 
 check "node is installed" node --version
 check "npm is installed" npm --version
-check "mmdc is installed" which mmdc
+check "mmdc is installed" command -v mmdc
 check "mermaid-mmdc wrapper exists" test -f /usr/local/bin/mermaid-mmdc
 check "mermaid-mmdc wrapper is executable" test -x /usr/local/bin/mermaid-mmdc
 check "mermaiduser exists" id mermaiduser
