@@ -15,8 +15,8 @@ source dev-container-features-test-lib
 echo "🧪 Testing renv-cache with pak backend"
 
 # Basic availability checks
-check "R is installed" bash -c "which R"
-check "Rscript is available" bash -c "which Rscript"
+check "R is installed" bash -c "command -v R"
+check "Rscript is available" bash -c "command -v Rscript"
 check "renv is installed" Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) quit(status = 1)"
 check "renvvv is installed" Rscript -e "if (!requireNamespace('renvvv', quietly = TRUE)) quit(status = 1)"
 check "pak is installed" Rscript -e "if (!requireNamespace('pak', quietly = TRUE)) quit(status = 1)"
