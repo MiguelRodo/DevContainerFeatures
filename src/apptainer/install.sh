@@ -36,18 +36,53 @@ case "$OS_ID" in
         apt-get update
         apt-get install -y --no-install-recommends \
             ca-certificates curl tzdata
-        ARCH=$(dpkg --print-architecture)
-        APPTAINER_VERSION=$(curl -s https://api.github.com/repos/apptainer/apptainer/releases/latest \
-            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
-        if [ -z "$APPTAINER_VERSION" ]; then
-            echo "Error: Could not determine latest Apptainer version from GitHub API."
-            exit 1
+        # Try installing apptainer from distribution repositories first (available in Debian 13+).
+        # apt-get update has already been run above, so the cache is current.
+        if apt-cache show apptainer >/dev/null 2>&1; then
+            apt-get install -y apptainer
+        else
+            ARCH=$(dpkg --print-architecture)
+            APPTAINER_VERSION=$(curl -s https://api.github.com/repos/apptainer/apptainer/releases/latest \
+                | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+            if [ -z "$APPTAINER_VERSION" ]; then
+                echo "Error: Could not determine latest Apptainer version from GitHub API."
+                exit 1
+            fi
+            echo "Downloading Apptainer ${APPTAINER_VERSION} for ${ARCH}..."
+            curl -L -o /tmp/apptainer.deb \
+                "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_${ARCH}.deb"
+            # On Debian trixie+ fuse3 bumped its soname from 3 to 4 (fuse3 >= 3.16), renaming
+            # the library package from libfuse3-3 to libfuse3-4.  The upstream Apptainer .deb
+            # still declares "Depends: libfuse3-3", which is unresolvable on trixie+.
+            # Work-around: install equivs + fuse3, then build a tiny virtual package that
+            # satisfies the declared dependency so apt can install the .deb cleanly.
+            # Version 999.0.0 is intentionally high to act as an obvious compatibility shim.
+            if ! apt-cache show libfuse3-3 >/dev/null 2>&1; then
+                apt-get install -y --no-install-recommends equivs fuse3
+                cat > /tmp/libfuse3-3-compat.control << 'EOF'
+Section: libs
+Priority: optional
+Standards-Version: 3.9.2
+Package: libfuse3-3
+Version: 999.0.0
+Architecture: any
+Maintainer: dummy <dummy@example.com>
+Provides: libfuse3-3
+Depends: fuse3
+Description: Dummy compatibility shim satisfying libfuse3-3 on systems that provide libfuse3-4
+EOF
+                (cd /tmp && equivs-build libfuse3-3-compat.control)
+                SHIM_DEB="/tmp/libfuse3-3_999.0.0_all.deb"
+                if [ ! -f "${SHIM_DEB}" ]; then
+                    echo "Error: equivs-build did not produce expected file ${SHIM_DEB}"
+                    exit 1
+                fi
+                dpkg -i "${SHIM_DEB}"
+                rm -f "${SHIM_DEB}" /tmp/libfuse3-3-compat.control
+            fi
+            apt-get install -y /tmp/apptainer.deb
+            rm -f /tmp/apptainer.deb
         fi
-        echo "Downloading Apptainer ${APPTAINER_VERSION} for ${ARCH}..."
-        curl -L -o /tmp/apptainer.deb \
-            "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_${ARCH}.deb"
-        apt-get install -y /tmp/apptainer.deb
-        rm -f /tmp/apptainer.deb
         rm -rf /var/lib/apt/lists/*
         ;;
     fedora)
