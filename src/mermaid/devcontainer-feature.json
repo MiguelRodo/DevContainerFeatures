@@ -1,28 +1,26 @@
 {
-  "name": "Mermaid",
-  "id": "mermaid",
-  "version": "1.4.3",
-  "description": "Installs Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration.",
-  "options": {
-    "userName": {
-      "type": "string",
-      "default": "mermaiduser",
-      "description": "Specify the username under which Mermaid CLI will run."
+    "name": "Mermaid",
+    "id": "mermaid",
+    "version": "1.4.4",
+    "description": "Installs Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration.",
+    "options": {
+        "userName": {
+            "type": "string",
+            "default": "mermaiduser",
+            "description": "Specify the username under which Mermaid CLI will run."
+        },
+        "puppeteerConfigDir": {
+            "type": "string",
+            "default": "/usr/local/share/mermaid-config",
+            "description": "Directory to store Puppeteer configuration files."
+        },
+        "nodeVersion": {
+            "type": "string",
+            "default": "lts",
+            "description": "Node.js version to install if not present (e.g., 'lts', '20', '18')."
+        }
     },
-    "puppeteerConfigDir": {
-      "type": "string",
-      "default": "/usr/local/share/mermaid-config",
-      "description": "Directory to store Puppeteer configuration files."
-    },
-    "nodeVersion": {
-      "type": "string",
-      "default": "lts",
-      "description": "Node.js version to install if not present (e.g., 'lts', '20', '18')."
-    }
-  },
-  "installsAfter": [
-    "ghcr.io/devcontainers/features/node"
-  ]
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/node"
+    ]
 }
-
-

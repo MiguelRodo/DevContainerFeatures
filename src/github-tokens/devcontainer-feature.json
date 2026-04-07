@@ -1,7 +1,7 @@
 {
     "name": "GitHub Tokens",
     "id": "github-tokens",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup",
     "postCreateCommand": "/usr/local/bin/github-tokens-post-create",
     "options": {
