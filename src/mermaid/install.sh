@@ -38,10 +38,10 @@ create_non_root_user() {
     if ! id "$USERNAME" &>/dev/null; then
         echo "[INFO] Creating non-root user: $USERNAME"
         if command -v useradd >/dev/null 2>&1; then
-            useradd --system --shell /bin/bash "$USERNAME"
+            useradd --system --shell /sbin/nologin "$USERNAME"
         else
             # Alpine Linux uses adduser
-            adduser -D -s /bin/sh "$USERNAME"
+            adduser -D -s /sbin/nologin "$USERNAME"
         fi
         mkdir -p "/home/$USERNAME"
         chown "$USERNAME":"$USERNAME" "/home/$USERNAME"
@@ -212,7 +212,7 @@ setup_mermaid() {
     # Install Chrome for Puppeteer (skip on Alpine - uses system Chromium)
     if [ "$OS_ID" != "alpine" ]; then
         echo "[INFO] Installing Chrome Headless Shell for $USERNAME..."
-        su - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell"
+        su -s /bin/bash - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell"
     fi
 }
 
