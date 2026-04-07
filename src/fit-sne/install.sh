@@ -84,6 +84,9 @@ cd "fftw-${FFTW_VERSION}"
 make -j"$(nproc)"
 make install
 if command -v ldconfig >/dev/null 2>&1; then
+    if [ -d /etc/ld.so.conf.d ]; then
+        echo "/usr/local/lib" > /etc/ld.so.conf.d/local-libs.conf
+    fi
     ldconfig
 fi
 

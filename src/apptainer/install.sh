@@ -46,7 +46,7 @@ case "$OS_ID" in
         echo "Downloading Apptainer ${APPTAINER_VERSION} for ${ARCH}..."
         curl -L -o /tmp/apptainer.deb \
             "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_${ARCH}.deb"
-        dpkg -i /tmp/apptainer.deb || apt-get install -f -y
+        apt-get install -y /tmp/apptainer.deb
         rm -f /tmp/apptainer.deb
         rm -rf /var/lib/apt/lists/*
         ;;
