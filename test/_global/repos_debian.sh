@@ -7,7 +7,7 @@ set -e
 source dev-container-features-test-lib
 
 # Feature-specific tests for repos
-check "repos binary is installed" bash -c "which repos"
+check "repos binary is installed" bash -c "command -v repos"
 check "repos help command works" bash -c "repos --help || repos -h || true"
 check "repos-post-start script exists" bash -c "test -f /usr/local/bin/repos-post-start"
 check "repos-post-start script is executable" bash -c "test -x /usr/local/bin/repos-post-start"

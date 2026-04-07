@@ -17,8 +17,8 @@ source dev-container-features-test-lib
 # The 'check' command comes from the dev-container-features-test-lib.
 
 # Check that R is available
-check "R is installed" bash -c "which R"
-check "Rscript is available" bash -c "which Rscript"
+check "R is installed" bash -c "command -v R"
+check "Rscript is available" bash -c "command -v Rscript"
 
 # Check that renv-cache scripts are installed
 check "renv-cache-post-create exists" bash -c "test -f /usr/local/bin/renv-cache-post-create"
