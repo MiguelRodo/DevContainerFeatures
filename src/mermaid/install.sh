@@ -74,7 +74,7 @@ install_dependencies() {
                 curl ca-certificates gcc gcc-c++ make openssl-devel \
                 libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
                 libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
-                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux
             ;;
         centos|rhel|rocky|almalinux)
             yum install -y epel-release || true
@@ -82,7 +82,7 @@ install_dependencies() {
                 curl ca-certificates gcc gcc-c++ make openssl-devel \
                 libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
                 libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
-                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux
             ;;
         alpine)
             apk add --no-cache \
@@ -95,7 +95,7 @@ install_dependencies() {
                 curl ca-certificates gcc gcc-c++ make libopenssl-devel \
                 libX11-xcb1 libXcomposite1 libXcursor1 libXdamage1 libXext6 libXfixes3 \
                 libXi6 libXrandr2 libXrender1 libXss1 libXtst6 mozilla-nss libgbm1 \
-                liberation-fonts at-spi2-atk gtk3 alsa sudo
+                liberation-fonts at-spi2-atk gtk3 alsa sudo util-linux
             ;;
         *)
             echo "[ERROR] Unsupported OS: $OS_ID"
