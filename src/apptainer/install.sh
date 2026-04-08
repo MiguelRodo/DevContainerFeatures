@@ -65,7 +65,7 @@ Priority: optional
 Standards-Version: 3.9.2
 Package: libfuse3-3
 Version: 999.0.0
-Architecture: any
+Architecture: all
 Maintainer: dummy <dummy@example.com>
 Provides: libfuse3-3
 Depends: fuse3

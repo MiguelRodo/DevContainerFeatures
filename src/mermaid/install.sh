@@ -17,6 +17,12 @@ INSTALL_DIR="/usr/local/bin"
 INSTALL_PATH="$INSTALL_DIR/mermaid-mmdc"
 NODE_VERSION="${NODEVERSION:-"lts"}"
 
+# 🛡️ Sentinel: Prevent command injection in NODE_VERSION
+if ! echo "$NODE_VERSION" | grep -Eq '^[a-zA-Z0-9._-]+$'; then
+    echo "Error: Invalid NODE_VERSION."
+    exit 1
+fi
+
 # Detect OS
 if [ -f /etc/os-release ]; then
     . /etc/os-release
