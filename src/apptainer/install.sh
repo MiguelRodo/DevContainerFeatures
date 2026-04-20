@@ -108,7 +108,7 @@ esac
 echo "Configuring timezone to ${TIMEZONE}..."
 
 # 🛡️ Sentinel: Validate TIMEZONE to prevent path traversal
-if [[ "${TIMEZONE}" == *".."* ]] || [[ "${TIMEZONE}" == *"/"* && ! "${TIMEZONE}" =~ ^[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+)+$ ]]; then
+if echo "$TIMEZONE" | grep -Fq ".." || { echo "$TIMEZONE" | grep -Fq "/" && ! echo "$TIMEZONE" | grep -Eq '^[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+)+$'; }; then
     echo "Error: Invalid or dangerous TIMEZONE provided."
     exit 1
 fi

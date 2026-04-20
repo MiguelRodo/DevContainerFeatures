@@ -56,9 +56,9 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# 🛡️ Sentinel: Prevent option injection in user-supplied commands
-if [[ "${USERNAME}" == -* ]]; then
-    echo "Error: Invalid USERNAME. Cannot start with a dash."
+# 🛡️ Sentinel: Prevent option injection and command injection in user-supplied commands
+if ! echo "$USERNAME" | grep -Eq '^[a-zA-Z0-9_][a-zA-Z0-9_-]*$'; then
+    echo "Error: Invalid USERNAME. Must consist of alphanumeric characters, dashes, and underscores, and cannot start with a dash."
     exit 1
 fi
 
