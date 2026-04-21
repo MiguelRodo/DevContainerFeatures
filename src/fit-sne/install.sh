@@ -99,8 +99,8 @@ cd FIt-SNE
 
 if [ "${FITSNE_VERSION}" != "latest" ] && [ "${FITSNE_VERSION}" != "" ]; then
     # 🛡️ Sentinel: Prevent git checkout option injection
-    if echo "${FITSNE_VERSION}" | grep -Eq '^-'; then
-        echo "Error: Invalid FITSNE_VERSION. Cannot start with a dash."
+    if ! echo "${FITSNE_VERSION}" | grep -Eq '^[a-zA-Z0-9_][a-zA-Z0-9_.-]*$'; then
+        echo "Error: Invalid FITSNE_VERSION. Must consist of alphanumeric characters, dots, dashes, and underscores, and cannot start with a dash."
         exit 1
     fi
     echo "Checking out version ${FITSNE_VERSION}..."
