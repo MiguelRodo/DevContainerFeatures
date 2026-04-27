@@ -62,6 +62,10 @@ DevContainerFeatures/
 │   └── _global/
 │       ├── scenarios.json # Test configurations for all features
 │       └── *.sh          # Test scripts (use dev-container-features-test-lib)
+├── docs/
+│   ├── _quarto.yml       # Quarto website project config
+│   ├── index.qmd         # Quarto website home page
+│   └── features/         # Quarto website feature pages (*.qmd)
 └── README.md             # Main repository documentation
 ```
 
