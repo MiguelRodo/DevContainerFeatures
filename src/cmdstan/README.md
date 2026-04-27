@@ -23,6 +23,16 @@ With a specific version and R integration disabled:
 }
 ```
 
+With Python integration disabled:
+
+```json
+"features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1": {
+        "installPythonPackage": false
+    }
+}
+```
+
 ## Options
 
 | Option Id | Description | Type | Default Value |
@@ -30,6 +40,7 @@ With a specific version and R integration disabled:
 | `version` | CmdStan version to install (e.g. `"2.36.0"`). Use `"latest"` to always pull the newest release. | string | `latest` |
 | `installDir` | Base directory under which the versioned CmdStan folder is created (e.g. `/opt/cmdstan/cmdstan-2.36.0`). | string | `/opt/cmdstan` |
 | `installRPackage` | When `true` and R is present in the image, install the `cmdstanr` R package and configure it to use the system CmdStan installation. | boolean | `true` |
+| `installPythonPackage` | When `true` and Python/pip is present in the image, install the `cmdstanpy` Python package and configure it to use the system CmdStan installation. | boolean | `true` |
 
 ## Notes
 
@@ -53,6 +64,15 @@ When `installRPackage` is `true` and R is present, the feature installs `cmdstan
 ```r
 library(cmdstanr)
 cmdstan_path()   # returns /opt/cmdstan/cmdstan-<version>
+```
+
+### Using CmdStan with Python (`cmdstanpy`)
+
+When `installPythonPackage` is `true` and Python/pip is present, the feature installs `cmdstanpy` via pip. Because the `CMDSTAN` environment variable is set system-wide, `cmdstanpy` automatically picks up the system installation with no additional configuration:
+
+```python
+import cmdstanpy
+cmdstanpy.cmdstan_path()   # returns /opt/cmdstan/cmdstan-<version>
 ```
 
 ### Using CmdStan directly
