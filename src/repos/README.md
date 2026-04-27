@@ -1,7 +1,7 @@
 
 # Automatically set up multi-repo projects (repos)
 
-Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos setup' when the container starts to clone repositories defined in repos.list.
+Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos clone' when the container starts to clone repositories defined in repos.list.
 
 ## Example Usage
 
@@ -15,7 +15,7 @@ Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally ru
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| runOnStart | Automatically run 'repos setup' when the container starts. | boolean | false |
+| runOnStart | Automatically run 'repos clone' when the container starts. | boolean | false |
 
 # TL;DR
 
