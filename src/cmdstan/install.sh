@@ -231,7 +231,7 @@ if [ "${INSTALL_PYTHON_PACKAGE}" = "true" ]; then
 
     if [ -n "${PIP_CMD}" ]; then
         echo "Python/pip detected (${PIP_CMD}) – installing cmdstanpy..."
-        ${PIP_CMD} install --quiet --no-cache-dir cmdstanpy
+        ${PIP_CMD} install --quiet --no-cache-dir --break-system-packages cmdstanpy
         echo "[cmdstanpy] installed."
         echo "[cmdstanpy] The system-wide CMDSTAN env var (${VERSIONED_DIR}) will be used automatically."
     else
