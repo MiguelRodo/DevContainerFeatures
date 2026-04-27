@@ -1,0 +1,46 @@
+---
+title: "fit-sne"
+description: "Install FIt-SNE for dimensionality reduction"
+toc: true
+toc-depth: 3
+---
+
+Install [FIt-SNE](https://github.com/KlugerLab/FIt-SNE) (Fast Interpolation-based t-SNE) by compiling it from source, along with the required FFTW 3.3.10 library.
+
+## Example Usage
+
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1": {}
+  }
+}
+```
+
+With a specific version:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1": {
+      "version": "1.2.1"
+    }
+  }
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `version` | string | `"latest"` | FIt-SNE version tag or commit SHA to install. Use `"latest"` for the default branch. |
+
+## Notes
+
+- Compiles FIt-SNE and its FFTW dependency from source, so installation may take a few minutes.
+- Installed build dependencies: `build-essential`, `wget`, `git`.
+
+## Source
+
+[`src/fit-sne`](https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/fit-sne)

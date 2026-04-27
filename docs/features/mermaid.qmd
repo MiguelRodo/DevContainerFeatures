@@ -1,0 +1,50 @@
+---
+title: "mermaid"
+description: "Install Mermaid CLI for diagram generation"
+toc: true
+toc-depth: 3
+---
+
+Install [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli) (`mmdc`) to generate diagrams from `.mmd` files. Sets up a non-root user and Puppeteer configuration for headless rendering.
+
+## Example Usage
+
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1": {}
+  }
+}
+```
+
+With a custom user and Node.js version:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1": {
+      "userName": "mermaiduser",
+      "nodeVersion": "20"
+    }
+  }
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `userName` | string | `"mermaiduser"` | Username under which Mermaid CLI will run. |
+| `puppeteerConfigDir` | string | `"/usr/local/share/mermaid-config"` | Directory to store Puppeteer configuration files. |
+| `nodeVersion` | string | `"lts"` | Node.js version to install if not present (e.g., `"lts"`, `"20"`, `"18"`). |
+
+## Notes
+
+- Requires Node.js — the feature will install it if not already present.
+- Installs system libraries required by Puppeteer (Chromium dependencies).
+- The non-root `mermaiduser` is used to run the headless browser safely inside the container.
+
+## Source
+
+[`src/mermaid`](https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/mermaid)

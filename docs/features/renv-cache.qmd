@@ -1,0 +1,172 @@
+---
+title: "renv-cache"
+description: "Configure R with renv cache for VS Code development"
+toc: true
+toc-depth: 3
+---
+
+Configure R for development in VS Code, including library paths, GitHub token management, and package restoration via renv cache. Packages are installed once during the image build and reused on every container start, dramatically speeding up rebuilds.
+
+## Example Usage
+
+```json
+{
+  "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {}
+  }
+}
+```
+
+With a custom renv directory and selective package exclusion:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
+      "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv",
+      "pkgExclude": "package1,package2"
+    }
+  }
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `setRLibPaths` | boolean | `true` | Set default paths for R libraries (including for `renv`) to avoid reinstalling upon rebuild. |
+| `overrideTokensAtInstall` | boolean | `true` | Temporarily override `GITHUB_TOKEN` / set `GITHUB_PAT` from the best available token during the renv install phase, then reset afterwards. |
+| `restore` | boolean | `true` | Run package restoration using `renvvv::renvvv_restore()`. |
+| `update` | boolean | `false` | Run package update using `renvvv::renvvv_update()`. If both `restore` and `update` are `true`, `renvvv::renvvv_restore_and_update()` is used. |
+| `renvDir` | string | `"/usr/local/share/renv-cache/renv"` | Path to directory containing subdirectories with `renv.lock` files. |
+| `pkgExclude` | string | `""` | Comma-separated list of packages to exclude from renv snapshot restore. |
+| `usePak` | boolean | `false` | Use `pak` for package installation. |
+| `debug` | boolean | `false` | Print debug information during package restore. |
+| `debugRenv` | boolean | `false` | Print debug information during renv restore. |
+
+## How It Works
+
+### R Configuration Files Modified
+
+The feature modifies the site-wide `Renviron.site` file (`$R_HOME/lib/R/etc/Renviron.site`). Two different configurations are applied at different stages:
+
+**During Image Build** (`scripts/r-lib.sh`):
+
+```
+RENV_PATHS_ROOT=/renv/local
+RENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library
+RENV_PATHS_CACHE=/renv/cache
+R_LIBS=/workspaces/.local/lib/R
+```
+
+**After Container Creation** (`scripts/r-lib-update.sh`):
+
+```
+RENV_PATHS_ROOT=/workspaces/.local/renv
+RENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library
+RENV_PATHS_CACHE=/workspaces/.cache/renv:/renv/cache
+R_LIBS=/workspaces/.local/lib/R
+```
+
+### Image Build Phase
+
+1. `Renviron.site` is configured with initial paths.
+2. Required directories are created (`/renv/local`, `/renv/cache`, `/workspaces/.local/lib/R/library`).
+3. Packages are installed from `renv.lock` files located in subdirectories of `renvDir`.
+4. Installed packages are automatically cached in `/renv/cache`.
+
+### Container Runtime Phase
+
+When the container starts, `RENV_PATHS_CACHE` is updated to `/workspaces/.cache/renv:/renv/cache`, creating a two-level cache:
+
+1. Workspace-specific cache (`/workspaces/.cache/renv`) is checked first.
+2. The build-time cache (`/renv/cache`) is used as a fallback.
+
+Packages already in the cache are linked instead of reinstalled, making subsequent starts very fast.
+
+## Basic Setup
+
+1. Create an renv directory structure in your repository:
+
+```
+.devcontainer/
+└── renv/
+    ├── project1/
+    │   └── renv.lock
+    └── shared/
+        └── renv.lock
+```
+
+2. Configure the feature in `devcontainer.json`:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
+      "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv"
+    }
+  }
+}
+```
+
+3. Mount the renv directory so it is available during the build:
+
+```json
+{
+  "mounts": [
+    "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/renv,type=bind"
+  ]
+}
+```
+
+## Package Restoration
+
+This feature uses [`renvvv::renvvv_restore()`](https://github.com/MiguelRodo/renvvv) instead of the default `renv::restore()`. This provides more robust restoration logic that:
+
+- Continues past individual package failures
+- Retries failed packages individually
+- Reports packages that could not be installed
+- Handles GitHub, CRAN, and Bioconductor packages
+- Supports skipping specific packages via `pkgExclude`
+
+## GitHub Token Management
+
+### Build-Time Token Override (`overrideTokensAtInstall`)
+
+During the build phase, `renv-cache` temporarily overrides GitHub authentication tokens so that `renv` package installation can authenticate with GitHub:
+
+1. Saves the current values of `GITHUB_TOKEN` and `GITHUB_PAT`.
+2. Sets `GITHUB_PAT` from the best available token (priority: `GITHUB_PAT` > `GH_TOKEN` > `GITHUB_TOKEN`).
+3. Overrides `GITHUB_TOKEN` with the most permissive token available.
+4. Runs the renv restore.
+5. Resets both variables to their original values.
+
+To opt out:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
+      "overrideTokensAtInstall": false
+    }
+  }
+}
+```
+
+### Session-Time Token Management
+
+For GitHub token elevation on every shell startup (e.g., for interactive R sessions), use the companion [`github-tokens`](github-tokens.qmd) feature:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {},
+    "ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1": {}
+  }
+}
+```
+
+## Source
+
+[`src/renv-cache`](https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/renv-cache)

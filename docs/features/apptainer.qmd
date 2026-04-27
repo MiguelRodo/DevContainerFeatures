@@ -1,0 +1,36 @@
+---
+title: "apptainer"
+description: "Install Apptainer for HPC containerization"
+toc: true
+toc-depth: 3
+---
+
+Install [Apptainer](https://apptainer.org/), a container system widely used in High Performance Computing (HPC) environments.
+
+## Example Usage
+
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1": {
+      "timezone": "UTC"
+    }
+  }
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `timezone` | string | `"UTC"` | Timezone to configure in the container (e.g., `"UTC"`, `"Europe/London"`, `"America/New_York"`). Required for proper Apptainer mount behavior. |
+
+## Notes
+
+- Adds the `ppa:apptainer/ppa` repository and installs Apptainer from it.
+- Configures `tzdata` because Apptainer containers often inherit the host's `/etc/localtime`.
+
+## Source
+
+[`src/apptainer`](https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/apptainer)

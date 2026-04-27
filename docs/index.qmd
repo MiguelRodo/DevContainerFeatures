@@ -1,0 +1,40 @@
+---
+title: "DevContainer Features"
+toc: true
+toc-depth: 2
+---
+
+A collection of reusable [DevContainer Features](https://containers.dev/implementors/features/) for various development tools and workflows, published to the GitHub Container Registry.
+
+## Features
+
+Each feature can be added to your `devcontainer.json` file by referencing it from `ghcr.io/MiguelRodo/DevContainerFeatures/<feature-name>`.
+
+| Feature | Description |
+|---------|-------------|
+| [apptainer](features/apptainer.qmd) | Install Apptainer for HPC containerization |
+| [cmdstan](features/cmdstan.qmd) | Install CmdStan (Stan probabilistic programming) |
+| [fit-sne](features/fit-sne.qmd) | Install FIt-SNE for dimensionality reduction |
+| [github-tokens](features/github-tokens.qmd) | Manage GitHub authentication tokens |
+| [mermaid](features/mermaid.qmd) | Install Mermaid CLI for diagram generation |
+| [renv-cache](features/renv-cache.qmd) | Configure R with renv cache |
+| [repos](features/repos.qmd) | Manage multiple Git repositories |
+
+## Quick Start
+
+Add a feature to your `devcontainer.json`:
+
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/<feature-name>:1": {}
+  }
+}
+```
+
+Replace `<feature-name>` with the feature you want to use and set the version tag accordingly.
+
+## Source
+
+Source code and issue tracker: <https://github.com/MiguelRodo/DevContainerFeatures>
