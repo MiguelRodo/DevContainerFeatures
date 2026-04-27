@@ -1,0 +1,57 @@
+---
+title: "github-tokens"
+description: "Manage GitHub authentication tokens on each shell startup"
+toc: true
+toc-depth: 3
+---
+
+Manage GitHub authentication tokens (`GITHUB_PAT`, `GITHUB_TOKEN`) on each shell startup so that R tools (such as `renv`) that prioritize `GITHUB_TOKEN` always have access to the most permissive token available.
+
+## Example Usage
+
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1": {}
+  }
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `elevateGitHubToken` | boolean | `true` | If `true` and a more permissive token (`GH_TOKEN` or `GITHUB_PAT`) is available, override `GITHUB_TOKEN` to match it. Helps R tools like `renv` that prioritize `GITHUB_TOKEN`. |
+| `overrideGitHubToken` | boolean | `false` | If `true`, force `GITHUB_TOKEN` to be set to either `GH_TOKEN` or `GITHUB_PAT` (in priority order), regardless of its existing value. Use only if you always want to override `GITHUB_TOKEN`. |
+
+## Notes
+
+### Token priority
+
+When `elevateGitHubToken` is `true`, the token used to override `GITHUB_TOKEN` is chosen in this order:
+
+1. `GITHUB_PAT`
+2. `GH_TOKEN`
+3. (no override if neither is available)
+
+### Build-time vs. session-time token management
+
+This feature manages tokens **on every shell startup** (session-time). For build-time token management during `renv` package installation, see the [`renv-cache`](renv-cache.qmd) feature's `overrideTokensAtInstall` option.
+
+### Related feature
+
+Use `github-tokens` together with `renv-cache` for comprehensive token management:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {},
+    "ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1": {}
+  }
+}
+```
+
+## Source
+
+[`src/github-tokens`](https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/github-tokens)

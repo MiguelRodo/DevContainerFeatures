@@ -1,0 +1,46 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "DevContainer Features"
+  description: "A collection of reusable DevContainer Features for various development tools and workflows."
+  repo-url: https://github.com/MiguelRodo/DevContainerFeatures
+  repo-actions: [issue]
+  navbar:
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Features"
+        menu:
+          - text: "apptainer"
+            href: features/apptainer.qmd
+          - text: "cmdstan"
+            href: features/cmdstan.qmd
+          - text: "fit-sne"
+            href: features/fit-sne.qmd
+          - text: "github-tokens"
+            href: features/github-tokens.qmd
+          - text: "mermaid"
+            href: features/mermaid.qmd
+          - text: "renv-cache"
+            href: features/renv-cache.qmd
+          - text: "repos"
+            href: features/repos.qmd
+  sidebar:
+    - title: "Features"
+      contents:
+        - features/apptainer.qmd
+        - features/cmdstan.qmd
+        - features/fit-sne.qmd
+        - features/github-tokens.qmd
+        - features/mermaid.qmd
+        - features/renv-cache.qmd
+        - features/repos.qmd
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+    highlight-style: github

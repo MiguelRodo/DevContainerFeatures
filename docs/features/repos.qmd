@@ -1,0 +1,154 @@
+---
+title: "repos"
+description: "Manage multiple Git repositories automatically"
+toc: true
+toc-depth: 3
+---
+
+Install the `repos` CLI tool to manage multiple Git repositories. Optionally runs `repos setup` when the container starts to clone repositories defined in `repos.list`.
+
+## Example Usage
+
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:2": {}
+  }
+}
+```
+
+With automatic setup on container start:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:2": {
+      "runOnStart": true
+    }
+  }
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `runOnStart` | boolean | `false` | Automatically run `repos setup` when the container starts. |
+
+## Key Features
+
+### Automatic Repository Cloning
+
+- Clones all repositories specified in the `repos.list` file on container creation or start.
+- Supports custom target clone directories per repository.
+- Adds repositories to the VS Code workspace automatically.
+
+### Git Authentication
+
+Sets up Git credential helpers for GitHub and Hugging Face by modifying the system `gitconfig`. Authentication tokens are sourced from environment variables:
+
+| Service | Environment Variable | Fallback |
+|---------|---------------------|----------|
+| GitHub | `GH_TOKEN` | `GITHUB_TOKEN` |
+| Hugging Face | `HF_TOKEN` | `HUGGINGFACE_TOKEN` |
+
+### Flexible Repository Formats
+
+The `repos.list` file supports multiple formats:
+
+```bash
+# GitHub repositories
+owner/repo
+owner/repo@branch
+
+# Hugging Face datasets
+datasets/owner/repo
+datasets/owner/repo@branch
+
+# Full URLs
+https://host/owner/repo
+https://host/owner/repo@branch
+
+# With an explicit target directory
+owner2/repo2@develop ./Projects/Repo2
+```
+
+## Installation and Usage
+
+### Create a Repository List File
+
+Create a `repos.list` file in your devcontainer:
+
+```bash
+# Example repositories
+owner1/repo1
+owner2/repo2@develop ./Projects/Repo2
+datasets/owner3/dataset1 ../Datasets
+https://gitlab.com/owner4/repo4@feature-branch ./GitLabRepos
+```
+
+Lines starting with `#` are treated as comments. Empty lines are ignored. Each line can optionally include a target directory where the repository will be cloned.
+
+### Set Up Authentication Tokens
+
+Set the following environment variables before building or starting the container:
+
+- **GitHub**: `GH_TOKEN` or `GITHUB_TOKEN`
+- **Hugging Face**: `HF_TOKEN` or `HUGGINGFACE_TOKEN`
+
+For GitHub Codespaces, add these as repository secrets under **Settings → Codespaces → Secrets**.
+
+### Rebuild Your DevContainer
+
+After updating `devcontainer.json`, rebuild the container via the VS Code Command Palette → **Dev Containers: Rebuild Container**.
+
+## Commands Provided
+
+### `repos-git-clone`
+
+Clones repositories listed in a specified file.
+
+```bash
+repos-git-clone [-f|--file <file>]
+```
+
+- `-f, --file <file>`: Repository list file. Defaults to `repos.list`.
+
+### `repos-workspace-add`
+
+Adds cloned repositories to the VS Code workspace file.
+
+```bash
+repos-workspace-add [-f|--file <file>]
+```
+
+- `-f, --file <file>`: Repository list file. Defaults to `repos.list`.
+
+### `repos-git-auth-gitconfig`
+
+Sets up Git credential helpers for GitHub and Hugging Face.
+
+```bash
+repos-git-auth-gitconfig
+```
+
+### `repos-hf-install`
+
+Installs Hugging Face CLI and Git LFS.
+
+```bash
+repos-hf-install [--hf-scope <system|user>]
+```
+
+- `--hf-scope`: Install scope for the Hugging Face CLI (`system` or `user`). Default is `system`.
+
+## Notes
+
+- Installed via the `apt-miguelrodo` APT repository on Debian/Ubuntu; compiled from source on Alpine.
+- The `repos.list` file supports comments (lines starting with `#`) and ignores empty lines.
+- Particularly useful in GitHub Codespaces or similar cloud development environments.
+
+## Source
+
+[`src/repos`](https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/repos)
