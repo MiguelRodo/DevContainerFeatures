@@ -1,7 +1,7 @@
 {
     "name": "CmdStan",
     "id": "cmdstan",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Installs CmdStan (the Stan probabilistic programming system command-line interface) from the official GitHub release, compiles it during image build, and configures the CMDSTAN environment variable system-wide so the installation survives container rebuilds.",
     "options": {
         "version": {
