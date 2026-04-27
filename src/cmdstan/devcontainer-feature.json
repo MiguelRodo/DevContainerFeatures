@@ -1,0 +1,32 @@
+{
+    "name": "CmdStan",
+    "id": "cmdstan",
+    "version": "1.0.0",
+    "description": "Installs CmdStan (the Stan probabilistic programming system command-line interface) from the official GitHub release, compiles it during image build, and configures the CMDSTAN environment variable system-wide so the installation survives container rebuilds.",
+    "options": {
+        "version": {
+            "type": "string",
+            "proposals": [
+                "latest",
+                "2.36.0",
+                "2.35.0",
+                "2.34.1"
+            ],
+            "default": "latest",
+            "description": "CmdStan version to install (e.g. '2.36.0'). Use 'latest' to always pull the newest release."
+        },
+        "installDir": {
+            "type": "string",
+            "default": "/opt/cmdstan",
+            "description": "Base directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0)."
+        },
+        "installRPackage": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true and R is present in the image, install the 'cmdstanr' R package and configure it to use the system CmdStan installation."
+        }
+    },
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ]
+}

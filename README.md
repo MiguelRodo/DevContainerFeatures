@@ -7,6 +7,7 @@ A collection of reusable DevContainer Features for various development tools and
 This repository contains the following DevContainer Features:
 
 - **[apptainer](#apptainer)** - Install Apptainer for HPC containerization
+- **[cmdstan](#cmdstan)** - Install CmdStan (Stan probabilistic programming system)
 - **[renv-cache](#renv-cache)** - Configure R with renv cache
 - **[fit-sne](#fit-sne)** - Install FIt-SNE for dimensionality reduction
 - **[mermaid](#mermaid)** - Install Mermaid CLI for diagram generation
@@ -45,6 +46,42 @@ Installs [Apptainer](https://apptainer.org/), a container system widely used in 
 
 - Adds the `ppa:apptainer/ppa` repository
 - Configures `tzdata` because Apptainer containers often inherit the host's `/etc/localtime`
+
+---
+
+## cmdstan
+
+Installs [CmdStan](https://mc-stan.org/users/interfaces/cmdstan), the command-line interface to [Stan](https://mc-stan.org/) – a state-of-the-art platform for Bayesian probabilistic programming and statistical inference.
+
+The feature downloads the official CmdStan release tarball, pre-compiles the Stan C++ toolchain during the image build, and configures the `CMDSTAN` environment variable system-wide so that the installation **survives container rebuilds**.
+
+### Example
+
+```json
+{
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1": {
+            "version": "latest"
+        }
+    }
+}
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `version` | string | `"latest"` | CmdStan version to install (e.g. `"2.36.0"`). Use `"latest"` to always pull the newest release. |
+| `installDir` | string | `"/opt/cmdstan"` | Base directory under which the versioned CmdStan folder is created. |
+| `installRPackage` | boolean | `true` | When `true` and R is present, install the `cmdstanr` R package and configure it to use the system CmdStan installation. |
+
+### Notes
+
+- Installs CmdStan to a system-wide path (not a user home directory) so the installation survives rebuilds
+- Pre-compiles the Stan C++ toolchain during the image build (`make build`)
+- Sets `CMDSTAN` and updates `PATH` via `/etc/profile.d/cmdstan.sh` and `/etc/environment`
+- Compilation may take 3–10 minutes depending on available CPU cores
 
 ---
 

@@ -173,5 +173,17 @@
     "features": {
       "mermaid": {}
     }
+  },
+  "cmdstan_default": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "cmdstan": {}
+    }
+  },
+  "cmdstan_debian": {
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+      "cmdstan": {}
+    }
   }
 }
