@@ -97,19 +97,53 @@ else
     cat > /usr/local/bin/repos << 'WRAPPER_EOF'
 #!/usr/bin/env bash
 # repos - Multi-repository management tool wrapper
+# Dispatches subcommands to the appropriate script
+
 set -euo pipefail
 
 SCRIPT_DIR="/usr/local/share/repos/scripts"
-SETUP_SCRIPT="$SCRIPT_DIR/setup-repos.sh"
 
-if [ ! -f "$SETUP_SCRIPT" ]; then
-  echo "Error: setup-repos.sh not found at $SETUP_SCRIPT" >&2
-  echo "The repos package may not be installed correctly." >&2
-  exit 1
+usage() {
+  cat <<EOF
+Usage: repos <command> [options]
+
+Commands:
+  clone       Clone repositories listed in repos.list into the parent directory
+  workspace   Generate (or update) the VS Code multi-root workspace file
+  codespace   Configure GitHub Codespaces authentication
+  codespaces  Alias for codespace
+  run         Execute a script inside each cloned repository
+
+Run 'repos <command> --help' for more information on a command.
+EOF
+}
+
+if [ $# -eq 0 ]; then
+  usage >&2; exit 1
 fi
 
-# Execute setup-repos.sh with all passed arguments
-exec "$SETUP_SCRIPT" "$@"
+case "$1" in
+  -h|--help)
+    usage; exit 0 ;;
+  clone)
+    shift
+    [ -f "$SCRIPT_DIR/helper/clone-repos.sh" ] || { echo "Error: clone-repos.sh not found at $SCRIPT_DIR/helper/clone-repos.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/helper/clone-repos.sh" "$@" ;;
+  workspace)
+    shift
+    [ -f "$SCRIPT_DIR/helper/vscode-workspace-add.sh" ] || { echo "Error: vscode-workspace-add.sh not found at $SCRIPT_DIR/helper/vscode-workspace-add.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/helper/vscode-workspace-add.sh" "$@" ;;
+  codespace|codespaces)
+    shift
+    [ -f "$SCRIPT_DIR/helper/codespaces-auth-add.sh" ] || { echo "Error: codespaces-auth-add.sh not found at $SCRIPT_DIR/helper/codespaces-auth-add.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/helper/codespaces-auth-add.sh" "$@" ;;
+  run)
+    shift
+    [ -f "$SCRIPT_DIR/run-pipeline.sh" ] || { echo "Error: run-pipeline.sh not found at $SCRIPT_DIR/run-pipeline.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/run-pipeline.sh" "$@" ;;
+  *)
+    echo "Error: unknown command '$1'" >&2; echo "" >&2; usage >&2; exit 1 ;;
+esac
 WRAPPER_EOF
     
     chmod +x /usr/local/bin/repos
@@ -130,10 +164,10 @@ if [ "${RUNONSTART}" = "true" ]; then
 # Check if repos.list exists in the workspace
 REPOS_LIST="${REPOS_LIST:-repos.list}"
 if [ -f "$REPOS_LIST" ]; then
-  repos setup
+  repos clone
 else
   echo "Info: No repos.list file found. Skipping repository setup."
-  echo "Create a repos.list file and run 'repos setup' to clone repositories."
+  echo "Create a repos.list file and run 'repos clone' to clone repositories."
 fi
 EOF
 else
