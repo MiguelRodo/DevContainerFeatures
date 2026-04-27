@@ -126,13 +126,21 @@ case "$1" in
   -h|--help)
     usage; exit 0 ;;
   clone)
-    shift; exec "$SCRIPT_DIR/helper/clone-repos.sh" "$@" ;;
+    shift
+    [ -f "$SCRIPT_DIR/helper/clone-repos.sh" ] || { echo "Error: clone-repos.sh not found at $SCRIPT_DIR/helper/clone-repos.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/helper/clone-repos.sh" "$@" ;;
   workspace)
-    shift; exec "$SCRIPT_DIR/helper/vscode-workspace-add.sh" "$@" ;;
+    shift
+    [ -f "$SCRIPT_DIR/helper/vscode-workspace-add.sh" ] || { echo "Error: vscode-workspace-add.sh not found at $SCRIPT_DIR/helper/vscode-workspace-add.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/helper/vscode-workspace-add.sh" "$@" ;;
   codespace|codespaces)
-    shift; exec "$SCRIPT_DIR/helper/codespaces-auth-add.sh" "$@" ;;
+    shift
+    [ -f "$SCRIPT_DIR/helper/codespaces-auth-add.sh" ] || { echo "Error: codespaces-auth-add.sh not found at $SCRIPT_DIR/helper/codespaces-auth-add.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/helper/codespaces-auth-add.sh" "$@" ;;
   run)
-    shift; exec "$SCRIPT_DIR/run-pipeline.sh" "$@" ;;
+    shift
+    [ -f "$SCRIPT_DIR/run-pipeline.sh" ] || { echo "Error: run-pipeline.sh not found at $SCRIPT_DIR/run-pipeline.sh" >&2; exit 1; }
+    exec "$SCRIPT_DIR/run-pipeline.sh" "$@" ;;
   *)
     echo "Error: unknown command '$1'" >&2; echo "" >&2; usage >&2; exit 1 ;;
 esac
