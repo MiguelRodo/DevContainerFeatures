@@ -17,6 +17,7 @@ set -e
 CMDSTAN_VERSION="${VERSION:-"latest"}"
 INSTALL_DIR="${INSTALLDIR:-"/opt/cmdstan"}"
 INSTALL_R_PACKAGE="${INSTALLRPACKAGE:-"true"}"
+INSTALL_PYTHON_PACKAGE="${INSTALLPYTHONPACKAGE:-"true"}"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -208,6 +209,33 @@ if [ "${INSTALL_R_PACKAGE}" = "true" ] && command -v Rscript >/dev/null 2>&1; th
         echo "# CmdStan path for cmdstanr – set by the cmdstan DevContainer feature" >> "${RENVIRON_SITE}"
         echo "CMDSTAN=${VERSIONED_DIR}" >> "${RENVIRON_SITE}"
         echo "[cmdstanr] Wrote CMDSTAN=${VERSIONED_DIR} to ${RENVIRON_SITE}"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Optional: install the cmdstanpy Python package
+# ---------------------------------------------------------------------------
+if [ "${INSTALL_PYTHON_PACKAGE}" = "true" ]; then
+    # Detect a usable pip command
+    if command -v pip3 >/dev/null 2>&1; then
+        PIP_CMD="pip3"
+    elif command -v pip >/dev/null 2>&1; then
+        PIP_CMD="pip"
+    elif command -v python3 >/dev/null 2>&1 && python3 -m pip --version >/dev/null 2>&1; then
+        PIP_CMD="python3 -m pip"
+    elif command -v python >/dev/null 2>&1 && python -m pip --version >/dev/null 2>&1; then
+        PIP_CMD="python -m pip"
+    else
+        PIP_CMD=""
+    fi
+
+    if [ -n "${PIP_CMD}" ]; then
+        echo "Python/pip detected (${PIP_CMD}) – installing cmdstanpy..."
+        ${PIP_CMD} install --quiet --no-cache-dir cmdstanpy
+        echo "[cmdstanpy] installed."
+        echo "[cmdstanpy] The system-wide CMDSTAN env var (${VERSIONED_DIR}) will be used automatically."
+    else
+        echo "Python/pip not found – skipping cmdstanpy installation."
     fi
 fi
 

@@ -1,7 +1,7 @@
 {
     "name": "CmdStan",
     "id": "cmdstan",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Installs CmdStan (the Stan probabilistic programming system command-line interface) from the official GitHub release, compiles it during image build, and configures the CMDSTAN environment variable system-wide so the installation survives container rebuilds.",
     "options": {
         "version": {
@@ -24,6 +24,11 @@
             "type": "boolean",
             "default": true,
             "description": "When true and R is present in the image, install the 'cmdstanr' R package and configure it to use the system CmdStan installation."
+        },
+        "installPythonPackage": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true and Python/pip is present in the image, install the 'cmdstanpy' Python package and configure it to use the system CmdStan installation."
         }
     },
     "installsAfter": [

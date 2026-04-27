@@ -185,5 +185,11 @@
     "features": {
       "cmdstan": {}
     }
+  },
+  "cmdstan_python": {
+    "image": "mcr.microsoft.com/devcontainers/python:3",
+    "features": {
+      "cmdstan": {}
+    }
   }
 }
