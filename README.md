@@ -198,7 +198,7 @@ Installs the `repos` CLI tool to manage multiple Git repositories. Automatically
 {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/repos:2": {
+        "ghcr.io/MiguelRodo/DevContainerFeatures/repos:3": {
             "runOnStart": true
         }
     }
