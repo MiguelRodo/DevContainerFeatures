@@ -27,44 +27,52 @@ case "$OS_ID" in
             ca-certificates \
             curl \
             gnupg \
-            tzdata
-        # Fetch the PPA signing key with retries and fallbacks to avoid Launchpad API and keyserver timeouts
-        KEY_FILE="$(mktemp)"
-        trap 'rm -f "${KEY_FILE}"' EXIT
-        
-        KEY_FETCHED=false
-        KEYSERVERS=(
-            "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
-            "http://keyserver.ubuntu.com:80/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
-        )
+            tzdata \
+            software-properties-common
+            
+        echo "Attempting to add Apptainer PPA using add-apt-repository..."
+        if ! add-apt-repository -y ppa:apptainer/ppa; then
+            echo "add-apt-repository failed. Falling back to manual key fetch..."
+            
+            # Fetch the PPA signing key with retries and fallbacks
+            KEY_FILE="$(mktemp)"
+            trap 'rm -f "${KEY_FILE}"' EXIT
+            
+            KEY_FETCHED=false
+            KEYSERVERS=(
+                "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
+                "http://keyserver.ubuntu.com:80/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
+            )
 
-        for KEYSERVER in "${KEYSERVERS[@]}"; do
-            echo "Attempting to fetch key from $KEYSERVER..."
-            if curl --retry 3 --retry-delay 2 --retry-connrefused -fsSL "$KEYSERVER" -o "${KEY_FILE}"; then
-                KEY_FETCHED=true
-                break
+            for KEYSERVER in "${KEYSERVERS[@]}"; do
+                echo "Attempting to fetch key from $KEYSERVER..."
+                if curl --retry 3 --retry-delay 2 --retry-connrefused -fsSL "$KEYSERVER" -o "${KEY_FILE}"; then
+                    KEY_FETCHED=true
+                    break
+                fi
+            done
+
+            if [ "$KEY_FETCHED" = false ]; then
+                echo "Error: Failed to fetch apptainer PPA signing key from all attempted methods." >&2
+                exit 1
             fi
-        done
 
-        if [ "$KEY_FETCHED" = false ]; then
-            echo "Error: Failed to fetch apptainer PPA signing key from all attempted keyservers." >&2
-            exit 1
+            mkdir -p /usr/share/keyrings
+            if ! gpg --dearmor -o /usr/share/keyrings/apptainer-archive-keyring.gpg "${KEY_FILE}"; then
+                echo "Error: Failed to dearmor apptainer PPA signing key" >&2
+                exit 1
+            fi
+            rm -f "${KEY_FILE}"
+            trap - EXIT
+            UBUNTU_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME}}"
+            if [ -z "${UBUNTU_CODENAME}" ]; then
+                echo "Error: Could not determine Ubuntu codename from /etc/os-release" >&2
+                exit 1
+            fi
+            echo "deb [signed-by=/usr/share/keyrings/apptainer-archive-keyring.gpg] https://ppa.launchpadcontent.net/apptainer/ppa/ubuntu ${UBUNTU_CODENAME} main" \
+                > /etc/apt/sources.list.d/apptainer.list
         fi
 
-        mkdir -p /usr/share/keyrings
-        if ! gpg --dearmor -o /usr/share/keyrings/apptainer-archive-keyring.gpg "${KEY_FILE}"; then
-            echo "Error: Failed to dearmor apptainer PPA signing key" >&2
-            exit 1
-        fi
-        rm -f "${KEY_FILE}"
-        trap - EXIT
-        UBUNTU_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME}}"
-        if [ -z "${UBUNTU_CODENAME}" ]; then
-            echo "Error: Could not determine Ubuntu codename from /etc/os-release" >&2
-            exit 1
-        fi
-        echo "deb [signed-by=/usr/share/keyrings/apptainer-archive-keyring.gpg] https://ppa.launchpadcontent.net/apptainer/ppa/ubuntu ${UBUNTU_CODENAME} main" \
-            > /etc/apt/sources.list.d/apptainer.list
         apt-get update
         apt-get install -y apptainer
         rm -rf /var/lib/apt/lists/*
