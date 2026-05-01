@@ -24,10 +24,31 @@ case "$OS_ID" in
     ubuntu)
         apt-get update
         apt-get install -y --no-install-recommends \
-            software-properties-common \
             ca-certificates \
+            curl \
+            gnupg \
             tzdata
-        add-apt-repository -y ppa:apptainer/ppa
+        # Fetch the PPA signing key via HTTPS to avoid Launchpad API and keyserver HKP port timeouts
+        KEY_FILE="$(mktemp)"
+        trap 'rm -f "${KEY_FILE}"' EXIT
+        if ! curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436" -o "${KEY_FILE}"; then
+            echo "Error: Failed to fetch apptainer PPA signing key from keyserver.ubuntu.com" >&2
+            exit 1
+        fi
+        mkdir -p /usr/share/keyrings
+        if ! gpg --dearmor -o /usr/share/keyrings/apptainer-archive-keyring.gpg "${KEY_FILE}"; then
+            echo "Error: Failed to dearmor apptainer PPA signing key" >&2
+            exit 1
+        fi
+        rm -f "${KEY_FILE}"
+        trap - EXIT
+        UBUNTU_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME}}"
+        if [ -z "${UBUNTU_CODENAME}" ]; then
+            echo "Error: Could not determine Ubuntu codename from /etc/os-release" >&2
+            exit 1
+        fi
+        echo "deb [signed-by=/usr/share/keyrings/apptainer-archive-keyring.gpg] https://ppa.launchpadcontent.net/apptainer/ppa/ubuntu ${UBUNTU_CODENAME} main" \
+            > /etc/apt/sources.list.d/apptainer.list
         apt-get update
         apt-get install -y apptainer
         rm -rf /var/lib/apt/lists/*
