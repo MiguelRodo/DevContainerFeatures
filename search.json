@@ -92,7 +92,7 @@
     "href": "features/repos.html#example-usage",
     "title": "repos",
     "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/repos:2\": {}\n  }\n}\nWith automatic setup on container start:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/repos:2\": {\n      \"runOnStart\": true\n    }\n  }\n}",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/repos:3\": {}\n  }\n}\nWith automatic setup on container start:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/repos:3\": {\n      \"runOnStart\": true\n    }\n  }\n}",
     "crumbs": [
       "repos"
     ]
