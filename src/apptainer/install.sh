@@ -30,14 +30,19 @@ case "$OS_ID" in
             tzdata
         # Fetch the PPA signing key via HTTPS to avoid Launchpad API and keyserver HKP port timeouts
         KEY_FILE="$(mktemp)"
+        trap 'rm -f "${KEY_FILE}"' EXIT
         if ! curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436" -o "${KEY_FILE}"; then
             echo "Error: Failed to fetch apptainer PPA signing key from keyserver.ubuntu.com" >&2
-            rm -f "${KEY_FILE}"
             exit 1
         fi
-        gpg --dearmor < "${KEY_FILE}" > /usr/share/keyrings/apptainer-archive-keyring.gpg
+        mkdir -p /usr/share/keyrings
+        if ! gpg --dearmor -o /usr/share/keyrings/apptainer-archive-keyring.gpg "${KEY_FILE}"; then
+            echo "Error: Failed to dearmor apptainer PPA signing key" >&2
+            exit 1
+        fi
         rm -f "${KEY_FILE}"
-        UBUNTU_CODENAME=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-${VERSION_CODENAME}}")
+        trap - EXIT
+        UBUNTU_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME}}"
         if [ -z "${UBUNTU_CODENAME}" ]; then
             echo "Error: Could not determine Ubuntu codename from /etc/os-release" >&2
             exit 1
