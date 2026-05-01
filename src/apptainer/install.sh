@@ -24,10 +24,16 @@ case "$OS_ID" in
     ubuntu)
         apt-get update
         apt-get install -y --no-install-recommends \
-            software-properties-common \
             ca-certificates \
+            curl \
+            gnupg \
             tzdata
-        add-apt-repository -y ppa:apptainer/ppa
+        # Fetch the PPA signing key via HTTPS to avoid Launchpad API and keyserver HKP port timeouts
+        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436" \
+            | gpg --dearmor -o /usr/share/keyrings/apptainer-archive-keyring.gpg
+        UBUNTU_CODENAME=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-${VERSION_CODENAME}}")
+        echo "deb [signed-by=/usr/share/keyrings/apptainer-archive-keyring.gpg] https://ppa.launchpadcontent.net/apptainer/ppa/ubuntu ${UBUNTU_CODENAME} main" \
+            > /etc/apt/sources.list.d/apptainer.list
         apt-get update
         apt-get install -y apptainer
         rm -rf /var/lib/apt/lists/*
