@@ -29,9 +29,19 @@ case "$OS_ID" in
             gnupg \
             tzdata
         # Fetch the PPA signing key via HTTPS to avoid Launchpad API and keyserver HKP port timeouts
-        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436" \
-            | gpg --dearmor -o /usr/share/keyrings/apptainer-archive-keyring.gpg
+        KEY_FILE="$(mktemp)"
+        if ! curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436" -o "${KEY_FILE}"; then
+            echo "Error: Failed to fetch apptainer PPA signing key from keyserver.ubuntu.com" >&2
+            rm -f "${KEY_FILE}"
+            exit 1
+        fi
+        gpg --dearmor < "${KEY_FILE}" > /usr/share/keyrings/apptainer-archive-keyring.gpg
+        rm -f "${KEY_FILE}"
         UBUNTU_CODENAME=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-${VERSION_CODENAME}}")
+        if [ -z "${UBUNTU_CODENAME}" ]; then
+            echo "Error: Could not determine Ubuntu codename from /etc/os-release" >&2
+            exit 1
+        fi
         echo "deb [signed-by=/usr/share/keyrings/apptainer-archive-keyring.gpg] https://ppa.launchpadcontent.net/apptainer/ppa/ubuntu ${UBUNTU_CODENAME} main" \
             > /etc/apt/sources.list.d/apptainer.list
         apt-get update
