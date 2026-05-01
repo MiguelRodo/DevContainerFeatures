@@ -28,13 +28,29 @@ case "$OS_ID" in
             curl \
             gnupg \
             tzdata
-        # Fetch the PPA signing key via HTTPS to avoid Launchpad API and keyserver HKP port timeouts
+        # Fetch the PPA signing key with retries and fallbacks to avoid Launchpad API and keyserver timeouts
         KEY_FILE="$(mktemp)"
         trap 'rm -f "${KEY_FILE}"' EXIT
-        if ! curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436" -o "${KEY_FILE}"; then
-            echo "Error: Failed to fetch apptainer PPA signing key from keyserver.ubuntu.com" >&2
+        
+        KEY_FETCHED=false
+        KEYSERVERS=(
+            "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
+            "http://keyserver.ubuntu.com:80/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
+        )
+
+        for KEYSERVER in "${KEYSERVERS[@]}"; do
+            echo "Attempting to fetch key from $KEYSERVER..."
+            if curl --retry 3 --retry-delay 2 --retry-connrefused -fsSL "$KEYSERVER" -o "${KEY_FILE}"; then
+                KEY_FETCHED=true
+                break
+            fi
+        done
+
+        if [ "$KEY_FETCHED" = false ]; then
+            echo "Error: Failed to fetch apptainer PPA signing key from all attempted keyservers." >&2
             exit 1
         fi
+
         mkdir -p /usr/share/keyrings
         if ! gpg --dearmor -o /usr/share/keyrings/apptainer-archive-keyring.gpg "${KEY_FILE}"; then
             echo "Error: Failed to dearmor apptainer PPA signing key" >&2
