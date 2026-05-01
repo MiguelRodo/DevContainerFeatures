@@ -16,6 +16,13 @@ set -e
 
 CMDSTAN_VERSION="${VERSION:-"latest"}"
 INSTALL_DIR="${INSTALLDIR:-"/opt/cmdstan"}"
+
+# 🛡️ Sentinel: Validate INSTALL_DIR to prevent path and command injection
+if ! echo "${INSTALL_DIR}" | grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$'; then
+    echo "Error: Invalid INSTALL_DIR '${INSTALL_DIR}'. Must be an absolute path containing only safe characters." >&2
+    exit 1
+fi
+
 INSTALL_R_PACKAGE="${INSTALLRPACKAGE:-"true"}"
 INSTALL_PYTHON_PACKAGE="${INSTALLPYTHONPACKAGE:-"true"}"
 
