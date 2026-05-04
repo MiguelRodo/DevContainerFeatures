@@ -38,3 +38,13 @@
 **Vulnerability:** A command injection vulnerability was found in the CmdStan feature installation script (`src/cmdstan/install.sh`). The unvalidated option `INSTALL_DIR` was interpolated directly into `/etc/profile.d/cmdstan.sh` and `/etc/environment` using string substitution in bash. An attacker could supply an unsafe value (e.g., `/opt/cmdstan"; touch /tmp/pwned; #`) allowing them to execute arbitrary code with root privileges during the build process, or corrupt system paths.
 **Learning:** DevContainer feature scripts are susceptible to command injection and path corruption when user-provided configuration options (which may be loaded dynamically from `devcontainer-feature.json`) are insecurely written directly into bash profiles or configuration files.
 **Prevention:** Always validate all external options (paths, usernames, booleans, versions) against strict POSIX-compliant regex patterns (e.g., `echo "$VAR" | grep -Eq '^[pattern]$'`) before using them in scripts or writing them to files. Specifically, directory paths must be validated to ensure they are absolute and contain only safe characters.
+
+## 2024-05-04 - [su Command Option Injection]
+**Vulnerability:** Option injection when passing user-controlled arguments to `su -c` without separating options via `--`. Arguments like `-i` were intercepted by `su`, causing the command to fail.
+**Learning:** When using `su -s /bin/bash USER -c '...' args`, `su` will attempt to parse `-` prefixed arguments as its own options. Memory states `--` becomes `$0` if used naively. The safe pattern is `su -c '...' -- bash args` where `--` terminates `su` options and `bash` properly binds to `$0`.
+**Prevention:** Always use `--` followed by a dummy `$0` string (e.g., `bash`) when passing arguments to an inline shell script via `su -c` to prevent option injection while maintaining correct `$0`/`$1` positional argument alignment.
+
+## 2024-05-04 - [Expired Apptainer PPA Key CI Failure]
+**Vulnerability:** CI environments and installations can fail when hardcoded GPG keys for PPAs expire or are revoked by the upstream maintainer (in this case, Apptainer's PPA key changed from 0x6A74CF8FDE9E8436 to 0x28A5611BB8AA8B19).
+**Learning:** Hardcoding GPG keys creates a brittle installation process. If the upstream repository changes keys, the `curl` fallback method for key retrieval will 404, breaking the installation script.
+**Prevention:** Regularly audit and update hardcoded PPA GPG keys, or rely on native `add-apt-repository` if the environment permits, as it automatically retrieves the latest valid keys.
