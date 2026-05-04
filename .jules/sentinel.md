@@ -43,3 +43,8 @@
 **Vulnerability:** Option injection when passing user-controlled arguments to `su -c` without separating options via `--`. Arguments like `-i` were intercepted by `su`, causing the command to fail.
 **Learning:** When using `su -s /bin/bash USER -c '...' args`, `su` will attempt to parse `-` prefixed arguments as its own options. Memory states `--` becomes `$0` if used naively. The safe pattern is `su -c '...' -- bash args` where `--` terminates `su` options and `bash` properly binds to `$0`.
 **Prevention:** Always use `--` followed by a dummy `$0` string (e.g., `bash`) when passing arguments to an inline shell script via `su -c` to prevent option injection while maintaining correct `$0`/`$1` positional argument alignment.
+
+## 2024-05-04 - [Expired Apptainer PPA Key CI Failure]
+**Vulnerability:** CI environments and installations can fail when hardcoded GPG keys for PPAs expire or are revoked by the upstream maintainer (in this case, Apptainer's PPA key changed from 0x6A74CF8FDE9E8436 to 0x28A5611BB8AA8B19).
+**Learning:** Hardcoding GPG keys creates a brittle installation process. If the upstream repository changes keys, the `curl` fallback method for key retrieval will 404, breaking the installation script.
+**Prevention:** Regularly audit and update hardcoded PPA GPG keys, or rely on native `add-apt-repository` if the environment permits, as it automatically retrieves the latest valid keys.

@@ -40,8 +40,8 @@ case "$OS_ID" in
             
             KEY_FETCHED=false
             KEYSERVERS=(
-                "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
-                "http://keyserver.ubuntu.com:80/pks/lookup?op=get&search=0x6A74CF8FDE9E8436"
+                "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x28A5611BB8AA8B19"
+                "http://keyserver.ubuntu.com:80/pks/lookup?op=get&search=0x28A5611BB8AA8B19"
             )
 
             for KEYSERVER in "${KEYSERVERS[@]}"; do
