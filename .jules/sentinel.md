@@ -48,3 +48,7 @@
 **Vulnerability:** CI environments and installations can fail when hardcoded GPG keys for PPAs expire or are revoked by the upstream maintainer (in this case, Apptainer's PPA key changed from 0x6A74CF8FDE9E8436 to 0x28A5611BB8AA8B19).
 **Learning:** Hardcoding GPG keys creates a brittle installation process. If the upstream repository changes keys, the `curl` fallback method for key retrieval will 404, breaking the installation script.
 **Prevention:** Regularly audit and update hardcoded PPA GPG keys, or rely on native `add-apt-repository` if the environment permits, as it automatically retrieves the latest valid keys.
+## $(date +%Y-%m-%d) - Unvalidated Absolute Path Options Enable Path Traversal
+**Vulnerability:** DevContainer features taking directory paths as options (e.g., `renvDir`, `puppeteerConfigDir`) without regex validation could allow a malicious consumer to traverse out of the intended directory context via paths like `/usr/local/share/../../../etc`, leading to unintended arbitrary file modification when downstream scripts perform `mkdir` and `chown`.
+**Learning:** Even internal tool configuration directories must be explicitly validated as safe absolute paths, because users supply their values dynamically through the `devcontainer.json` configuration and the scripts execute as `root`.
+**Prevention:** Strictly validate absolute directory inputs against a POSIX-compliant regex such as `grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$'` before proceeding.
