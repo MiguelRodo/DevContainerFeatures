@@ -28,3 +28,6 @@ jobs:
 
       - name: "Testing global scenarios"
         run: devcontainer features test --global-scenarios-only .
+
+      - name: "Running additional validation tests"
+        run: ./test/mermaid/test_install_validation.sh
