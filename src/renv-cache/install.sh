@@ -38,8 +38,8 @@ RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 
 # 🛡️ Sentinel: Validate RENV_DIR to prevent path traversal and command injection
-if [ -n "$RENV_DIR" ] && ! echo "$RENV_DIR" | grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$'; then
-    echo "[ERROR] Invalid RENV_DIR '$RENV_DIR'. Must be an absolute path containing only safe characters."
+if [ -n "$RENV_DIR" ] && { ! echo "$RENV_DIR" | grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$' || echo "$RENV_DIR" | grep -Fq '..'; }; then
+    echo "[ERROR] Invalid RENV_DIR '$RENV_DIR'. Must be an absolute path containing only safe characters and no path traversal."
     exit 1
 fi
 

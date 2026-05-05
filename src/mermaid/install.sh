@@ -12,8 +12,8 @@ fi
 CONFIG_DIR="${PUPPETEERCONFIGDIR:-"/usr/local/share/mermaid-config"}"
 
 # 🛡️ Sentinel: Validate CONFIG_DIR to prevent path traversal and command injection
-if ! echo "$CONFIG_DIR" | grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$'; then
-    echo "Error: Invalid PUPPETEERCONFIGDIR '$CONFIG_DIR'. Must be an absolute path containing only safe characters."
+if ! echo "$CONFIG_DIR" | grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$' || echo "$CONFIG_DIR" | grep -Fq '..'; then
+    echo "Error: Invalid PUPPETEERCONFIGDIR '$CONFIG_DIR'. Must be an absolute path containing only safe characters and no path traversal."
     exit 1
 fi
 
