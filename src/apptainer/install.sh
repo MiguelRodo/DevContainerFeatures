@@ -21,7 +21,18 @@ echo "Detected OS: $OS_ID"
 echo "Installing Apptainer..."
 
 case "$OS_ID" in
-    ubuntu|debian)
+    ubuntu)
+        apt-get update
+        apt-get install -y --no-install-recommends \
+            software-properties-common \
+            ca-certificates \
+            tzdata
+        add-apt-repository -y ppa:apptainer/ppa
+        apt-get update
+        apt-get install -y apptainer
+        rm -rf /var/lib/apt/lists/*
+        ;;
+    debian)
         apt-get update
         apt-get install -y --no-install-recommends \
             ca-certificates curl tzdata

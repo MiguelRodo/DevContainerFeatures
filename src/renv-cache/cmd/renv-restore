@@ -392,16 +392,16 @@ restore() {
         export RENV_CONFIG_PAK_ENABLED=TRUE
     fi
 
-    # Determine which renvvv function to call
-    local renvvv_function=""
+    # Determine which renvvv action to execute
+    local renvvv_action=""
     if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
-        renvvv_function="renvvv::renvvv_restore_and_update(skip = skip_packages)"
+        renvvv_action="restore_and_update"
         echo "[INFO] Both restore and update requested - using renvvv_restore_and_update()"
     elif [ "$RESTORE" = "true" ]; then
-        renvvv_function="renvvv::renvvv_restore(skip = skip_packages)"
+        renvvv_action="restore"
         echo "[INFO] Restore requested - using renvvv_restore()"
     elif [ "$UPDATE" = "true" ]; then
-        renvvv_function="renvvv::renvvv_update(skip = skip_packages)"
+        renvvv_action="update"
         echo "[INFO] Update requested - using renvvv_update()"
     else
         echo "[WARN] Neither restore nor update requested. Skipping."
@@ -409,8 +409,8 @@ restore() {
         return 0
     fi
 
-    # Use renvvv function
-    RENVVV_FUNCTION="$renvvv_function" Rscript -e "
+    # Use renvvv action safely
+    RENVVV_ACTION="$renvvv_action" Rscript -e "
         if (!requireNamespace('renvvv', quietly = TRUE)) {
             stop('renvvv not found. Please ensure it was installed by the feature.')
         }
@@ -433,17 +433,24 @@ restore() {
             message('Skipping packages: ', paste(skip_packages, collapse = ', '))
         }
 
-        fn_str <- Sys.getenv('RENVVV_FUNCTION')
-        if (nzchar(fn_str)) {
-            tryCatch(
-                eval(parse(text = fn_str)),
-                error = function(e) {
+        action <- Sys.getenv('RENVVV_ACTION')
+        if (nzchar(action)) {
+            tryCatch({
+                if (action == 'restore_and_update') {
+                    renvvv::renvvv_restore_and_update(skip = skip_packages)
+                } else if (action == 'restore') {
+                    renvvv::renvvv_restore(skip = skip_packages)
+                } else if (action == 'update') {
+                    renvvv::renvvv_update(skip = skip_packages)
+                } else {
+                    message('[WARN] Unknown renvvv action.')
+                }
+            }, error = function(e) {
                     message('[WARN] renvvv operation failed: ', e)
                     quit(status = 1)
-                }
-            )
+            })
         } else {
-            message('[WARN] No renvvv function provided.')
+            message('[WARN] No renvvv action provided.')
         }
     "
     echo "[OK] Restore/update process attempted"

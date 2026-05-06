@@ -37,12 +37,6 @@ USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 
-# 🛡️ Sentinel: Validate RENV_DIR to prevent path traversal and command injection
-if [ -n "$RENV_DIR" ] && { ! echo "$RENV_DIR" | grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$' || echo "$RENV_DIR" | grep -Fq '..'; }; then
-    echo "[ERROR] Invalid RENV_DIR '$RENV_DIR'. Must be an absolute path containing only safe characters and no path traversal."
-    exit 1
-fi
-
 
 # Function to log debug messages if enabled
 debug() {
@@ -150,6 +144,19 @@ install_renvvv() {
     
     # Install renvvv
     Rscript -e "remotes::install_github('MiguelRodo/renvvv', upgrade = 'never')"
+}
+
+update_renv_cache() {
+    if [ "$SET_R_LIB_PATHS" = "true" ]; then
+        # Ensure the R library script is executable
+        chmod 755 scripts/r-lib-update.sh
+
+        # Execute the R library script
+        if ! bash scripts/r-lib-update.sh; then
+            echo "Failed to update R library environment variables"
+        fi
+    fi
+
 }
 
 # Save original token values (used for restoring after install)
