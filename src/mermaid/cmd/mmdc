@@ -71,7 +71,7 @@ fi
 # Execute the command as the specified user
 if [ "$EUID" -eq 0 ]; then
     # Running as root
-   su -s /bin/bash "$USERNAME" -c 'exec mmdc -p "$0" "$@"' -- "$CONFIG_FILE" "$@"
+   su -s /bin/bash "$USERNAME" -c 'exec mmdc -p "$0" "$@"' "$CONFIG_FILE" "$@"
 else
     # Not running as root, check for sudo
     if command -v sudo &>/dev/null; then

@@ -13,7 +13,7 @@ Install the `repos` CLI tool to manage multiple Git repositories. Optionally run
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:3": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:2": {}
   }
 }
 ```
@@ -23,7 +23,7 @@ With automatic setup on container start:
 ```json
 {
   "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:3": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:2": {
       "runOnStart": true
     }
   }

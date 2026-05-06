@@ -10,13 +10,6 @@ if ! echo "$USERNAME" | grep -Eq '^[a-zA-Z0-9_][a-zA-Z0-9_-]*$'; then
 fi
 
 CONFIG_DIR="${PUPPETEERCONFIGDIR:-"/usr/local/share/mermaid-config"}"
-
-# 🛡️ Sentinel: Validate CONFIG_DIR to prevent path traversal and command injection
-if ! echo "$CONFIG_DIR" | grep -Eq '^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$' || echo "$CONFIG_DIR" | grep -Fq '..'; then
-    echo "Error: Invalid PUPPETEERCONFIGDIR '$CONFIG_DIR'. Must be an absolute path containing only safe characters and no path traversal."
-    exit 1
-fi
-
 PUPPETEER_CONFIG="$CONFIG_DIR/puppeteer-config.json"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WRAPPER_SCRIPT="$SCRIPT_DIR/cmd/mmdc"
