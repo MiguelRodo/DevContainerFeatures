@@ -30,16 +30,15 @@ if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
     
     # Setup APT repository
     echo "Setting up APT repository..."
-    curl -fsSL https://raw.githubusercontent.com/MiguelRodo/apt-miguelrodo/main/KEY.gpg \
-    | gpg --dearmor -o /usr/share/keyrings/miguelrodo-repos.gpg
-    
-    echo "deb [signed-by=/usr/share/keyrings/miguelrodo-repos.gpg] https://raw.githubusercontent.com/MiguelRodo/apt-miguelrodo/main/ ./" \
-      > /etc/apt/sources.list.d/miguelrodo-repos.list
-    
-    # Install repos package
+    curl -fsSL https://miguelrodo.github.io/apt-miguelrodo/KEY.gpg \
+      | gpg --dearmor -o /usr/share/keyrings/apt-miguelrodo.gpg
+
+    echo "deb [signed-by=/usr/share/keyrings/apt-miguelrodo.gpg] https://miguelrodo.github.io/apt-miguelrodo stable main" \
+      > /etc/apt/sources.list.d/apt-miguelrodo.list
+
     echo "Installing repos package..."
     apt-get update
-    apt-get install -y repos
+    apt-get install -y repos  
     
     # Cleanup
     echo "Cleaning up..."
