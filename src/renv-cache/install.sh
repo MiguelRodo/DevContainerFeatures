@@ -89,8 +89,24 @@ empty_dir() {
     local directory="$1"
 
     # 🛡️ Sentinel: Security fix to prevent accidental rm -rf /*
-    if [ -z "$directory" ] || [ "$directory" = "/" ]; then
-        echo "[ERROR] Refusing to empty directory: '$directory'"
+    if [[ -z "$directory" ]] || [[ "$directory" != /* ]]; then
+        echo "[ERROR] Refusing to empty directory: '$directory' (not an absolute path)"
+        return 1
+    fi
+
+    # Block path traversal and root-equivalent segments ( . and .. )
+    if [[ "$directory" == *"/./"* || "$directory" == *"/../"* || "$directory" == "/." || "$directory" == "/.." || "$directory" == */. || "$directory" == */.. ]]; then
+        echo "[ERROR] Refusing to empty directory: '$directory' (unsafe segment: . or ..)"
+        return 1
+    fi
+
+    # Block root aliases (/, //, etc.)
+    local normalized="${directory}"
+    while [[ "$normalized" != "/" && "$normalized" == */ ]]; do
+        normalized="${normalized%/}"
+    done
+    if [[ "$normalized" == "/" ]] || [[ "$normalized" == "//" ]] || [[ -z "$normalized" ]]; then
+        echo "[ERROR] Refusing to empty directory: '$directory' (resolves to root)"
         return 1
     fi
 
@@ -109,8 +125,25 @@ rm_dirs() {
     fi
 
     for dir in "$@"; do
-        if [ -z "$dir" ] || [ "$dir" = "/" ]; then
-            echo "[ERROR] Refusing to remove directory: '$dir'"
+        # 🛡️ Sentinel: Security fix to prevent accidental rm -rf /*
+        if [[ -z "$dir" ]] || [[ "$dir" != /* ]]; then
+            echo "[ERROR] Refusing to remove directory: '$dir' (not an absolute path)"
+            continue
+        fi
+
+        # Block path traversal and root-equivalent segments ( . and .. )
+        if [[ "$dir" == *"/./"* || "$dir" == *"/../"* || "$dir" == "/." || "$dir" == "/.." || "$dir" == */. || "$dir" == */.. ]]; then
+            echo "[ERROR] Refusing to remove directory: '$dir' (unsafe segment: . or ..)"
+            continue
+        fi
+
+        # Block root aliases (/, //, etc.)
+        local normalized="${dir}"
+        while [[ "$normalized" != "/" && "$normalized" == */ ]]; do
+            normalized="${normalized%/}"
+        done
+        if [[ "$normalized" == "/" ]] || [[ "$normalized" == "//" ]] || [[ -z "$normalized" ]]; then
+            echo "[ERROR] Refusing to remove directory: '$dir' (resolves to root)"
             continue
         fi
 
