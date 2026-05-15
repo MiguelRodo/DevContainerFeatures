@@ -28,56 +28,6 @@
     "text": "Source\nSource code and issue tracker: https://github.com/MiguelRodo/DevContainerFeatures"
   },
   {
-    "objectID": "features/github-tokens.html",
-    "href": "features/github-tokens.html",
-    "title": "github-tokens",
-    "section": "",
-    "text": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup so that R tools (such as renv) that prioritize GITHUB_TOKEN always have access to the most permissive token available.",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#example-usage",
-    "href": "features/github-tokens.html#example-usage",
-    "title": "github-tokens",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#options",
-    "href": "features/github-tokens.html#options",
-    "title": "github-tokens",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nelevateGitHubToken\nboolean\ntrue\nIf true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. Helps R tools like renv that prioritize GITHUB_TOKEN.\n\n\noverrideGitHubToken\nboolean\nfalse\nIf true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of its existing value. Use only if you always want to override GITHUB_TOKEN.",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#notes",
-    "href": "features/github-tokens.html#notes",
-    "title": "github-tokens",
-    "section": "Notes",
-    "text": "Notes\n\nToken priority\nWhen elevateGitHubToken is true, the token used to override GITHUB_TOKEN is chosen in this order:\n\nGITHUB_PAT\nGH_TOKEN\n(no override if neither is available)\n\n\n\nBuild-time vs. session-time token management\nThis feature manages tokens on every shell startup (session-time). For build-time token management during renv package installation, see the renv-cache feature’s overrideTokensAtInstall option.\n\n\nRelated feature\nUse github-tokens together with renv-cache for comprehensive token management:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#source",
-    "href": "features/github-tokens.html#source",
-    "title": "github-tokens",
-    "section": "Source",
-    "text": "Source\nsrc/github-tokens",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
     "objectID": "features/repos.html",
     "href": "features/repos.html",
     "title": "repos",
@@ -158,53 +108,153 @@
     ]
   },
   {
-    "objectID": "features/apptainer.html",
-    "href": "features/apptainer.html",
-    "title": "apptainer",
+    "objectID": "features/mermaid.html",
+    "href": "features/mermaid.html",
+    "title": "mermaid",
     "section": "",
-    "text": "Install Apptainer, a container system widely used in High Performance Computing (HPC) environments.",
+    "text": "Install Mermaid CLI (mmdc) to generate diagrams from .mmd files. Sets up a non-root user and Puppeteer configuration for headless rendering.",
     "crumbs": [
-      "apptainer"
+      "mermaid"
     ]
   },
   {
-    "objectID": "features/apptainer.html#example-usage",
-    "href": "features/apptainer.html#example-usage",
-    "title": "apptainer",
+    "objectID": "features/mermaid.html#example-usage",
+    "href": "features/mermaid.html#example-usage",
+    "title": "mermaid",
     "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1\": {\n      \"timezone\": \"UTC\"\n    }\n  }\n}",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {}\n  }\n}\nWith a custom user and Node.js version:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {\n      \"userName\": \"mermaiduser\",\n      \"nodeVersion\": \"20\"\n    }\n  }\n}",
     "crumbs": [
-      "apptainer"
+      "mermaid"
     ]
   },
   {
-    "objectID": "features/apptainer.html#options",
-    "href": "features/apptainer.html#options",
-    "title": "apptainer",
+    "objectID": "features/mermaid.html#options",
+    "href": "features/mermaid.html#options",
+    "title": "mermaid",
     "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ntimezone\nstring\n\"UTC\"\nTimezone to configure in the container (e.g., \"UTC\", \"Europe/London\", \"America/New_York\"). Required for proper Apptainer mount behavior.",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nuserName\nstring\n\"mermaiduser\"\nUsername under which Mermaid CLI will run.\n\n\npuppeteerConfigDir\nstring\n\"/usr/local/share/mermaid-config\"\nDirectory to store Puppeteer configuration files.\n\n\nnodeVersion\nstring\n\"lts\"\nNode.js version to install if not present (e.g., \"lts\", \"20\", \"18\").",
     "crumbs": [
-      "apptainer"
+      "mermaid"
     ]
   },
   {
-    "objectID": "features/apptainer.html#notes",
-    "href": "features/apptainer.html#notes",
-    "title": "apptainer",
+    "objectID": "features/mermaid.html#notes",
+    "href": "features/mermaid.html#notes",
+    "title": "mermaid",
     "section": "Notes",
-    "text": "Notes\n\nAdds the ppa:apptainer/ppa repository and installs Apptainer from it.\nConfigures tzdata because Apptainer containers often inherit the host’s /etc/localtime.",
+    "text": "Notes\n\nRequires Node.js — the feature will install it if not already present.\nInstalls system libraries required by Puppeteer (Chromium dependencies).\nThe non-root mermaiduser is used to run the headless browser safely inside the container.",
     "crumbs": [
-      "apptainer"
+      "mermaid"
     ]
   },
   {
-    "objectID": "features/apptainer.html#source",
-    "href": "features/apptainer.html#source",
-    "title": "apptainer",
+    "objectID": "features/mermaid.html#source",
+    "href": "features/mermaid.html#source",
+    "title": "mermaid",
     "section": "Source",
-    "text": "Source\nsrc/apptainer",
+    "text": "Source\nsrc/mermaid",
     "crumbs": [
-      "apptainer"
+      "mermaid"
+    ]
+  },
+  {
+    "objectID": "features/fit-sne.html",
+    "href": "features/fit-sne.html",
+    "title": "fit-sne",
+    "section": "",
+    "text": "Install FIt-SNE (Fast Interpolation-based t-SNE) by compiling it from source, along with the required FFTW 3.3.10 library.",
+    "crumbs": [
+      "fit-sne"
+    ]
+  },
+  {
+    "objectID": "features/fit-sne.html#example-usage",
+    "href": "features/fit-sne.html#example-usage",
+    "title": "fit-sne",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1\": {}\n  }\n}\nWith a specific version:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1\": {\n      \"version\": \"1.2.1\"\n    }\n  }\n}",
+    "crumbs": [
+      "fit-sne"
+    ]
+  },
+  {
+    "objectID": "features/fit-sne.html#options",
+    "href": "features/fit-sne.html#options",
+    "title": "fit-sne",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"latest\"\nFIt-SNE version tag or commit SHA to install. Use \"latest\" for the default branch.",
+    "crumbs": [
+      "fit-sne"
+    ]
+  },
+  {
+    "objectID": "features/fit-sne.html#notes",
+    "href": "features/fit-sne.html#notes",
+    "title": "fit-sne",
+    "section": "Notes",
+    "text": "Notes\n\nCompiles FIt-SNE and its FFTW dependency from source, so installation may take a few minutes.\nInstalled build dependencies: build-essential, wget, git.",
+    "crumbs": [
+      "fit-sne"
+    ]
+  },
+  {
+    "objectID": "features/fit-sne.html#source",
+    "href": "features/fit-sne.html#source",
+    "title": "fit-sne",
+    "section": "Source",
+    "text": "Source\nsrc/fit-sne",
+    "crumbs": [
+      "fit-sne"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html",
+    "href": "features/github-tokens.html",
+    "title": "github-tokens",
+    "section": "",
+    "text": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup so that R tools (such as renv) that prioritize GITHUB_TOKEN always have access to the most permissive token available.",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#example-usage",
+    "href": "features/github-tokens.html#example-usage",
+    "title": "github-tokens",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#options",
+    "href": "features/github-tokens.html#options",
+    "title": "github-tokens",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nelevateGitHubToken\nboolean\ntrue\nIf true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. Helps R tools like renv that prioritize GITHUB_TOKEN.\n\n\noverrideGitHubToken\nboolean\nfalse\nIf true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of its existing value. Use only if you always want to override GITHUB_TOKEN.",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#notes",
+    "href": "features/github-tokens.html#notes",
+    "title": "github-tokens",
+    "section": "Notes",
+    "text": "Notes\n\nToken priority\nWhen elevateGitHubToken is true, the token used to override GITHUB_TOKEN is chosen in this order:\n\nGITHUB_PAT\nGH_TOKEN\n(no override if neither is available)\n\n\n\nBuild-time vs. session-time token management\nThis feature manages tokens on every shell startup (session-time). For build-time token management during renv package installation, see the renv-cache feature’s overrideTokensAtInstall option.\n\n\nRelated feature\nUse github-tokens together with renv-cache for comprehensive token management:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#source",
+    "href": "features/github-tokens.html#source",
+    "title": "github-tokens",
+    "section": "Source",
+    "text": "Source\nsrc/github-tokens",
+    "crumbs": [
+      "github-tokens"
     ]
   },
   {
@@ -288,103 +338,53 @@
     ]
   },
   {
-    "objectID": "features/fit-sne.html",
-    "href": "features/fit-sne.html",
-    "title": "fit-sne",
+    "objectID": "features/apptainer.html",
+    "href": "features/apptainer.html",
+    "title": "apptainer",
     "section": "",
-    "text": "Install FIt-SNE (Fast Interpolation-based t-SNE) by compiling it from source, along with the required FFTW 3.3.10 library.",
+    "text": "Install Apptainer, a container system widely used in High Performance Computing (HPC) environments.",
     "crumbs": [
-      "fit-sne"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/fit-sne.html#example-usage",
-    "href": "features/fit-sne.html#example-usage",
-    "title": "fit-sne",
+    "objectID": "features/apptainer.html#example-usage",
+    "href": "features/apptainer.html#example-usage",
+    "title": "apptainer",
     "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1\": {}\n  }\n}\nWith a specific version:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1\": {\n      \"version\": \"1.2.1\"\n    }\n  }\n}",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1\": {\n      \"timezone\": \"UTC\"\n    }\n  }\n}",
     "crumbs": [
-      "fit-sne"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/fit-sne.html#options",
-    "href": "features/fit-sne.html#options",
-    "title": "fit-sne",
+    "objectID": "features/apptainer.html#options",
+    "href": "features/apptainer.html#options",
+    "title": "apptainer",
     "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"latest\"\nFIt-SNE version tag or commit SHA to install. Use \"latest\" for the default branch.",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ntimezone\nstring\n\"UTC\"\nTimezone to configure in the container (e.g., \"UTC\", \"Europe/London\", \"America/New_York\"). Required for proper Apptainer mount behavior.",
     "crumbs": [
-      "fit-sne"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/fit-sne.html#notes",
-    "href": "features/fit-sne.html#notes",
-    "title": "fit-sne",
+    "objectID": "features/apptainer.html#notes",
+    "href": "features/apptainer.html#notes",
+    "title": "apptainer",
     "section": "Notes",
-    "text": "Notes\n\nCompiles FIt-SNE and its FFTW dependency from source, so installation may take a few minutes.\nInstalled build dependencies: build-essential, wget, git.",
+    "text": "Notes\n\nAdds the ppa:apptainer/ppa repository and installs Apptainer from it.\nConfigures tzdata because Apptainer containers often inherit the host’s /etc/localtime.",
     "crumbs": [
-      "fit-sne"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/fit-sne.html#source",
-    "href": "features/fit-sne.html#source",
-    "title": "fit-sne",
+    "objectID": "features/apptainer.html#source",
+    "href": "features/apptainer.html#source",
+    "title": "apptainer",
     "section": "Source",
-    "text": "Source\nsrc/fit-sne",
+    "text": "Source\nsrc/apptainer",
     "crumbs": [
-      "fit-sne"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html",
-    "href": "features/mermaid.html",
-    "title": "mermaid",
-    "section": "",
-    "text": "Install Mermaid CLI (mmdc) to generate diagrams from .mmd files. Sets up a non-root user and Puppeteer configuration for headless rendering.",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#example-usage",
-    "href": "features/mermaid.html#example-usage",
-    "title": "mermaid",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {}\n  }\n}\nWith a custom user and Node.js version:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {\n      \"userName\": \"mermaiduser\",\n      \"nodeVersion\": \"20\"\n    }\n  }\n}",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#options",
-    "href": "features/mermaid.html#options",
-    "title": "mermaid",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nuserName\nstring\n\"mermaiduser\"\nUsername under which Mermaid CLI will run.\n\n\npuppeteerConfigDir\nstring\n\"/usr/local/share/mermaid-config\"\nDirectory to store Puppeteer configuration files.\n\n\nnodeVersion\nstring\n\"lts\"\nNode.js version to install if not present (e.g., \"lts\", \"20\", \"18\").",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#notes",
-    "href": "features/mermaid.html#notes",
-    "title": "mermaid",
-    "section": "Notes",
-    "text": "Notes\n\nRequires Node.js — the feature will install it if not already present.\nInstalls system libraries required by Puppeteer (Chromium dependencies).\nThe non-root mermaiduser is used to run the headless browser safely inside the container.",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#source",
-    "href": "features/mermaid.html#source",
-    "title": "mermaid",
-    "section": "Source",
-    "text": "Source\nsrc/mermaid",
-    "crumbs": [
-      "mermaid"
+      "apptainer"
     ]
   },
   {
@@ -412,7 +412,7 @@
     "href": "features/cmdstan.html#options",
     "title": "cmdstan",
     "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"latest\"\nCmdStan version to install (e.g. \"2.36.0\"). Use \"latest\" to always pull the newest release.\n\n\ninstallDir\nstring\n\"/opt/cmdstan\"\nBase directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0).\n\n\ninstallRPackage\nboolean\ntrue\nWhen true and R is present in the image, install the cmdstanr R package and configure it to use the system CmdStan installation.\n\n\ninstallPythonPackage\nboolean\ntrue\nWhen true and Python/pip is present in the image, install the cmdstanpy Python package and configure it to use the system CmdStan installation.",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"2.36.0\"\nCmdStan version to install (e.g. \"2.36.0\"). Use \"latest\" to always pull the newest release.\n\n\ninstallDir\nstring\n\"/opt/cmdstan\"\nBase directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0).\n\n\ninstallRPackage\nboolean\ntrue\nWhen true and R is present in the image, install the cmdstanr R package and configure it to use the system CmdStan installation.\n\n\ninstallPythonPackage\nboolean\ntrue\nWhen true and Python/pip is present in the image, install the cmdstanpy Python package and configure it to use the system CmdStan installation.",
     "crumbs": [
       "cmdstan"
     ]
