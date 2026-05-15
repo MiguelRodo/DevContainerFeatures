@@ -152,31 +152,38 @@ install_nodejs() {
     fi
 
     echo "[INFO] Installing Node.js ${NODE_VERSION}..."
+    local node_major="${NODE_VERSION}"
+    if [ "$node_major" = "lts" ]; then node_major="20"; fi
+
     case "$OS_ID" in
         ubuntu|debian)
-            if [ "${NODE_VERSION}" = "lts" ]; then
-                 curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-            else
-                 curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-            fi
-            # NodeSource nodejs bundles npm; installing Ubuntu's npm package conflicts
+            curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+            cat <<EOF > /etc/apt/sources.list.d/nodesource.sources
+Types: deb
+URIs: https://deb.nodesource.com/node_${node_major}.x
+Suites: nodistro
+Components: main
+Signed-By: /usr/share/keyrings/nodesource.gpg
+EOF
+            apt-get update -y
             apt-get install -y nodejs
             ;;
         fedora)
-            if [ "${NODE_VERSION}" = "lts" ]; then
-                dnf install -y nodejs npm
-            else
-                dnf module reset -y nodejs || true
-                dnf module enable -y "nodejs:${NODE_VERSION}" || dnf install -y nodejs
-                dnf install -y nodejs npm
-            fi
+            dnf module reset -y nodejs || true
+            dnf module enable -y "nodejs:${node_major}" || dnf install -y nodejs
+            dnf install -y nodejs npm
             ;;
         centos|rhel|rocky|almalinux)
-            if [ "${NODE_VERSION}" = "lts" ]; then
-                curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
-            else
-                curl -fsSL "https://rpm.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-            fi
+            cat <<EOF > /etc/yum.repos.d/nodesource.repo
+[nodesource-nodejs]
+name=Node.js Packages for Linux RPM based distros - \$basearch
+baseurl=https://rpm.nodesource.com/pub_${node_major}.x/nodistro/nodejs/\$basearch
+priority=9
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.nodesource.com/gpgkey/ns-operations-public.key
+module_hotfixes=1
+EOF
             yum install -y nodejs npm
             ;;
         alpine)
