@@ -47,3 +47,8 @@
 **Vulnerability:** Path/URL manipulation and injection caused by unvalidated dynamic variables (e.g., dynamically fetching latest version strings via API calls).
 **Learning:** Variables that determine file paths or download URLs, even when fetched from typically trusted external sources (like a GitHub API), must be treated as untrusted input. If an API response is manipulated or unexpected (e.g., changing a version string to `../../../etc/passwd` or embedding shell commands), it can lead to path traversal, arbitrary file writes, or URL redirection vulnerabilities.
 **Prevention:** Always validate dynamically fetched data (like tags or version strings) against strict allow-lists (using POSIX-compliant regex like `^[0-9]+\.[0-9]+\.[0-9]+$`) before interpolating them into paths, URLs, or executing them.
+
+## 2024-05-15 - Sudo Option Injection Prevention
+**Vulnerability:** Option injection during privilege escalation.
+**Learning:** When invoking `sudo` with user-controlled or variable arguments, specifically when forwarding positional parameters (`$@`), it's possible for those arguments to be interpreted as options to `sudo` itself (e.g. `-i`, `-s`, etc.) if not explicitly delimited.
+**Prevention:** Always use the end-of-options delimiter (`--`) immediately preceding the command to execute when calling `sudo` (e.g. `sudo -u "$USERNAME" -- cmd "$@"`).
