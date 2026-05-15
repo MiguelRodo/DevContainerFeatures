@@ -74,11 +74,13 @@ else
     
     # Check for required dependencies
     MISSING_DEPS=()
-    for dep in bash git curl jq gh; do
-        if ! command -v "$dep" >/dev/null 2>&1; then
-            MISSING_DEPS+=("$dep")
-        fi
-    done
+    if ! hash bash git curl jq gh 2>/dev/null; then
+        for dep in bash git curl jq gh; do
+            if ! command -v "$dep" >/dev/null 2>&1; then
+                MISSING_DEPS+=("$dep")
+            fi
+        done
+    fi
     
     if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
         echo "Error: Missing required dependencies: ${MISSING_DEPS[*]}" >&2
