@@ -10,8 +10,5 @@
             "description": "Automatically run 'repos clone' when the container starts."
         }
     },
-    "postStartCommand": "/usr/local/bin/repos-post-start",
-    "dependsOn": {
-        "ghcr.io/devcontainers/features/github-cli:1": {}
-    }
+    "postStartCommand": "/usr/local/bin/repos-post-start"
 }
