@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+
+set -e
+
+CACHE_DIR="/usr/local/share/renv-cache/lockfiles"
+
+usage() {
+    echo "Usage: renv-lockfile-cache [OPTIONS] [PATH]"
+    echo ""
+    echo "Options:"
+    echo "  --list           Lists all original renv.lock files saved to the internal cache during the build."
+    echo "  --copy [path]    Copies the appropriate renv.lock file to the specified location."
+    echo "                   Defaults to './renv.lock' if no path is specified."
+    echo "  -h, --help       Display this help message."
+    exit "${1:-0}"
+}
+
+if [ "$#" -eq 0 ]; then
+    usage 1
+fi
+
+ACTION=""
+TARGET_PATH="./renv.lock"
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --list)
+            ACTION="list"
+            shift
+            ;;
+        --copy)
+            ACTION="copy"
+            shift
+            if [ -n "$1" ] && [[ ! "$1" == --* ]]; then
+                TARGET_PATH="$1"
+                shift
+            fi
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            if [ "$ACTION" == "copy" ] && [ "$TARGET_PATH" == "./renv.lock" ]; then
+               TARGET_PATH="$1"
+               shift
+            else
+               echo "[ERROR] Unknown option or too many arguments: $1"
+               usage 1
+            fi
+            ;;
+    esac
+done
+
+if [ -z "$ACTION" ]; then
+    usage 1
+fi
+
+if [ ! -d "$CACHE_DIR" ]; then
+    echo "[INFO] Internal cache directory not found: $CACHE_DIR"
+    exit 0
+fi
+
+if [ "$ACTION" == "list" ]; then
+    echo "Available lockfiles:"
+
+    # Loop over projects
+    for proj_dir in "$CACHE_DIR"/*; do
+        if [ -d "$proj_dir" ]; then
+            proj_name=$(basename "$proj_dir")
+            echo "Project: $proj_name"
+            if [ -f "$proj_dir/restore/renv.lock" ]; then
+                echo "  - Restored state: $proj_dir/restore/renv.lock"
+            fi
+            if [ -f "$proj_dir/update/renv.lock" ]; then
+                echo "  - Updated state: $proj_dir/update/renv.lock"
+            fi
+        fi
+    done
+    exit 0
+fi
+
+if [ "$ACTION" == "copy" ]; then
+    # Path resolution
+    if [[ "$TARGET_PATH" == *"/renv.lock" ]] || [[ "$TARGET_PATH" == "renv.lock" ]]; then
+        # It's a file path
+        dest_dir=$(dirname "$TARGET_PATH")
+        dest_file="$TARGET_PATH"
+    else
+        # It's a directory path
+        dest_dir="$TARGET_PATH"
+        dest_file="${dest_dir}/renv.lock"
+    fi
+
+    # Project Selection
+    projects=()
+    for proj_dir in "$CACHE_DIR"/*; do
+        if [ -d "$proj_dir" ]; then
+            projects+=("$(basename "$proj_dir")")
+        fi
+    done
+
+    if [ ${#projects[@]} -eq 0 ]; then
+        echo "[ERROR] No projects found in cache."
+        exit 1
+    fi
+
+    SELECTED_PROJ=""
+    if [ ${#projects[@]} -eq 1 ]; then
+        SELECTED_PROJ="${projects[0]}"
+    else
+        if [ -t 0 ]; then
+            echo "Multiple projects found. Please select one:"
+            select proj in "${projects[@]}"; do
+                if [ -n "$proj" ]; then
+                    SELECTED_PROJ="$proj"
+                    break
+                else
+                    echo "Invalid selection."
+                fi
+            done
+        else
+            # Non-interactive, default to first
+            SELECTED_PROJ="${projects[0]}"
+            echo "[INFO] Non-interactive mode. Defaulting to project: $SELECTED_PROJ"
+        fi
+    fi
+
+    proj_dir="${CACHE_DIR}/${SELECTED_PROJ}"
+    SOURCE_LOCKFILE=""
+
+    # Preference for Updated Files
+    if [ -f "$proj_dir/update/renv.lock" ]; then
+        SOURCE_LOCKFILE="$proj_dir/update/renv.lock"
+        echo "[INFO] Selected updated state for project $SELECTED_PROJ"
+    elif [ -f "$proj_dir/restore/renv.lock" ]; then
+        SOURCE_LOCKFILE="$proj_dir/restore/renv.lock"
+        echo "[INFO] Selected restored state for project $SELECTED_PROJ"
+    else
+        echo "[ERROR] No renv.lock files found for project $SELECTED_PROJ"
+        exit 1
+    fi
+
+    # Create destination directories if needed
+    mkdir -p "$dest_dir"
+
+    # Copy with overwrite logic
+    if [ -f "$dest_file" ]; then
+        if [ -t 0 ]; then
+            read -p "File '$dest_file' exists. Overwrite? (y/N): " confirm
+            if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+                echo "Copy aborted."
+                exit 0
+            fi
+        else
+            echo "[INFO] Overwriting existing file: $dest_file (non-interactive)"
+        fi
+    fi
+
+    cp "$SOURCE_LOCKFILE" "$dest_file"
+    echo "[OK] Copied to $dest_file"
+fi

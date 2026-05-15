@@ -253,6 +253,7 @@ restore() {
     # Copy and set execute permissions for renv restore scripts
     copy_and_set_execute_bit renv-restore
     copy_and_set_execute_bit renv-restore-build
+    copy_and_set_execute_bit renv-lockfile-cache
 
     # set renv cache mode and user
     debug "USERNAME: $USERNAME"

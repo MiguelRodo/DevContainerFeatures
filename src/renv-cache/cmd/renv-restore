@@ -392,67 +392,93 @@ restore() {
         export RENV_CONFIG_PAK_ENABLED=TRUE
     fi
 
-    # Determine which renvvv action to execute
-    local renvvv_action=""
-    if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
-        renvvv_action="restore_and_update"
-        echo "[INFO] Both restore and update requested - using renvvv_restore_and_update()"
-    elif [ "$RESTORE" = "true" ]; then
-        renvvv_action="restore"
-        echo "[INFO] Restore requested - using renvvv_restore()"
-    elif [ "$UPDATE" = "true" ]; then
-        renvvv_action="update"
-        echo "[INFO] Update requested - using renvvv_update()"
-    else
+    if [ "$RESTORE" != "true" ] && [ "$UPDATE" != "true" ]; then
         echo "[WARN] Neither restore nor update requested. Skipping."
         reset_pak_backend "$renv_config_pak_orig"
         return 0
     fi
 
-    # Use renvvv action safely
-    RENVVV_ACTION="$renvvv_action" Rscript -e "
-        if (!requireNamespace('renvvv', quietly = TRUE)) {
-            stop('renvvv not found. Please ensure it was installed by the feature.')
-        }
+    local project_name=$(basename "$(pwd)")
+    local internal_cache_dir="/usr/local/share/renv-cache/lockfiles"
 
-        # Activate the project first to ensure correct paths
-        if (file.exists('renv/activate.R')) {
-            source('renv/activate.R')
-        }
-
-        # Parse packages to skip from environment variable
-        pkg_exclude_str <- Sys.getenv('PKG_EXCLUDE', '')
-        skip_packages <- if (nzchar(pkg_exclude_str)) {
-            # Split by comma and trim whitespace
-            trimws(unlist(strsplit(pkg_exclude_str, ',')))
-        } else {
-            character(0)
-        }
-
-        if (length(skip_packages) > 0) {
-            message('Skipping packages: ', paste(skip_packages, collapse = ', '))
-        }
-
-        action <- Sys.getenv('RENVVV_ACTION')
-        if (nzchar(action)) {
+    if [ "$RESTORE" = "true" ]; then
+        echo "[INFO] Restore requested - using renvvv_restore()"
+        RENVVV_ACTION="restore" Rscript -e "
+            if (!requireNamespace('renvvv', quietly = TRUE)) {
+                stop('renvvv not found. Please ensure it was installed by the feature.')
+            }
+            if (file.exists('renv/activate.R')) {
+                source('renv/activate.R')
+            }
+            pkg_exclude_str <- Sys.getenv('PKG_EXCLUDE', '')
+            skip_packages <- if (nzchar(pkg_exclude_str)) trimws(unlist(strsplit(pkg_exclude_str, ','))) else character(0)
+            if (length(skip_packages) > 0) message('Skipping packages: ', paste(skip_packages, collapse = ', '))
             tryCatch({
-                if (action == 'restore_and_update') {
-                    renvvv::renvvv_restore_and_update(skip = skip_packages)
-                } else if (action == 'restore') {
-                    renvvv::renvvv_restore(skip = skip_packages)
-                } else if (action == 'update') {
-                    renvvv::renvvv_update(skip = skip_packages)
-                } else {
-                    message('[WARN] Unknown renvvv action.')
-                }
+                renvvv::renvvv_restore(skip = skip_packages)
             }, error = function(e) {
-                    message('[WARN] renvvv operation failed: ', e)
-                    quit(status = 1)
+                message('[WARN] renvvv operation failed: ', e)
+                quit(status = 1)
             })
-        } else {
-            message('[WARN] No renvvv action provided.')
-        }
-    "
+        "
+
+        if [ -f "renv.lock" ]; then
+            echo "[INFO] Taking Build-Time Snapshot for RESTORE state"
+            # Pre-Snapshot Workaround
+            if command -v jq >/dev/null 2>&1; then
+                jq -r '.Packages | keys[]' renv.lock | while read -r pkg; do
+                    echo "library($pkg)" >> _dependencies.R
+                done
+            fi
+
+            local restore_snap_dir="${internal_cache_dir}/${project_name}/restore"
+            mkdir -p "$restore_snap_dir"
+            Rscript -e "
+                if (file.exists('renv/activate.R')) source('renv/activate.R')
+                renv::snapshot(lockfile = '${restore_snap_dir}/renv.lock', prompt = FALSE)
+            "
+        fi
+    fi
+
+    if [ "$UPDATE" = "true" ]; then
+        echo "[INFO] Update requested - using renvvv_update()"
+        RENVVV_ACTION="update" Rscript -e "
+            if (!requireNamespace('renvvv', quietly = TRUE)) {
+                stop('renvvv not found. Please ensure it was installed by the feature.')
+            }
+            if (file.exists('renv/activate.R')) {
+                source('renv/activate.R')
+            }
+            pkg_exclude_str <- Sys.getenv('PKG_EXCLUDE', '')
+            skip_packages <- if (nzchar(pkg_exclude_str)) trimws(unlist(strsplit(pkg_exclude_str, ','))) else character(0)
+            if (length(skip_packages) > 0) message('Skipping packages: ', paste(skip_packages, collapse = ', '))
+            tryCatch({
+                renvvv::renvvv_update(skip = skip_packages)
+            }, error = function(e) {
+                message('[WARN] renvvv operation failed: ', e)
+                quit(status = 1)
+            })
+        "
+
+        if [ -f "renv.lock" ]; then
+            echo "[INFO] Taking Build-Time Snapshot for UPDATE state"
+            # Pre-Snapshot Workaround
+            if command -v jq >/dev/null 2>&1; then
+                > _dependencies.R # Clear it first
+                jq -r '.Packages | keys[]' renv.lock | while read -r pkg; do
+                    echo "library($pkg)" >> _dependencies.R
+                done
+            fi
+
+            local update_snap_dir="${internal_cache_dir}/${project_name}/update"
+            mkdir -p "$update_snap_dir"
+            Rscript -e "
+                if (file.exists('renv/activate.R')) source('renv/activate.R')
+                renv::snapshot(lockfile = '${update_snap_dir}/renv.lock', prompt = FALSE)
+            "
+        fi
+    fi
+
+    rm -f _dependencies.R
     echo "[OK] Restore/update process attempted"
     echo "---------------------------------------------"
 
