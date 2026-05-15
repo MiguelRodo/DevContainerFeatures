@@ -82,6 +82,12 @@
             "GH_TOKEN": "ghp_permissive_token"
         }
    },
+   "github-tokens-bashrc-d": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "github-tokens": {}
+        }
+   },
   "mermaid_default": {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
