@@ -7,12 +7,12 @@
         "version": {
             "type": "string",
             "proposals": [
-                "latest",
                 "2.36.0",
+                "latest",
                 "2.35.0",
                 "2.34.1"
             ],
-            "default": "latest",
+            "default": "2.36.0",
             "description": "CmdStan version to install (e.g. '2.36.0'). Use 'latest' to always pull the newest release."
         },
         "installDir": {
