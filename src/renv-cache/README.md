@@ -155,6 +155,31 @@ You can place custom scripts in your renv subdirectories:
 
 These scripts receive the `pkgExclude` parameter and run in the project directory context.
 
+### Accessing Lockfiles at Runtime
+
+The feature automatically creates snapshots of the `renv.lock` files used during the image build (both the "restore" state and the "update" state, if updates were requested).
+
+You can interact with these internal snapshots using the `renv-lockfile-cache` CLI utility, which is automatically available on your path inside the built container:
+
+**List Available Lockfiles:**
+```bash
+renv-lockfile-cache --list
+```
+
+**Copy a Lockfile to your Workspace:**
+By default, the script will prefer the updated lockfile (if available) and will place it in your current directory:
+```bash
+renv-lockfile-cache --copy
+```
+
+You can also specify a custom path (either a directory or exact filename):
+```bash
+renv-lockfile-cache --copy ./my-project/
+renv-lockfile-cache --copy /workspaces/custom-name.lock
+```
+
+If multiple project configurations were used during the build, `--copy` will prompt you interactively to select which project's lockfile you want to extract.
+
 ## Package Restoration
 
 This feature uses [`renvvv::renvvv_restore()`](https://github.com/MiguelRodo/renvvv) for package restoration instead of the default `renv::restore()`. This provides more robust restoration logic that:
