@@ -42,23 +42,27 @@ copy_and_set_execute_bit() {
     fi
 }
 
-# Function to initialize the post-create command file
-initialize_post_create_command() {
-    PATH_POST_CREATE_COMMAND=/usr/local/bin/github-tokens-post-create
-    if [ ! -f "$PATH_POST_CREATE_COMMAND" ]; then
-        printf '#!/usr/bin/env bash\n' > "$PATH_POST_CREATE_COMMAND"
+# Function to initialize a command file with a shebang
+initialize_command_file() {
+    local file_path="$1"
+    if [ ! -f "$file_path" ]; then
+        # Create the file with shebang if it does not exist
+        printf '#!/usr/bin/env bash\n' > "$file_path"
     else
-        if ! grep -q '^#!/usr/bin/env bash' "$PATH_POST_CREATE_COMMAND"; then
+        # Check if shebang exists; add if missing (POSIX-safe, no GNU sed)
+        if ! grep -q '^#!/usr/bin/env bash' "$file_path"; then
             tmp_file=$(mktemp)
-            { echo '#!/usr/bin/env bash'; cat "$PATH_POST_CREATE_COMMAND"; } > "$tmp_file"
-            mv "$tmp_file" "$PATH_POST_CREATE_COMMAND"
+            { echo '#!/usr/bin/env bash'; cat "$file_path"; } > "$tmp_file"
+            mv "$tmp_file" "$file_path"
         fi
     fi
-    chmod 755 "$PATH_POST_CREATE_COMMAND"
+    # Set execute permissions
+    chmod 755 "$file_path"
 }
 
 main() {
-    initialize_post_create_command
+    PATH_POST_CREATE_COMMAND=/usr/local/bin/github-tokens-post-create
+    initialize_command_file "$PATH_POST_CREATE_COMMAND"
 
     # Copy scripts to /usr/local/bin/
     copy_and_set_execute_bit bashrc-d
