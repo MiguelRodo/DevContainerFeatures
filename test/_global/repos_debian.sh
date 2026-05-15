@@ -12,6 +12,10 @@ check "repos help command works" bash -c "repos --help || repos -h || true"
 check "repos-post-start script exists" bash -c "test -f /usr/local/bin/repos-post-start"
 check "repos-post-start script is executable" bash -c "test -x /usr/local/bin/repos-post-start"
 
+# Dependencies
+check "gh binary is installed" bash -c "command -v gh"
+check "jq binary is installed" bash -c "command -v jq"
+
 # Debian uses APT installation, so repos should be in /usr/bin
 check "repos is installed via APT" bash -c "dpkg -l | grep -q repos || test -x /usr/local/bin/repos"
 
