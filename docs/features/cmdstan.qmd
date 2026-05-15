@@ -49,7 +49,7 @@ With Python integration disabled:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `version` | string | `"latest"` | CmdStan version to install (e.g. `"2.36.0"`). Use `"latest"` to always pull the newest release. |
+| `version` | string | `"2.36.0"` | CmdStan version to install (e.g. `"2.36.0"`). Use `"latest"` to always pull the newest release. |
 | `installDir` | string | `"/opt/cmdstan"` | Base directory under which the versioned CmdStan folder is created (e.g. `/opt/cmdstan/cmdstan-2.36.0`). |
 | `installRPackage` | boolean | `true` | When `true` and R is present in the image, install the `cmdstanr` R package and configure it to use the system CmdStan installation. |
 | `installPythonPackage` | boolean | `true` | When `true` and Python/pip is present in the image, install the `cmdstanpy` Python package and configure it to use the system CmdStan installation. |

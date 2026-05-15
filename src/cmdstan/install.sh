@@ -14,7 +14,7 @@
 
 set -e
 
-CMDSTAN_VERSION="${VERSION:-"latest"}"
+CMDSTAN_VERSION="${VERSION:-"2.36.0"}"
 INSTALL_DIR="${INSTALLDIR:-"/opt/cmdstan"}"
 INSTALL_R_PACKAGE="${INSTALLRPACKAGE:-"true"}"
 INSTALL_PYTHON_PACKAGE="${INSTALLPYTHONPACKAGE:-"true"}"
@@ -102,15 +102,26 @@ esac
 # ---------------------------------------------------------------------------
 if [ "${CMDSTAN_VERSION}" = "latest" ] || [ -z "${CMDSTAN_VERSION}" ]; then
     echo "Resolving latest CmdStan version from GitHub..."
-    CMDSTAN_VERSION=$(curl -sSfL \
-        https://api.github.com/repos/stan-dev/cmdstan/releases/latest \
-        | grep '"tag_name"' \
-        | sed -E 's/.*"v([^"]+)".*/\1/')
-    if [ -z "${CMDSTAN_VERSION}" ]; then
-        echo "Error: Could not determine latest CmdStan version from GitHub API." >&2
-        exit 1
+
+    # Try fast resolution first, then fallback to API if that fails
+    LATEST_VERSION=$(curl -sSfLI -o /dev/null -w '%{url_effective}' \
+        https://github.com/stan-dev/cmdstan/releases/latest \
+        | sed 's|.*/v||' || true)
+
+    if [ -z "${LATEST_VERSION}" ] || [ "${LATEST_VERSION}" = "https://github.com/stan-dev/cmdstan/releases/latest" ]; then
+        LATEST_VERSION=$(curl -sSfL \
+            https://api.github.com/repos/stan-dev/cmdstan/releases/latest \
+            | grep '"tag_name"' \
+            | sed -E 's/.*"v([^"]+)".*/\1/' || true)
     fi
-    echo "Resolved latest version: ${CMDSTAN_VERSION}"
+
+    if [ -z "${LATEST_VERSION}" ]; then
+        echo "Warning: Could not determine latest CmdStan version from GitHub. Falling back to default 2.36.0." >&2
+        CMDSTAN_VERSION="2.36.0"
+    else
+        CMDSTAN_VERSION="${LATEST_VERSION}"
+        echo "Resolved latest version: ${CMDSTAN_VERSION}"
+    fi
 fi
 
 # 🛡️ Sentinel: Validate version format (X.Y.Z) to prevent path injection
