@@ -97,7 +97,7 @@ else
     cp -r "$TEMP_DIR/repos/scripts" /usr/local/share/repos/
     
     # Make all shell scripts executable
-    find /usr/local/share/repos/scripts -type f -name "*.sh" -exec chmod +x {} \;
+    find /usr/local/share/repos/scripts -type f -name "*.sh" -exec chmod +x {} +
     
     # Create wrapper script in /usr/local/bin
     cat > /usr/local/bin/repos << 'WRAPPER_EOF'
