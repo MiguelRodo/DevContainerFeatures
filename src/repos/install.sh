@@ -50,24 +50,24 @@ else
     # Install dependencies based on package manager
     if command -v apk >/dev/null 2>&1; then
         echo "Installing dependencies via apk (Alpine)..."
-        apk add --no-cache bash git curl jq
+        apk add --no-cache bash git curl jq github-cli
     elif command -v yum >/dev/null 2>&1; then
         echo "Installing dependencies via yum (RHEL/CentOS)..."
-        yum install -y bash git curl jq
+        yum install -y bash git curl jq gh
     elif command -v dnf >/dev/null 2>&1; then
         echo "Installing dependencies via dnf (Fedora)..."
-        dnf install -y bash git curl jq
+        dnf install -y bash git curl jq gh
     elif command -v pacman >/dev/null 2>&1; then
         echo "Installing dependencies via pacman (Arch)..."
-        pacman -Sy --noconfirm bash git curl jq
+        pacman -Sy --noconfirm bash git curl jq github-cli
     else
         echo "Warning: Unknown package manager. Assuming dependencies are already installed."
-        echo "Required dependencies: bash, git, curl, jq"
+        echo "Required dependencies: bash, git, curl, jq, gh"
     fi
     
     # Check for required dependencies
     MISSING_DEPS=()
-    for dep in bash git curl jq; do
+    for dep in bash git curl jq gh; do
         if ! command -v "$dep" >/dev/null 2>&1; then
             MISSING_DEPS+=("$dep")
         fi
