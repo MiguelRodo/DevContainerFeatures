@@ -47,3 +47,11 @@
 **Vulnerability:** Path/URL manipulation and injection caused by unvalidated dynamic variables (e.g., dynamically fetching latest version strings via API calls).
 **Learning:** Variables that determine file paths or download URLs, even when fetched from typically trusted external sources (like a GitHub API), must be treated as untrusted input. If an API response is manipulated or unexpected (e.g., changing a version string to `../../../etc/passwd` or embedding shell commands), it can lead to path traversal, arbitrary file writes, or URL redirection vulnerabilities.
 **Prevention:** Always validate dynamically fetched data (like tags or version strings) against strict allow-lists (using POSIX-compliant regex like `^[0-9]+\.[0-9]+\.[0-9]+$`) before interpolating them into paths, URLs, or executing them.
+
+## 2024-05-15 - Unsafe Direct Execution of Remote Script
+
+**Vulnerability:** The devcontainer feature `src/mermaid/install.sh` was directly executing remote bash scripts downloaded via `curl | bash` for NodeSource installation. This exposes the installation process to remote code execution risks if the source is compromised or a Man-in-the-Middle (MitM) attack occurs.
+
+**Learning:** When installing vendor dependencies like Node.js, relying on mutable remote setup scripts via `curl | bash` is inherently insecure and brittle. Even attempting to secure it by hardcoding hashes is an anti-pattern because the upstream provider frequently updates the script, causing the installation to break.
+
+**Prevention:** Replaced `curl <url> | bash -` patterns with native package manager configuration. By directly downloading the vendor's GPG key and configuring the package manager repositories (e.g., via `/etc/apt/sources.list.d/nodesource.sources` for Debian/Ubuntu or `/etc/yum.repos.d/nodesource.repo` for RHEL/CentOS), we eliminate the execution of arbitrary remote shell scripts entirely while remaining robust to upstream script changes.
