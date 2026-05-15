@@ -15,7 +15,7 @@ Installs CmdStan (the Stan probabilistic programming system command-line interfa
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| version | CmdStan version to install (e.g. '2.36.0'). Use 'latest' to always pull the newest release. | string | latest |
+| version | CmdStan version to install (e.g. '2.36.0'). Use 'latest' to always pull the newest release. | string | 2.36.0 |
 | installDir | Base directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0). | string | /opt/cmdstan |
 | installRPackage | When true and R is present in the image, install the 'cmdstanr' R package and configure it to use the system CmdStan installation. | boolean | true |
 | installPythonPackage | When true and Python/pip is present in the image, install the 'cmdstanpy' Python package and configure it to use the system CmdStan installation. | boolean | true |

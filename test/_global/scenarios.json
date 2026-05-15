@@ -19,6 +19,14 @@
              }
         }
    },
+   "renv-cache-jq-unit-test": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "renv-cache": {
+                "restore": false
+             }
+        }
+   },
    "renv-cache-restore": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
@@ -80,6 +88,12 @@
         },
         "remoteEnv": {
             "GH_TOKEN": "ghp_permissive_token"
+        }
+   },
+   "github-tokens-bashrc-d": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "github-tokens": {}
         }
    },
   "mermaid_default": {

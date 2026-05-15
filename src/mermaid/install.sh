@@ -169,8 +169,13 @@ install_nodejs() {
             mkdir -p /usr/share/keyrings
             curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /usr/share/keyrings/nodesource.asc
             chmod 644 /usr/share/keyrings/nodesource.asc
-            echo "deb [signed-by=/usr/share/keyrings/nodesource.asc] https://deb.nodesource.com/node_${RESOLVED_NODE_VERSION}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
-
+            cat <<EOF_SRC > /etc/apt/sources.list.d/nodesource.sources
+Types: deb
+URIs: https://deb.nodesource.com/node_${RESOLVED_NODE_VERSION}.x
+Suites: nodistro
+Components: main
+Signed-By: /usr/share/keyrings/nodesource.asc
+EOF_SRC
             apt-get update -y
             # NodeSource nodejs bundles npm; installing Ubuntu's npm package conflicts
             apt-get install -y nodejs
@@ -181,18 +186,16 @@ install_nodejs() {
             dnf install -y nodejs npm
             ;;
         centos|rhel|rocky|almalinux)
-            local SYS_ARCH
-            SYS_ARCH=$(uname -m)
-            cat <<EOF | tee /etc/yum.repos.d/nodesource-nodejs.repo > /dev/null
+            cat <<EOF_REPO > /etc/yum.repos.d/nodesource.repo
 [nodesource-nodejs]
-name=Node.js Packages for Linux RPM based distros - $SYS_ARCH
-baseurl=https://rpm.nodesource.com/pub_${RESOLVED_NODE_VERSION}.x/nodistro/nodejs/$SYS_ARCH
+name=Node.js Packages for Linux RPM based distros - \$basearch
+baseurl=https://rpm.nodesource.com/pub_${RESOLVED_NODE_VERSION}.x/nodistro/nodejs/\$basearch
 priority=9
 enabled=1
 gpgcheck=1
 gpgkey=https://rpm.nodesource.com/gpgkey/ns-operations-public.key
 module_hotfixes=1
-EOF
+EOF_REPO
             yum install -y nodejs npm
             ;;
         alpine)

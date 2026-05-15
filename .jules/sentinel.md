@@ -51,3 +51,7 @@
 **Vulnerability:** Directly piping downloaded remote scripts into bash (`curl -fsSL <url> | bash -`) allows arbitrary code execution.
 **Learning:** NodeSource provides native manual package manager configuration methods which avoid executing mutable remote setup scripts entirely. For dynamic aliases like `lts`, the numeric version can be safely parsed from the remote script using `grep` instead of executing it. Furthermore, downloading APT repository keys as ASCII-armored (`.asc`) files natively supported by `apt` is preferable to piping them through `gpg --dearmor` to avoid dependencies on `gnupg`.
 **Prevention:** Avoid `curl | bash` in DevContainer setup scripts; configure package manager repositories directly via standard configuration files (`/etc/apt/sources.list.d/`, `/etc/yum.repos.d/`) and import GPG keys securely.
+## 2026-05-15 - Clean up development scratch files
+**Vulnerability:** Accidental commit of development scripts and scratch files (e.g. `resolver.py`, `test_script.sh`, `benchmark.sh`) into the repository.
+**Learning:** Temporary tools and scripts created to assist in conflict resolution, debugging, or execution during development are not part of the final codebase. Committing them creates repository bloat and potential security/maintenance overhead.
+**Prevention:** Before committing changes or requesting a code review, always verify the status with `git status` and delete any temporary files, mock scripts, or scratchpads. Ensure that only intentionally modified, project-relevant source files are staged and committed.

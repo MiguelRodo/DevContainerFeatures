@@ -74,11 +74,13 @@ else
     
     # Check for required dependencies
     MISSING_DEPS=()
-    for dep in bash git curl jq gh; do
-        if ! command -v "$dep" >/dev/null 2>&1; then
-            MISSING_DEPS+=("$dep")
-        fi
-    done
+    if ! hash bash git curl jq gh 2>/dev/null; then
+        for dep in bash git curl jq gh; do
+            if ! command -v "$dep" >/dev/null 2>&1; then
+                MISSING_DEPS+=("$dep")
+            fi
+        done
+    fi
     
     if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
         echo "Error: Missing required dependencies: ${MISSING_DEPS[*]}" >&2
@@ -97,7 +99,7 @@ else
     cp -r "$TEMP_DIR/repos/scripts" /usr/local/share/repos/
     
     # Make all shell scripts executable
-    find /usr/local/share/repos/scripts -type f -name "*.sh" -exec chmod +x {} \;
+    find /usr/local/share/repos/scripts -type f -name "*.sh" -exec chmod +x {} +
     
     # Create wrapper script in /usr/local/bin
     cat > /usr/local/bin/repos << 'WRAPPER_EOF'
