@@ -57,6 +57,12 @@
             "GH_TOKEN": "ghp_permissive_token"
         }
    },
+   "github-tokens-functions": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "github-tokens": {}
+        }
+   },
    "github-tokens-override": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
