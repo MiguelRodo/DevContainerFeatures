@@ -1,6 +1,6 @@
 {
     "name": "Container Metadata Injector",
-    "id": "metadata-injector",
+    "id": "build-info",
     "version": "1.0.0",
     "description": "Bakes build-time release version and date metadata from GHA directly into a system-wide command.",
     "options": {
