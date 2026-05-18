@@ -26,6 +26,11 @@ fi
 # --- Everything below runs under bash ---
 set -e
 
+if ! command -v Rscript >/dev/null 2>&1; then
+    echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
+    exit 1
+fi
+
 # Configuration variables with default values
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
 OVERRIDE_TOKENS_AT_INSTALL="${OVERRIDETOKENSATINSTALL:-true}"
@@ -36,6 +41,31 @@ DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
+
+INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-true}"
+CRAN_MIRROR="${CRANMIRROR:-"https://cloud.r-project.org"}"
+
+# Resolve target user
+USERNAME=${USERNAME:-${_REMOTE_USER:-"automatic"}}
+if [ "$USERNAME" = "auto" ] || [ "$USERNAME" = "automatic" ]; then
+    USERNAME=""
+    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
+    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
+        if id -u "${CURRENT_USER}" > /dev/null 2>&1; then
+            USERNAME="${CURRENT_USER}"
+            break
+        fi
+    done
+    if [ "${USERNAME}" = "" ]; then
+        USERNAME="root"
+    fi
+elif [ "$USERNAME" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
+    USERNAME="root"
+fi
+
+export USERNAME
+export INSTALL_SYSREQS
+export CRAN_MIRROR
 
 
 # Function to log debug messages if enabled
@@ -173,10 +203,10 @@ set_r_libs() {
 install_renvvv() {
     echo "Installing renvvv..."
     # Ensure remotes is installed
-    Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = 'https://cloud.r-project.org')"
+    su "${USERNAME}" -c "Rscript -e \"if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = '${CRAN_MIRROR}')\""
     
     # Install renvvv
-    Rscript -e "remotes::install_github('MiguelRodo/renvvv', upgrade = 'never')"
+    su "${USERNAME}" -c "Rscript -e \"remotes::install_github('MiguelRodo/renvvv', upgrade = 'never')\""
 }
 
 update_renv_cache() {
@@ -305,8 +335,11 @@ restore() {
     # Log the command for debugging purposes
     echo "Executing command: ${command[*]}"
 
-    # Execute the command with error handling
-    if ! "${command[@]}"; then
+    # Change ownership of internal directories and RENV_DIR so USERNAME can write to them
+    chown -R "${USERNAME}:${USERNAME}" "$RENV_DIR" /usr/local/share/renv-cache 2>/dev/null || true
+
+    # Execute the command with error handling as target user
+    if ! su "${USERNAME}" -c "${command[*]}"; then
         echo "[ERROR] renv-cache-renv-restore-build failed with command: ${command[*]}"
         exit 0
     fi
@@ -327,7 +360,55 @@ main() {
     create_path_post_create_command
     set_r_libs
     set_tokens_for_install
-    restore
+
+    # System Requirements Resolution
+    if [ "${INSTALL_SYSREQS}" = "true" ]; then
+        echo "Resolving system requirements via Posit Package Manager API..."
+
+        # We must look for renv.lock in subdirectories of RENV_DIR
+        if [ -d "$RENV_DIR" ]; then
+            apt-get update -y && apt-get install -y jq curl lsb-release
+
+            OS_DIST=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+            OS_RELEASE=$(lsb_release -cs)
+
+            # Collect all unique packages from all lockfiles
+            ALL_PKGS=""
+            for lockfile in $(find "$RENV_DIR" -mindepth 2 -maxdepth 2 -name "renv.lock" 2>/dev/null); do
+                PKGS=$(jq -r '.Packages | keys[]?' "$lockfile" | paste -sd, -)
+                if [ -n "$PKGS" ]; then
+                    if [ -n "$ALL_PKGS" ]; then
+                        ALL_PKGS="$ALL_PKGS,$PKGS"
+                    else
+                        ALL_PKGS="$PKGS"
+                    fi
+                fi
+            done
+
+            if [ -n "$ALL_PKGS" ]; then
+                # Deduplicate the comma-separated list
+                ALL_PKGS=$(echo "$ALL_PKGS" | tr ',' '\n' | sort -u | paste -sd, -)
+
+                # Query Posit API
+                SYSREQ_URL="https://packagemanager.posit.co/__api__/repos/1/sysreqs?all=false&pkgname=${ALL_PKGS}&distribution=${OS_DIST}&release=${OS_RELEASE}"
+
+                # Parse the required apt packages and install
+                APT_PKGS=$(curl -sL "$SYSREQ_URL" | jq -r '.requirements[]?.requirements?.packages[]?' | sort -u | paste -sd" " -)
+
+                if [ -n "$APT_PKGS" ]; then
+                    echo "Installing system requirements: $APT_PKGS"
+                    export DEBIAN_FRONTEND=noninteractive
+                    apt-get install -y --no-install-recommends $APT_PKGS
+                else
+                    echo "No additional system requirements found."
+                fi
+            else
+                echo "No packages found in lockfiles."
+            fi
+        fi
+    fi
+
+        restore
     reset_tokens_after_install
     clean_up
 }
