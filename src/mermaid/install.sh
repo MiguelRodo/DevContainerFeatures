@@ -40,6 +40,50 @@ check_root() {
     fi
 }
 
+pkg_install() {
+    case "$OS_ID" in
+        ubuntu|debian)
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -y
+            apt-get install -y --no-install-recommends "$@"
+            ;;
+        fedora)
+            dnf install -y "$@"
+            ;;
+        centos|rhel|rocky|almalinux)
+            yum install -y "$@"
+            ;;
+        alpine)
+            apk add --no-cache "$@"
+            ;;
+        opensuse*|sles)
+            zypper install -y "$@"
+            ;;
+        *)
+            echo "[ERROR] Unsupported OS for package installation: $OS_ID"
+            exit 1
+            ;;
+    esac
+}
+
+pkg_cleanup() {
+    case "$OS_ID" in
+        ubuntu|debian)
+            apt-get clean
+            rm -rf /var/lib/apt/lists/*
+            ;;
+        fedora)
+            dnf clean all
+            ;;
+        centos|rhel|rocky|almalinux)
+            yum clean all
+            ;;
+        opensuse*|sles)
+            zypper clean
+            ;;
+    esac
+}
+
 create_non_root_user() {
     if ! id "$USERNAME" &>/dev/null; then
         echo "[INFO] Creating non-root user: $USERNAME"
@@ -58,50 +102,38 @@ create_non_root_user() {
 
 install_dependencies() {
     echo "[INFO] Installing system dependencies..."
+
+    local deps=()
     case "$OS_ID" in
         ubuntu|debian)
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -y
-            apt-get install -y --no-install-recommends \
-                curl gnupg ca-certificates build-essential libssl-dev \
+            deps=(curl gnupg ca-certificates build-essential libssl-dev \
                 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 \
                 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3 libgbm1 \
-                fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 sudo
-
-            # Handle libasound2 variants for different Ubuntu versions
-            if apt-cache show libasound2t64 &>/dev/null; then
-                apt-get install -y libasound2t64
-            else
-                apt-get install -y libasound2
-            fi
+                fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 sudo)
             ;;
         fedora)
-            dnf install -y \
-                curl ca-certificates gcc gcc-c++ make openssl-devel \
+            deps=(curl ca-certificates gcc gcc-c++ make openssl-devel \
                 libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
                 libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
-                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux)
             ;;
         centos|rhel|rocky|almalinux)
             yum install -y epel-release || true
-            yum install -y \
-                curl ca-certificates gcc gcc-c++ make openssl-devel \
+            deps=(curl ca-certificates gcc gcc-c++ make openssl-devel \
                 libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
                 libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
-                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux
+                liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux)
             ;;
         alpine)
-            apk add --no-cache \
-                bash curl ca-certificates nodejs npm \
+            deps=(bash curl ca-certificates nodejs npm \
                 chromium nss freetype harfbuzz \
-                ttf-freefont font-noto-emoji sudo
+                ttf-freefont font-noto-emoji sudo)
             ;;
         opensuse*|sles)
-            zypper install -y \
-                curl ca-certificates gcc gcc-c++ make libopenssl-devel \
+            deps=(curl ca-certificates gcc gcc-c++ make libopenssl-devel \
                 libX11-xcb1 libXcomposite1 libXcursor1 libXdamage1 libXext6 libXfixes3 \
                 libXi6 libXrandr2 libXrender1 libXss1 libXtst6 mozilla-nss libgbm1 \
-                liberation-fonts at-spi2-atk gtk3 alsa sudo util-linux
+                liberation-fonts at-spi2-atk gtk3 alsa sudo util-linux)
             ;;
         *)
             echo "[ERROR] Unsupported OS: $OS_ID"
@@ -109,6 +141,17 @@ install_dependencies() {
             exit 1
             ;;
     esac
+
+    pkg_install "${deps[@]}"
+
+    if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
+        # Handle libasound2 variants for different Ubuntu versions
+        if apt-cache show libasound2t64 &>/dev/null; then
+            pkg_install libasound2t64
+        else
+            pkg_install libasound2
+        fi
+    fi
 }
 
 install_nodejs() {
@@ -121,34 +164,8 @@ install_nodejs() {
     # Node exists but npm is missing: install npm only
     if command -v node >/dev/null 2>&1 && ! command -v npm >/dev/null 2>&1; then
         echo "[WARN] Node.js is installed ($(node -v)) but npm is missing; installing npm..."
-        case "$OS_ID" in
-            ubuntu|debian)
-                export DEBIAN_FRONTEND=noninteractive
-                apt-get update -y
-                apt-get install -y --no-install-recommends npm
-                return
-                ;;
-            fedora)
-                dnf install -y npm
-                return
-                ;;
-            centos|rhel|rocky|almalinux)
-                yum install -y npm
-                return
-                ;;
-            opensuse*|sles)
-                zypper install -y npm
-                return
-                ;;
-            alpine)
-                apk add --no-cache npm
-                return
-                ;;
-            *)
-                echo "[ERROR] Unsupported OS for npm install: $OS_ID"
-                exit 1
-                ;;
-        esac
+        pkg_install npm
+        return
     fi
 
     echo "[INFO] Installing Node.js ${NODE_VERSION}..."
@@ -160,15 +177,15 @@ install_nodejs() {
                  curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
             fi
             # NodeSource nodejs bundles npm; installing Ubuntu's npm package conflicts
-            apt-get install -y nodejs
+            pkg_install nodejs
             ;;
         fedora)
             if [ "${NODE_VERSION}" = "lts" ]; then
-                dnf install -y nodejs npm
+                pkg_install nodejs npm
             else
                 dnf module reset -y nodejs || true
                 dnf module enable -y "nodejs:${NODE_VERSION}" || dnf install -y nodejs
-                dnf install -y nodejs npm
+                pkg_install nodejs npm
             fi
             ;;
         centos|rhel|rocky|almalinux)
@@ -177,14 +194,14 @@ install_nodejs() {
             else
                 curl -fsSL "https://rpm.nodesource.com/setup_${NODE_VERSION}.x" | bash -
             fi
-            yum install -y nodejs npm
+            pkg_install nodejs npm
             ;;
         alpine)
             # Node.js already installed in install_dependencies for Alpine
             echo "[INFO] Node.js should already be installed via apk."
             ;;
         opensuse*|sles)
-            zypper install -y nodejs npm
+            pkg_install nodejs npm
             ;;
         *)
             echo "[ERROR] Cannot install Node.js on unsupported OS: $OS_ID"
@@ -253,21 +270,7 @@ install_wrapper() {
 }
 
 cleanup() {
-    case "$OS_ID" in
-        ubuntu|debian)
-            apt-get clean
-            rm -rf /var/lib/apt/lists/*
-            ;;
-        fedora)
-            dnf clean all
-            ;;
-        centos|rhel|rocky|almalinux)
-            yum clean all
-            ;;
-        opensuse*|sles)
-            zypper clean
-            ;;
-    esac
+    pkg_cleanup
 }
 
 main() {
