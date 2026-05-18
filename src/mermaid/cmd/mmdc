@@ -75,7 +75,7 @@ if [ "$EUID" -eq 0 ]; then
 else
     # Not running as root, check for sudo
     if command -v sudo &>/dev/null; then
-        sudo -u "$USERNAME" mmdc -p "$CONFIG_FILE" "$@"
+        sudo -u "$USERNAME" -- mmdc -p "$CONFIG_FILE" "$@"
     else
         echo "Error: Not root and no 'sudo' available to switch user."
         exit 1
