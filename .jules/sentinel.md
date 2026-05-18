@@ -47,6 +47,14 @@
 **Vulnerability:** Path/URL manipulation and injection caused by unvalidated dynamic variables (e.g., dynamically fetching latest version strings via API calls).
 **Learning:** Variables that determine file paths or download URLs, even when fetched from typically trusted external sources (like a GitHub API), must be treated as untrusted input. If an API response is manipulated or unexpected (e.g., changing a version string to `../../../etc/passwd` or embedding shell commands), it can lead to path traversal, arbitrary file writes, or URL redirection vulnerabilities.
 **Prevention:** Always validate dynamically fetched data (like tags or version strings) against strict allow-lists (using POSIX-compliant regex like `^[0-9]+\.[0-9]+\.[0-9]+$`) before interpolating them into paths, URLs, or executing them.
+## 2026-05-15 - Prevent Remote Script Execution in Node.js Installation
+**Vulnerability:** Directly piping downloaded remote scripts into bash (`curl -fsSL <url> | bash -`) allows arbitrary code execution.
+**Learning:** NodeSource provides native manual package manager configuration methods which avoid executing mutable remote setup scripts entirely. For dynamic aliases like `lts`, the numeric version can be safely parsed from the remote script using `grep` instead of executing it. Furthermore, downloading APT repository keys as ASCII-armored (`.asc`) files natively supported by `apt` is preferable to piping them through `gpg --dearmor` to avoid dependencies on `gnupg`.
+**Prevention:** Avoid `curl | bash` in DevContainer setup scripts; configure package manager repositories directly via standard configuration files (`/etc/apt/sources.list.d/`, `/etc/yum.repos.d/`) and import GPG keys securely.
+## 2026-05-15 - Clean up development scratch files
+**Vulnerability:** Accidental commit of development scripts and scratch files (e.g. `resolver.py`, `test_script.sh`, `benchmark.sh`) into the repository.
+**Learning:** Temporary tools and scripts created to assist in conflict resolution, debugging, or execution during development are not part of the final codebase. Committing them creates repository bloat and potential security/maintenance overhead.
+**Prevention:** Before committing changes or requesting a code review, always verify the status with `git status` and delete any temporary files, mock scripts, or scratchpads. Ensure that only intentionally modified, project-relevant source files are staged and committed.
 
 ## 2024-05-15 - Sudo Option Injection Prevention
 **Vulnerability:** Option injection during privilege escalation.
