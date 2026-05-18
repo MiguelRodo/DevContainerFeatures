@@ -7,7 +7,7 @@ Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally ru
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:2": {}
+    "ghcr.io/MiguelRodo/DevContainerFeatures/repos:3": {}
 }
 ```
 

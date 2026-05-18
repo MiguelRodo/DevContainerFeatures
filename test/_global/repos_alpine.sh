@@ -14,5 +14,9 @@ check "repos-post-start script is executable" bash -c "test -x /usr/local/bin/re
 check "repos is installed to /usr/local/bin" bash -c "test -x /usr/local/bin/repos"
 check "repos scripts directory exists" bash -c "test -d /usr/local/share/repos/scripts"
 
+# Dependencies
+check "gh binary is installed" bash -c "command -v gh"
+check "jq binary is installed" bash -c "command -v jq"
+
 # Report result
 reportResults

@@ -26,20 +26,26 @@ if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
     # Install prerequisites
     echo "Installing prerequisites..."
     apt-get update
-    apt-get install -y curl gnupg ca-certificates
+    apt-get install -y curl gnupg ca-certificates wget
     
     # Setup APT repository
     echo "Setting up APT repository..."
-    curl -fsSL https://raw.githubusercontent.com/MiguelRodo/apt-miguelrodo/main/KEY.gpg \
-    | gpg --dearmor -o /usr/share/keyrings/miguelrodo-repos.gpg
-    
-    echo "deb [signed-by=/usr/share/keyrings/miguelrodo-repos.gpg] https://raw.githubusercontent.com/MiguelRodo/apt-miguelrodo/main/ ./" \
-      > /etc/apt/sources.list.d/miguelrodo-repos.list
-    
-    # Install repos package
-    echo "Installing repos package..."
+    curl -fsSL https://miguelrodo.github.io/apt-miguelrodo/KEY.gpg \
+      | gpg --dearmor -o /usr/share/keyrings/apt-miguelrodo.gpg
+
+    echo "deb [signed-by=/usr/share/keyrings/apt-miguelrodo.gpg] https://miguelrodo.github.io/apt-miguelrodo stable main" \
+      > /etc/apt/sources.list.d/apt-miguelrodo.list
+
+    # Setup GitHub CLI repository for Debian/Ubuntu
+    echo "Setting up GitHub CLI repository..."
+    mkdir -p -m 755 /etc/apt/keyrings
+    wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+    chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+
+    echo "Installing repos package and dependencies..."
     apt-get update
-    apt-get install -y repos
+    apt-get install -y repos gh jq
     
     # Cleanup
     echo "Cleaning up..."
@@ -51,28 +57,30 @@ else
     # Install dependencies based on package manager
     if command -v apk >/dev/null 2>&1; then
         echo "Installing dependencies via apk (Alpine)..."
-        apk add --no-cache bash git curl jq
+        apk add --no-cache bash git curl jq github-cli
     elif command -v yum >/dev/null 2>&1; then
         echo "Installing dependencies via yum (RHEL/CentOS)..."
-        yum install -y bash git curl jq
+        yum install -y bash git curl jq gh
     elif command -v dnf >/dev/null 2>&1; then
         echo "Installing dependencies via dnf (Fedora)..."
-        dnf install -y bash git curl jq
+        dnf install -y bash git curl jq gh
     elif command -v pacman >/dev/null 2>&1; then
         echo "Installing dependencies via pacman (Arch)..."
-        pacman -Sy --noconfirm bash git curl jq
+        pacman -Sy --noconfirm bash git curl jq github-cli
     else
         echo "Warning: Unknown package manager. Assuming dependencies are already installed."
-        echo "Required dependencies: bash, git, curl, jq"
+        echo "Required dependencies: bash, git, curl, jq, gh"
     fi
     
     # Check for required dependencies
     MISSING_DEPS=()
-    for dep in bash git curl jq; do
-        if ! command -v "$dep" >/dev/null 2>&1; then
-            MISSING_DEPS+=("$dep")
-        fi
-    done
+    if ! hash bash git curl jq gh 2>/dev/null; then
+        for dep in bash git curl jq gh; do
+            if ! command -v "$dep" >/dev/null 2>&1; then
+                MISSING_DEPS+=("$dep")
+            fi
+        done
+    fi
     
     if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
         echo "Error: Missing required dependencies: ${MISSING_DEPS[*]}" >&2
@@ -91,7 +99,7 @@ else
     cp -r "$TEMP_DIR/repos/scripts" /usr/local/share/repos/
     
     # Make all shell scripts executable
-    find /usr/local/share/repos/scripts -type f -name "*.sh" -exec chmod +x {} \;
+    find /usr/local/share/repos/scripts -type f -name "*.sh" -exec chmod +x {} +
     
     # Create wrapper script in /usr/local/bin
     cat > /usr/local/bin/repos << 'WRAPPER_EOF'

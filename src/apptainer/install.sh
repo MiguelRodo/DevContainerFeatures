@@ -48,6 +48,11 @@ case "$OS_ID" in
                 echo "Error: Could not determine latest Apptainer version from GitHub API."
                 exit 1
             fi
+            # 🛡️ Sentinel: Validate fetched version format to prevent URL/path injection
+            if ! echo "${APPTAINER_VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+)?$'; then
+                echo "Error: Invalid Apptainer version '${APPTAINER_VERSION}' fetched from API."
+                exit 1
+            fi
             echo "Downloading Apptainer ${APPTAINER_VERSION} for ${ARCH}..."
             curl -L -o /tmp/apptainer.deb \
                 "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_${ARCH}.deb"

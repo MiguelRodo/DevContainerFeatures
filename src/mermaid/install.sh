@@ -169,31 +169,49 @@ install_nodejs() {
     fi
 
     echo "[INFO] Installing Node.js ${NODE_VERSION}..."
+
+    local RESOLVED_NODE_VERSION="${NODE_VERSION}"
+    if [ "${NODE_VERSION}" = "lts" ]; then
+        echo "[INFO] Resolving Node.js LTS version from NodeSource..."
+        RESOLVED_NODE_VERSION=$(curl -fsSL https://deb.nodesource.com/setup_lts.x | grep '^NODE_VERSION=' | cut -d'"' -f2 | cut -d'.' -f1)
+        if [ -z "$RESOLVED_NODE_VERSION" ]; then
+            echo "[ERROR] Failed to resolve Node.js LTS version. Falling back to 22."
+            RESOLVED_NODE_VERSION="22"
+        fi
+        echo "[INFO] Resolved LTS version to ${RESOLVED_NODE_VERSION}.x"
+    fi
+
     case "$OS_ID" in
         ubuntu|debian)
-            if [ "${NODE_VERSION}" = "lts" ]; then
-                 curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-            else
-                 curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-            fi
+            mkdir -p /usr/share/keyrings
+            curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+            cat <<EOF > /etc/apt/sources.list.d/nodesource.sources
+Types: deb
+URIs: https://deb.nodesource.com/node_${RESOLVED_NODE_VERSION}.x
+Suites: nodistro
+Components: main
+Signed-By: /usr/share/keyrings/nodesource.gpg
+EOF
+            apt-get update -y
             # NodeSource nodejs bundles npm; installing Ubuntu's npm package conflicts
             pkg_install nodejs
             ;;
         fedora)
-            if [ "${NODE_VERSION}" = "lts" ]; then
-                pkg_install nodejs npm
-            else
-                dnf module reset -y nodejs || true
-                dnf module enable -y "nodejs:${NODE_VERSION}" || dnf install -y nodejs
-                pkg_install nodejs npm
-            fi
+            dnf module reset -y nodejs || true
+            dnf module enable -y "nodejs:${RESOLVED_NODE_VERSION}" || dnf install -y nodejs
+            pkg_install nodejs npm
             ;;
         centos|rhel|rocky|almalinux)
-            if [ "${NODE_VERSION}" = "lts" ]; then
-                curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
-            else
-                curl -fsSL "https://rpm.nodesource.com/setup_${NODE_VERSION}.x" | bash -
-            fi
+            cat <<EOF > /etc/yum.repos.d/nodesource.repo
+[nodesource-nodejs]
+name=Node.js Packages for Linux RPM based distros - \$basearch
+baseurl=https://rpm.nodesource.com/pub_${RESOLVED_NODE_VERSION}.x/nodistro/nodejs/\$basearch
+priority=9
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.nodesource.com/gpgkey/ns-operations-public.key
+module_hotfixes=1
+EOF
             pkg_install nodejs npm
             ;;
         alpine)
