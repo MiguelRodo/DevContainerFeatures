@@ -2,7 +2,6 @@
 
 set -e
 
-# Optional: Import test library
 source dev-container-features-test-lib
 
 check "container-info script exists and is executable" test -x /usr/local/bin/container-info

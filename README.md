@@ -8,6 +8,7 @@ This repository contains the following DevContainer Features:
 
 - **[apptainer](#apptainer)** - Install Apptainer for HPC containerization
 - **[cmdstan](#cmdstan)** - Install CmdStan (Stan probabilistic programming system)
+- **[metadata-injector](#metadata-injector)** - Bakes build-time release version and date metadata from GHA directly into a system-wide command
 - **[renv-cache](#renv-cache)** - Configure R with renv cache
 - **[fit-sne](#fit-sne)** - Install FIt-SNE for dimensionality reduction
 - **[mermaid](#mermaid)** - Install Mermaid CLI for diagram generation
@@ -82,6 +83,40 @@ The feature downloads the official CmdStan release tarball, pre-compiles the Sta
 - Pre-compiles the Stan C++ toolchain during the image build (`make build`)
 - Sets `CMDSTAN` and updates `PATH` via `/etc/profile.d/cmdstan.sh` and `/etc/environment`
 - Compilation may take 3–10 minutes depending on available CPU cores
+
+---
+
+## metadata-injector
+
+Bakes build-time release version and date metadata directly into a system-wide command `container-info`.
+
+### Example
+
+To pass host environment variables (like `IMAGE_VERSION` and `IMAGE_BUILD_DATE` exported in a GitHub Action step) to the container at build time, you can map them in your project's `devcontainer.json` using the `${localEnv:VAR_NAME}` syntax:
+
+```json
+{
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/MiguelRodo/DevContainerFeatures/metadata-injector:1": {
+            "version": "${localEnv:IMAGE_VERSION}",
+            "buildDate": "${localEnv:IMAGE_BUILD_DATE}"
+        }
+    }
+}
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `version` | string | `"development"` | The automated version number injected from the runner host environment. |
+| `buildDate` | string | `"unknown"` | The build timestamp injected from the runner host environment. |
+
+### Notes
+
+- Creates a secure static metadata file at `/usr/local/etc/container_metadata/build_info.txt`.
+- Generates a globally executable command `/usr/local/bin/container-info`.
 
 ---
 

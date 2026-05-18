@@ -22,13 +22,11 @@ if [ ! -f "$DATA_FILE" ]; then
     exit 1
 fi
 
-. "$DATA_FILE"
-
 echo "--------------------------------------------------"
 echo "🚀 DevContainer Release Information"
 echo "--------------------------------------------------"
-echo "  Version : ${CONTAINER_VERSION}"
-echo "  Built On: ${BUILD_DATE}"
+cat "$DATA_FILE" | grep "^CONTAINER_VERSION=" | sed 's/^CONTAINER_VERSION="/  Version : /' | sed 's/"$//'
+cat "$DATA_FILE" | grep "^BUILD_DATE=" | sed 's/^BUILD_DATE="/  Built On: /' | sed 's/"$//'
 echo "--------------------------------------------------"
 EOF
 
