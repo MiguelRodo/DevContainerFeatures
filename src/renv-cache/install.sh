@@ -31,7 +31,6 @@ SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
 OVERRIDE_TOKENS_AT_INSTALL="${OVERRIDETOKENSATINSTALL:-true}"
 RESTORE="${RESTORE:-true}"
 UPDATE="${UPDATE:-false}"
-PKG_EXCLUDE="${PKGEXCLUDE:-}"
 DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
@@ -39,11 +38,11 @@ DEBUG_RENV="${DEBUGRENV:-false}"
 
 REPOSITORIES="${REPOSITORIES:-""}"
 PACKAGES="${PACKAGES:-""}"
-SKIP_PACKAGES="${SKIPPACKAGES:-""}"
-INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-"false"}"
+PKG_EXCLUDE="${PKGEXCLUDE:-${SKIPPACKAGES:-""}}"
+INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-"true"}"
 CRAN_MIRROR="${CRANMIRROR:-"https://cloud.r-project.org"}"
 
-if [ -n "$PACKAGES" ] || [ -n "$REPOSITORIES" ] || [ -d "$RENV_DIR" ]; then
+if [ -n "$PACKAGES" ] || [ -n "$REPOSITORIES" ] || { [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; }; then
     if ! command -v Rscript >/dev/null 2>&1; then
         echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
         exit 1
@@ -118,13 +117,13 @@ if [ "${INSTALL_SYSREQS}" = "true" ]; then
 fi
 
 # Recursive Strip & Purge (Security)
-if [ -n "$SKIP_PACKAGES" ]; then
+if [ -n "$PKG_EXCLUDE" ]; then
     echo "Recursively stripping skipped packages and purging cache..."
-    export SKIP_PACKAGES="$SKIP_PACKAGES"
+    export PKG_EXCLUDE="$PKG_EXCLUDE"
     export RENV_LOCK_PATH="$LOCK_PATH"
 
     su "${USERNAME}" -c "Rscript -e \"
-        skip_list <- trimws(unlist(strsplit(Sys.getenv('SKIP_PACKAGES'), ',')))
+        skip_list <- trimws(unlist(strsplit(Sys.getenv('PKG_EXCLUDE'), ',')))
         lock_path <- Sys.getenv('RENV_LOCK_PATH')
         lock_data <- renv:::renv_json_read(lock_path)
 

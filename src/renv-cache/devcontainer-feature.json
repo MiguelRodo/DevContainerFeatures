@@ -60,15 +60,10 @@
             "description": "Comma-separated list of specific packages to cache explicitly.",
             "default": ""
         },
-        "skipPackages": {
-            "type": "string",
-            "description": "Comma-separated list of sensitive/private packages to explicitly ignore and strip from caching.",
-            "default": ""
-        },
         "installSystemRequirements": {
             "type": "boolean",
             "description": "Uses the Posit API to install apt-dependencies.",
-            "default": false
+            "default": true
         },
         "cranMirror": {
             "type": "string",
