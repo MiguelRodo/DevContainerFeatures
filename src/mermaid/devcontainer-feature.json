@@ -1,7 +1,7 @@
 {
     "name": "Mermaid",
     "id": "mermaid",
-    "version": "1.4.6",
+    "version": "1.4.7",
     "description": "Installs Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration.",
     "options": {
         "userName": {
