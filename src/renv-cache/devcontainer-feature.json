@@ -50,8 +50,19 @@
             "description": "Whether to print debug information during renv restore.",
             "default": false
         },
+        "repositories": {
+            "type": "string",
+            "description": "Comma-separated list of GitHub repos to clone. Must support branch and profile syntax: user/repo@branch:profile. If :profile is omitted, it defaults to the root renv.lock.",
+            "default": ""
+        },
+        "pkg": {
+            "type": "string",
+            "description": "Comma-separated list of specific packages to cache explicitly.",
+            "default": ""
+        },
         "installSystemRequirements": {
             "type": "boolean",
+            "description": "Uses the Posit API to install apt-dependencies.",
             "default": true
         },
         "cranMirror": {

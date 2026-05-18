@@ -24,7 +24,7 @@ usage() {
 PROJECT_DIR="."
 RESTORE=false
 UPDATE=false
-PKG_EXCLUDE=""
+PKG_EXCLUDE="${PKGEXCLUDE:-""}"
 DEBUG=false
 USE_PAK=false
 DEBUG_RENV=false
