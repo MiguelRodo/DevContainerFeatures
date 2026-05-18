@@ -37,12 +37,12 @@ RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 
 REPOSITORIES="${REPOSITORIES:-""}"
-PACKAGES="${PACKAGES:-""}"
-PKG_EXCLUDE="${PKGEXCLUDE:-${SKIPPACKAGES:-""}}"
+PKG="${PKG:-""}"
+PKG_EXCLUDE="${PKGEXCLUDE:-""}"
 INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-"true"}"
 CRAN_MIRROR="${CRANMIRROR:-"https://cloud.r-project.org"}"
 
-if [ -n "$PACKAGES" ] || [ -n "$REPOSITORIES" ] || { [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; }; then
+if [ -n "$PKG" ] || [ -n "$REPOSITORIES" ] || { [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; }; then
     if ! command -v Rscript >/dev/null 2>&1; then
         echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
         exit 1
@@ -434,16 +434,16 @@ if [ -n "$REPOSITORIES" ]; then
 fi
 
 # 3. Process Explicit Packages (No Lockfile)
-if [ -n "$PACKAGES" ]; then
+if [ -n "$PKG" ]; then
     TMP_PKG_DIR=$(mktemp -d)
     chown "${USERNAME}:${USERNAME}" "$TMP_PKG_DIR"
     pushd "$TMP_PKG_DIR" > /dev/null
 
-    echo "Warming cache with explicit packages: ${PACKAGES}..."
+    echo "Warming cache with explicit packages: ${PKG}..."
     su "${USERNAME}" -c "Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
         renv::init(bare = TRUE, restart = FALSE)
-        pkgs <- trimws(unlist(strsplit('${PACKAGES}', ',')))
+        pkgs <- trimws(unlist(strsplit('${PKG}', ',')))
         renv::install(pkgs)
     \""
     popd > /dev/null

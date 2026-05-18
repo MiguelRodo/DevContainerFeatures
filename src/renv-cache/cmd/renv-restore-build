@@ -29,7 +29,7 @@ usage() {
 # Initialize variables
 RESTORE=false
 UPDATE=false
-PKG_EXCLUDE="${PKGEXCLUDE:-${SKIPPACKAGES:-""}}"
+PKG_EXCLUDE="${PKGEXCLUDE:-""}"
 DEBUG=false
 USE_PAK=false
 RENV_DIR="/usr/local/share/renv-cache/renv"

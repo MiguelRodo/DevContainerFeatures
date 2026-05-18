@@ -55,7 +55,7 @@
             "description": "Comma-separated list of GitHub repos to clone. Must support branch and profile syntax: user/repo@branch:profile. If :profile is omitted, it defaults to the root renv.lock.",
             "default": ""
         },
-        "packages": {
+        "pkg": {
             "type": "string",
             "description": "Comma-separated list of specific packages to cache explicitly.",
             "default": ""
