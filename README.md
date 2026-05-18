@@ -62,7 +62,7 @@ The feature downloads the official CmdStan release tarball, pre-compiles the Sta
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
         "ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1": {
-            "version": "latest"
+            "version": "2.36.0"
         }
     }
 }
@@ -72,7 +72,7 @@ The feature downloads the official CmdStan release tarball, pre-compiles the Sta
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `version` | string | `"latest"` | CmdStan version to install (e.g. `"2.36.0"`). Use `"latest"` to always pull the newest release. |
+| `version` | string | `"2.36.0"` | CmdStan version to install (e.g. `"2.36.0"`). Use `"latest"` to always pull the newest release. |
 | `installDir` | string | `"/opt/cmdstan"` | Base directory under which the versioned CmdStan folder is created. |
 | `installRPackage` | boolean | `true` | When `true` and R is present, install the `cmdstanr` R package and configure it to use the system CmdStan installation. |
 

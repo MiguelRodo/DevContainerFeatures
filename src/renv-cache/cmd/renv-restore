@@ -250,49 +250,26 @@ restore_renv() {
 }
 
 install_pak() {
-    echo "Installing pak"
-    set_debug_renv
-    local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
-    if [ "$renv_config_pak_orig" = "true" ]; then
-        export RENV_CONFIG_PAK_ENABLED=false
-    fi
-    local version="stable"
-    PAK_VERSION="$version" Rscript -e "
-    tryCatch(
-        {
-            if (isFALSE(requireNamespace('pak', quietly = TRUE))) {
-                message('pak not found. Installing pak...')
-                version <- Sys.getenv('PAK_VERSION')
-                install.packages(\"pak\", repos = sprintf(\"https://r-lib.github.io/p/pak/%s/%s/%s/%s\", version, .Platform\$pkgType, R.Version()\$os, R.Version()\$arch))
-            } else {
-                message('[OK] pak is already installed.')
-            }
-        },
-        error = function(e) {
-            message('[WARN] Installation failed: ', e)
-        }
-    )"
-    if [ "$renv_config_pak_orig" = "true" ]; then
-        export RENV_CONFIG_PAK_ENABLED=true
-    fi
-    echo "[OK] Installation process attempted"
-    echo "---------------------------------------------"
+    PAK_VERSION="stable" install_pkg "pak" "sprintf('https://r-lib.github.io/p/pak/%s/%s/%s/%s', Sys.getenv('PAK_VERSION'), .Platform\$pkgType, R.Version()\$os, R.Version()\$arch)"
 }
 
 install_pkg() {
-    echo "Installing $1"
+    local pkg_name="$1"
+    local repos_expr="${2:-"'https://cloud.r-project.org'"}"
+
+    echo "Installing $pkg_name"
     set_debug_renv
     local renv_config_pak_orig="$RENV_CONFIG_PAK_ENABLED"
     if [ "$renv_config_pak_orig" = "true" ]; then
         export RENV_CONFIG_PAK_ENABLED=false
     fi
-    PKG_TO_INSTALL="$1" Rscript -e "
+    PKG_TO_INSTALL="$pkg_name" Rscript -e "
     tryCatch(
         {
             pkg <- Sys.getenv('PKG_TO_INSTALL')
             if (isFALSE(requireNamespace(pkg, quietly = TRUE))) {
                 message(pkg, ' not found. Installing ', pkg, '...')
-                utils::install.packages(pkg, repos = 'https://cloud.r-project.org')
+                utils::install.packages(pkg, repos = ${repos_expr})
             } else {
                 message('[OK] ', pkg, ' is already installed.')
             }

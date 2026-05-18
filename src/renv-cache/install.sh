@@ -95,7 +95,7 @@ empty_dir() {
     fi
 
     # Block path traversal and root-equivalent segments ( . and .. )
-    if [[ "$directory" == *"/./"* || "$directory" == *"/../"* || "$directory" == "/." || "$directory" == "/.." || "$directory" == */. || "$directory" == */.. ]]; then
+    if [[ "$directory" =~ (/\.($|/)|/\.\.($|/)) ]]; then
         echo "[ERROR] Refusing to empty directory: '$directory' (unsafe segment: . or ..)"
         return 1
     fi
@@ -132,7 +132,7 @@ rm_dirs() {
         fi
 
         # Block path traversal and root-equivalent segments ( . and .. )
-        if [[ "$dir" == *"/./"* || "$dir" == *"/../"* || "$dir" == "/." || "$dir" == "/.." || "$dir" == */. || "$dir" == */.. ]]; then
+        if [[ "$dir" =~ (/\.($|/)|/\.\.($|/)) ]]; then
             echo "[ERROR] Refusing to remove directory: '$dir' (unsafe segment: . or ..)"
             continue
         fi
