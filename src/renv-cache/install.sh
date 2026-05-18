@@ -26,9 +26,11 @@ fi
 # --- Everything below runs under bash ---
 set -e
 
-if ! command -v Rscript >/dev/null 2>&1; then
-    echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
-    exit 1
+if [ -n "$PACKAGES" ] || [ -n "$REPOSITORIES" ] || [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
+    if ! command -v Rscript >/dev/null 2>&1; then
+        echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
+        exit 1
+    fi
 fi
 
 # Configuration variables with default values
@@ -42,7 +44,10 @@ USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 
-INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-true}"
+REPOSITORIES="${REPOSITORIES:-""}"
+PACKAGES="${PACKAGES:-""}"
+SKIP_PACKAGES="${SKIPPACKAGES:-""}"
+INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-"false"}"
 CRAN_MIRROR="${CRANMIRROR:-"https://cloud.r-project.org"}"
 
 # Resolve target user
@@ -66,6 +71,94 @@ fi
 export USERNAME
 export INSTALL_SYSREQS
 export CRAN_MIRROR
+
+apt-get update -y && apt-get install -y --no-install-recommends jq git curl lsb-release
+
+if [ -n "$GITHUB_PAT" ]; then
+export GITHUB_TOKEN="$GITHUB_PAT"
+elif [ -n "$GITHUB_TOKEN" ]; then
+export GITHUB_PAT="$GITHUB_TOKEN"
+fi
+
+# CORE FUNCTION: Process a directory containing an renv lockfile
+
+process_renv_dir() {
+local TARGET_DIR=$1
+local PROFILE=$2
+
+if [ -n "$PROFILE" ]; then
+    export RENV_PROFILE="$PROFILE"
+    local LOCK_PATH="renv/profiles/$PROFILE/renv.lock"
+else
+    unset RENV_PROFILE
+    local LOCK_PATH="renv.lock"
+fi
+
+if [ ! -f "$TARGET_DIR/$LOCK_PATH" ]; then
+    echo "No lockfile found at $TARGET_DIR/$LOCK_PATH. Skipping."
+    return 0
+fi
+
+echo "Processing lockfile $LOCK_PATH in $TARGET_DIR..."
+pushd "$TARGET_DIR" > /dev/null
+chown -R "${USERNAME}:${USERNAME}" .
+
+# System Requirements Check via Posit API
+if [ "${INSTALL_SYSREQS}" = "true" ]; then
+    echo "Resolving system requirements..."
+    PKGS=$(jq -r '.Packages | keys[]' "$LOCK_PATH" | paste -sd, -)
+    OS_DIST=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+    OS_RELEASE=$(lsb_release -cs)
+    SYSREQ_URL="https://packagemanager.posit.co/__api__/repos/1/sysreqs?all=false&pkgname=${PKGS}&distribution=${OS_DIST}&release=${OS_RELEASE}"
+    APT_PKGS=$(curl -sL "$SYSREQ_URL" | jq -r '.requirements[]?.requirements?.packages[]?' | sort -u | paste -sd" " -)
+    if [ -n "$APT_PKGS" ]; then
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get install -y --no-install-recommends $APT_PKGS
+    fi
+fi
+
+# Recursive Strip & Purge (Security)
+if [ -n "$SKIP_PACKAGES" ]; then
+    echo "Recursively stripping skipped packages and purging cache..."
+    export SKIP_PACKAGES="$SKIP_PACKAGES"
+    export RENV_LOCK_PATH="$LOCK_PATH"
+
+    su "${USERNAME}" -c "Rscript -e \"
+        skip_list <- trimws(unlist(strsplit(Sys.getenv('SKIP_PACKAGES'), ',')))
+        lock_path <- Sys.getenv('RENV_LOCK_PATH')
+        lock_data <- renv:::renv_json_read(lock_path)
+
+        if (!is.null(lock_data\\\$Packages)) {
+            changed <- TRUE
+            while (changed) {
+                changed <- FALSE
+                for (pkg_name in names(lock_data\\\$Packages)) {
+                    reqs <- lock_data\\\$Packages[[pkg_name]]\\\$Requirements
+                    if (!is.null(reqs) && any(reqs %in% skip_list)) {
+                        if (!(pkg_name %in% skip_list)) {
+                            skip_list <- c(skip_list, pkg_name)
+                            changed <- TRUE
+                        }
+                    }
+                }
+            }
+            for (pkg in skip_list) lock_data\\\$Packages[[pkg]] <- NULL
+            renv:::renv_json_write(lock_data, file = lock_path)
+        }
+
+        for (pkg in skip_list) {
+            tryCatch({
+                renv::purge(pkg, prompt = FALSE)
+                message('Purged ', pkg, ' from global cache.')
+            }, error = function(e) NULL)
+        }
+    \""
+fi
+
+echo "Warming cache from $TARGET_DIR (Profile: ${PROFILE:-default})..."
+su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::restore()\""
+popd > /dev/null
+}
 
 
 # Function to log debug messages if enabled
@@ -278,73 +371,6 @@ reset_tokens_after_install() {
     fi
 }
 
-# Function to restore R environment using renv
-restore() {
-    # Copy and set execute permissions for renv restore scripts
-    copy_and_set_execute_bit renv-restore
-    copy_and_set_execute_bit renv-restore-build
-    copy_and_set_execute_bit renv-lockfile-cache
-
-    # set renv cache mode and user
-    debug "USERNAME: $USERNAME"
-    debug "USER: $USER"
-    debug "REMOTE_USER: $_REMOTE_USER"
-    debug "CONTAINER_USER: $_CONTAINER_USER"
-
-    export RENV_CACHE_MODE="0755"
-    debug "RENV_CACHE_MODE: $RENV_CACHE_MODE"
-    if [ -n "$_REMOTE_USER" ]; then
-        export RENV_CACHE_USER="$_REMOTE_USER"
-        debug "RENV_CACHE_USER: $_REMOTE_USER"
-    fi
-
-    # Construct the command as an array
-    local command=(/usr/local/bin/renv-cache-renv-restore-build)
-
-    # Append options based on conditions
-    if [ "$RESTORE" = "true" ]; then
-        command+=("--restore")
-    fi
-
-    if [ "$UPDATE" = "true" ]; then
-        command+=("--update")
-    fi
-
-    if [ "$DEBUG" = "true" ]; then
-        command+=("--debug")
-    fi
-
-    if [ "$DEBUG_RENV" = "true" ]; then
-        command+=("--debug-renv")
-    fi
-
-    if [ "$USE_PAK" = "true" ]; then
-        command+=("--pak")
-    fi
-
-    if [ -n "$PKG_EXCLUDE" ]; then
-        command+=("--exclude")
-        command+=("$PKG_EXCLUDE")
-    fi
-
-    if [ -n "$RENV_DIR" ]; then
-        command+=("--directory")
-        command+=("$RENV_DIR")
-    fi
-
-    # Log the command for debugging purposes
-    echo "Executing command: ${command[*]}"
-
-    # Change ownership of internal directories and RENV_DIR so USERNAME can write to them
-    chown -R "${USERNAME}:${USERNAME}" "$RENV_DIR" /usr/local/share/renv-cache 2>/dev/null || true
-
-    # Execute the command with error handling as target user
-    if ! su "${USERNAME}" -c "${command[*]}"; then
-        echo "[ERROR] renv-cache-renv-restore-build failed with command: ${command[*]}"
-        exit 0
-    fi
-}
-
 # Function to perform cleanup tasks
 clean_up() {
     # Remove specified temporary directories
@@ -354,64 +380,77 @@ clean_up() {
     empty_dir /var/lib/apt/lists
 }
 
-# Main function to orchestrate the execution of all tasks
-main() {
-    install_renvvv
-    create_path_post_create_command
-    set_r_libs
-    set_tokens_for_install
+# EXECUTION WORKFLOW
+install_renvvv
+create_path_post_create_command
+set_r_libs
+set_tokens_for_install
 
-    # System Requirements Resolution
-    if [ "${INSTALL_SYSREQS}" = "true" ]; then
-        echo "Resolving system requirements via Posit Package Manager API..."
+# 1. Process Local Lockfile (Backward Compatibility)
+if [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
+    # We must look for renv.lock in subdirectories of RENV_DIR
+    for dir in $(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null); do
+        process_renv_dir "$dir" ""
+    done
+fi
 
-        # We must look for renv.lock in subdirectories of RENV_DIR
-        if [ -d "$RENV_DIR" ]; then
-            apt-get update -y && apt-get install -y jq curl lsb-release
+# 2. Process Dynamic Repositories
+if [ -n "$REPOSITORIES" ]; then
+    TMP_REPO_DIR=$(mktemp -d)
+    IFS=',' read -ra REPO_ARRAY <<< "$REPOSITORIES"
 
-            OS_DIST=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
-            OS_RELEASE=$(lsb_release -cs)
+    for REPO_SPEC in "${REPO_ARRAY[@]}"; do
+        REPO_SPEC=$(echo "$REPO_SPEC" | xargs)
 
-            # Collect all unique packages from all lockfiles
-            ALL_PKGS=""
-            for lockfile in $(find "$RENV_DIR" -mindepth 2 -maxdepth 2 -name "renv.lock" 2>/dev/null); do
-                PKGS=$(jq -r '.Packages | keys[]?' "$lockfile" | paste -sd, -)
-                if [ -n "$PKGS" ]; then
-                    if [ -n "$ALL_PKGS" ]; then
-                        ALL_PKGS="$ALL_PKGS,$PKGS"
-                    else
-                        ALL_PKGS="$PKGS"
-                    fi
-                fi
-            done
-
-            if [ -n "$ALL_PKGS" ]; then
-                # Deduplicate the comma-separated list
-                ALL_PKGS=$(echo "$ALL_PKGS" | tr ',' '\n' | sort -u | paste -sd, -)
-
-                # Query Posit API
-                SYSREQ_URL="https://packagemanager.posit.co/__api__/repos/1/sysreqs?all=false&pkgname=${ALL_PKGS}&distribution=${OS_DIST}&release=${OS_RELEASE}"
-
-                # Parse the required apt packages and install
-                APT_PKGS=$(curl -sL "$SYSREQ_URL" | jq -r '.requirements[]?.requirements?.packages[]?' | sort -u | paste -sd" " -)
-
-                if [ -n "$APT_PKGS" ]; then
-                    echo "Installing system requirements: $APT_PKGS"
-                    export DEBIAN_FRONTEND=noninteractive
-                    apt-get install -y --no-install-recommends $APT_PKGS
-                else
-                    echo "No additional system requirements found."
-                fi
-            else
-                echo "No packages found in lockfiles."
-            fi
+        # Extract Profile (everything after the colon)
+        if [[ "$REPO_SPEC" == *":"* ]]; then
+            PROFILE="${REPO_SPEC##*:}"
+            REPO_SPEC="${REPO_SPEC%:*}"
+        else
+            PROFILE=""
         fi
-    fi
 
-        restore
-    reset_tokens_after_install
-    clean_up
-}
+        # Extract Branch (everything after the @)
+        if [[ "$REPO_SPEC" == *"@"* ]]; then
+            REPO_PATH="${REPO_SPEC%%@*}"
+            BRANCH="${REPO_SPEC##*@}"
+        else
+            REPO_PATH="$REPO_SPEC"
+            BRANCH=""
+        fi
 
-# Execute the main function
-main
+        TARGET_DIR="${TMP_REPO_DIR}/${REPO_PATH##*/}"
+        CLONE_URL="https://${GITHUB_PAT:-}@github.com/${REPO_PATH}.git"
+
+        echo "Cloning ${REPO_PATH}..."
+        if [ -n "$BRANCH" ]; then
+            git clone --branch "$BRANCH" --single-branch "$CLONE_URL" "$TARGET_DIR"
+        else
+            git clone "$CLONE_URL" "$TARGET_DIR"
+        fi
+
+        process_renv_dir "$TARGET_DIR" "$PROFILE"
+    done
+    rm -rf "$TMP_REPO_DIR"
+fi
+
+# 3. Process Explicit Packages (No Lockfile)
+if [ -n "$PACKAGES" ]; then
+    TMP_PKG_DIR=$(mktemp -d)
+    chown "${USERNAME}:${USERNAME}" "$TMP_PKG_DIR"
+    pushd "$TMP_PKG_DIR" > /dev/null
+
+    echo "Warming cache with explicit packages: ${PACKAGES}..."
+    su "${USERNAME}" -c "Rscript -e \"
+        options(repos = c(CRAN = '${CRAN_MIRROR}'))
+        renv::init(bare = TRUE, restart = FALSE)
+        pkgs <- trimws(unlist(strsplit('${PACKAGES}', ',')))
+        renv::install(pkgs)
+    \""
+    popd > /dev/null
+    rm -rf "$TMP_PKG_DIR"
+fi
+
+echo "renv-cache installation complete!"
+reset_tokens_after_install
+clean_up
