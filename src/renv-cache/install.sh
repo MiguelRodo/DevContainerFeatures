@@ -26,7 +26,7 @@ fi
 # --- Everything below runs under bash ---
 set -e
 
-if [ -n "$PACKAGES" ] || [ -n "$REPOSITORIES" ] || [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
+if [ -n "${PACKAGES:-}" ] || [ -n "${REPOSITORIES:-}" ] || [ -d "${RENV_DIR:-/tmp/nonexistent}" ]; then
     if ! command -v Rscript >/dev/null 2>&1; then
         echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
         exit 1
