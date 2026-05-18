@@ -211,5 +211,14 @@
     "features": {
       "cmdstan": {}
     }
+  },
+  "metadata_injector_default": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "metadata-injector": {
+        "version": "1.2.3",
+        "buildDate": "2023-10-27T10:00:00Z"
+      }
+    }
   }
 }
