@@ -26,13 +26,6 @@ fi
 # --- Everything below runs under bash ---
 set -e
 
-if [ -n "${PACKAGES:-}" ] || [ -n "${REPOSITORIES:-}" ] || [ -d "${RENV_DIR:-/tmp/nonexistent}" ]; then
-    if ! command -v Rscript >/dev/null 2>&1; then
-        echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
-        exit 1
-    fi
-fi
-
 # Configuration variables with default values
 SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
 OVERRIDE_TOKENS_AT_INSTALL="${OVERRIDETOKENSATINSTALL:-true}"
@@ -49,6 +42,13 @@ PACKAGES="${PACKAGES:-""}"
 SKIP_PACKAGES="${SKIPPACKAGES:-""}"
 INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-"false"}"
 CRAN_MIRROR="${CRANMIRROR:-"https://cloud.r-project.org"}"
+
+if [ -n "$PACKAGES" ] || [ -n "$REPOSITORIES" ] || [ -d "$RENV_DIR" ]; then
+    if ! command -v Rscript >/dev/null 2>&1; then
+        echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
+        exit 1
+    fi
+fi
 
 # Resolve target user
 USERNAME=${USERNAME:-${_REMOTE_USER:-"automatic"}}
