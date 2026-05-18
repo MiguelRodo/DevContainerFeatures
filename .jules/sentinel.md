@@ -55,3 +55,15 @@
 **Vulnerability:** Accidental commit of development scripts and scratch files (e.g. `resolver.py`, `test_script.sh`, `benchmark.sh`) into the repository.
 **Learning:** Temporary tools and scripts created to assist in conflict resolution, debugging, or execution during development are not part of the final codebase. Committing them creates repository bloat and potential security/maintenance overhead.
 **Prevention:** Before committing changes or requesting a code review, always verify the status with `git status` and delete any temporary files, mock scripts, or scratchpads. Ensure that only intentionally modified, project-relevant source files are staged and committed.
+
+## 2024-05-15 - Sudo Option Injection Prevention
+**Vulnerability:** Option injection during privilege escalation.
+**Learning:** When invoking `sudo` with user-controlled or variable arguments, specifically when forwarding positional parameters (`$@`), it's possible for those arguments to be interpreted as options to `sudo` itself (e.g. `-i`, `-s`, etc.) if not explicitly delimited.
+**Prevention:** Always use the end-of-options delimiter (`--`) immediately preceding the command to execute when calling `sudo` (e.g. `sudo -u "$USERNAME" -- cmd "$@"`).
+## 2024-05-15 - Unsafe Direct Execution of Remote Script
+
+**Vulnerability:** The devcontainer feature `src/mermaid/install.sh` was directly executing remote bash scripts downloaded via `curl | bash` for NodeSource installation. This exposes the installation process to remote code execution risks if the source is compromised or a Man-in-the-Middle (MitM) attack occurs.
+
+**Learning:** When installing vendor dependencies like Node.js, relying on mutable remote setup scripts via `curl | bash` is inherently insecure and brittle. Even attempting to secure it by hardcoding hashes is an anti-pattern because the upstream provider frequently updates the script, causing the installation to break.
+
+**Prevention:** Replaced `curl <url> | bash -` patterns with native package manager configuration. By directly downloading the vendor's GPG key and configuring the package manager repositories (e.g., via `/etc/apt/sources.list.d/nodesource.sources` for Debian/Ubuntu or `/etc/yum.repos.d/nodesource.repo` for RHEL/CentOS), we eliminate the execution of arbitrary remote shell scripts entirely while remaining robust to upstream script changes.
