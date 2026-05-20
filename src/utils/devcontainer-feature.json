@@ -1,0 +1,24 @@
+{
+    "name": "MiguelRodo Utils",
+    "id": "utils",
+    "version": "1.0.0",
+    "description": "Installs Miguel Rodo's utilities like 'repos' and 'setupmjr'.",
+    "options": {
+        "installRepos": {
+            "type": "boolean",
+            "default": true,
+            "description": "Install the 'repos' utility."
+        },
+        "installSetupmjr": {
+            "type": "boolean",
+            "default": true,
+            "description": "Install the 'setupmjr' utility."
+        },
+        "runOnStart": {
+            "type": "boolean",
+            "default": false,
+            "description": "Automatically run 'repos clone' when the container starts (only applies if installRepos is true)."
+        }
+    },
+    "postStartCommand": "/usr/local/bin/utils-post-start"
+}
