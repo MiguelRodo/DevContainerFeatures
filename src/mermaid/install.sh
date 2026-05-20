@@ -195,6 +195,10 @@ EOF
             apt-get update -y
             # NodeSource nodejs bundles npm; installing Ubuntu's npm package conflicts
             pkg_install nodejs
+            if ! command -v npm >/dev/null 2>&1; then
+                echo "[WARN] npm is missing after nodejs install; installing npm..."
+                pkg_install npm
+            fi
             ;;
         fedora)
             dnf module reset -y nodejs || true
