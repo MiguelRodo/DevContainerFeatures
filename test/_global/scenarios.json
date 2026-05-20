@@ -2,13 +2,13 @@
     "all": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
-            "repos": {},
             "apptainer": {
                 "timezone": "America/New_York"
             },
             "fit-sne": {
                 "version": "1.2.1"
-            }
+            },
+            "utils": {}
         }
     },
     "renv-cache": {
@@ -16,209 +16,209 @@
         "features": {
             "renv-cache": {
                 "restore": false
-             }
+            }
         }
-   },
-   "renv-cache-jq-unit-test": {
-        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    },
+    "renv-cache-jq-unit-test": {
+        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
             "renv-cache": {
                 "restore": false
-             }
+            }
         }
-   },
-   "renv-cache-restore": {
+    },
+    "renv-cache-restore": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
             "renv-cache": {
                 "restore": true,
                 "debug": true
-             }
+            }
         }
-   },
-   "renv-cache-pak": {
+    },
+    "renv-cache-pak": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
             "renv-cache": {
                 "restore": true,
                 "usePak": true,
                 "debug": true
-             }
+            }
         }
-   },
-   "github-tokens": {
+    },
+    "github-tokens": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
             "github-tokens": {}
         }
-   },
-   "github-tokens-elevate": {
+    },
+    "github-tokens-elevate": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
             "github-tokens": {
                 "elevateGitHubToken": true,
                 "overrideGitHubToken": false
-             }
+            }
         },
         "remoteEnv": {
             "GITHUB_TOKEN": "gha_restricted_token",
             "GH_TOKEN": "ghp_permissive_token"
         }
-   },
-   "github-tokens-functions": {
+    },
+    "github-tokens-functions": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
             "github-tokens": {}
         }
-   },
-   "github-tokens-override": {
+    },
+    "github-tokens-override": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
             "github-tokens": {
                 "elevateGitHubToken": false,
                 "overrideGitHubToken": true
-             }
+            }
         },
         "remoteEnv": {
             "GITHUB_TOKEN": "gha_restricted_token",
             "GITHUB_PAT": "ghp_pat_token"
         }
-   },
-   "github-tokens-disabled": {
+    },
+    "github-tokens-disabled": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
             "github-tokens": {
                 "elevateGitHubToken": false,
                 "overrideGitHubToken": false
-             }
+            }
         },
         "remoteEnv": {
             "GH_TOKEN": "ghp_permissive_token"
         }
-   },
-   "github-tokens-bashrc-d": {
+    },
+    "github-tokens-bashrc-d": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
             "github-tokens": {}
         }
-   },
-  "mermaid_default": {
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-      "mermaid": {}
+    },
+    "mermaid_default": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "mermaid": {}
+        }
+    },
+    "mermaid_with_node20": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "mermaid": {
+                "nodeVersion": "20"
+            }
+        }
+    },
+    "mermaid_custom_user": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "mermaid": {
+                "userName": "customuser"
+            }
+        }
+    },
+    "apptainer_debian": {
+        "image": "mcr.microsoft.com/devcontainers/base:debian",
+        "features": {
+            "apptainer": {
+                "timezone": "America/New_York"
+            }
+        }
+    },
+    "fit_sne_alpine": {
+        "image": "mcr.microsoft.com/devcontainers/base:alpine",
+        "features": {
+            "fit-sne": {
+                "version": "1.2.1"
+            }
+        }
+    },
+    "fit_sne_debian": {
+        "image": "mcr.microsoft.com/devcontainers/base:debian",
+        "features": {
+            "fit-sne": {
+                "version": "1.2.1"
+            }
+        }
+    },
+    "mermaid_debian": {
+        "image": "mcr.microsoft.com/devcontainers/base:debian",
+        "features": {
+            "mermaid": {}
+        }
+    },
+    "mermaid_alpine": {
+        "image": "mcr.microsoft.com/devcontainers/base:alpine",
+        "features": {
+            "mermaid": {}
+        }
+    },
+    "apptainer_fedora": {
+        "image": "fedora:latest",
+        "features": {
+            "apptainer": {
+                "timezone": "America/New_York"
+            }
+        }
+    },
+    "fit_sne_fedora": {
+        "image": "fedora:latest",
+        "features": {
+            "fit-sne": {
+                "version": "1.2.1"
+            }
+        }
+    },
+    "mermaid_fedora": {
+        "image": "fedora:latest",
+        "features": {
+            "mermaid": {}
+        }
+    },
+    "cmdstan_default": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "cmdstan": {}
+        }
+    },
+    "cmdstan_debian": {
+        "image": "mcr.microsoft.com/devcontainers/base:debian",
+        "features": {
+            "cmdstan": {}
+        }
+    },
+    "cmdstan_python": {
+        "image": "mcr.microsoft.com/devcontainers/python:3",
+        "features": {
+            "cmdstan": {}
+        }
+    },
+    "build_info_default": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "build-info": {
+                "version": "1.2.3",
+                "buildDate": "2023-10-27T10:00:00Z"
+            }
+        }
+    },
+    "utils_alpine": {
+        "image": "mcr.microsoft.com/devcontainers/base:alpine",
+        "features": {
+            "utils": {}
+        }
+    },
+    "utils_debian": {
+        "image": "mcr.microsoft.com/devcontainers/base:debian",
+        "features": {
+            "utils": {}
+        }
     }
-  },
-  "mermaid_with_node20": {
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-      "mermaid": {
-        "nodeVersion": "20"
-      }
-    }
-  },
-  "mermaid_custom_user": {
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-      "mermaid": {
-        "userName": "customuser"
-      }
-    }
-  },
-  "repos_alpine": {
-    "image": "mcr.microsoft.com/devcontainers/base:alpine",
-    "features": {
-      "repos": {}
-    }
-  },
-  "repos_debian": {
-    "image": "mcr.microsoft.com/devcontainers/base:debian",
-    "features": {
-      "repos": {}
-    }
-  },
-  "apptainer_debian": {
-    "image": "mcr.microsoft.com/devcontainers/base:debian",
-    "features": {
-      "apptainer": {
-        "timezone": "America/New_York"
-      }
-    }
-  },
-  "fit_sne_alpine": {
-    "image": "mcr.microsoft.com/devcontainers/base:alpine",
-    "features": {
-      "fit-sne": {
-        "version": "1.2.1"
-      }
-    }
-  },
-  "fit_sne_debian": {
-    "image": "mcr.microsoft.com/devcontainers/base:debian",
-    "features": {
-      "fit-sne": {
-        "version": "1.2.1"
-      }
-    }
-  },
-  "mermaid_debian": {
-    "image": "mcr.microsoft.com/devcontainers/base:debian",
-    "features": {
-      "mermaid": {}
-    }
-  },
-  "mermaid_alpine": {
-    "image": "mcr.microsoft.com/devcontainers/base:alpine",
-    "features": {
-      "mermaid": {}
-    }
-  },
-  "apptainer_fedora": {
-    "image": "fedora:latest",
-    "features": {
-      "apptainer": {
-        "timezone": "America/New_York"
-      }
-    }
-  },
-  "fit_sne_fedora": {
-    "image": "fedora:latest",
-    "features": {
-      "fit-sne": {
-        "version": "1.2.1"
-      }
-    }
-  },
-  "mermaid_fedora": {
-    "image": "fedora:latest",
-    "features": {
-      "mermaid": {}
-    }
-  },
-  "cmdstan_default": {
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-      "cmdstan": {}
-    }
-  },
-  "cmdstan_debian": {
-    "image": "mcr.microsoft.com/devcontainers/base:debian",
-    "features": {
-      "cmdstan": {}
-    }
-  },
-  "cmdstan_python": {
-    "image": "mcr.microsoft.com/devcontainers/python:3",
-    "features": {
-      "cmdstan": {}
-    }
-  },
-  "build_info_default": {
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-      "build-info": {
-        "version": "1.2.3",
-        "buildDate": "2023-10-27T10:00:00Z"
-      }
-    }
-  }
 }
