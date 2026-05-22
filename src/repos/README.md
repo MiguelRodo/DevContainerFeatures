@@ -1,7 +1,9 @@
+### **IMPORTANT NOTE**
+- **This Feature is deprecated, and will no longer receive any further updates/support.**
 
 # Automatically set up multi-repo projects (repos)
 
-Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos clone' when the container starts to clone repositories defined in repos.list.
+(DEPRECATED: Use the 'utils' feature instead) Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos clone' when the container starts to clone repositories defined in repos.list.
 
 ## Example Usage
 
@@ -275,4 +277,4 @@ This project incorporates code from [AwesomeProject](https://github.com/rocker-o
 
 ---
 
-_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/MiguelRodo/DevContainerFeatures/blob/main/src/repos/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
+_Note: This file was auto-generated from the [devcontainer-feature.json](devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
