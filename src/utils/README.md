@@ -23,4 +23,4 @@ Installs Miguel Rodo's utilities like 'repos' and 'setupmjr'.
 
 ---
 
-_Note: This file was auto-generated from the [devcontainer-feature.json](devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
+_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/MiguelRodo/DevContainerFeatures/blob/main/src/utils/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
