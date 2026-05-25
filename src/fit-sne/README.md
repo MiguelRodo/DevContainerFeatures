@@ -21,4 +21,4 @@ Installs FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source.
 
 ---
 
-_Note: This file was auto-generated from the [devcontainer-feature.json](devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
+_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/MiguelRodo/DevContainerFeatures/blob/main/src/fit-sne/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
