@@ -49,14 +49,14 @@ fi
 
 # ── Setup APT Repositories for Debian/Ubuntu (if needed) ───────────────────
 if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
-    if [ "${INSTALL_REPOS}" = "true" ]; then
+    if [ "${INSTALL_REPOS}" = "true" ] || [ "${INSTALL_SETUPMJR}" = "true" ]; then
         echo "Setting up Miguel Rodo APT repository..."
         curl -fsSL https://miguelrodo.github.io/apt-miguelrodo/KEY.gpg \
           | gpg --dearmor -o /usr/share/keyrings/apt-miguelrodo.gpg
 
         echo "deb [signed-by=/usr/share/keyrings/apt-miguelrodo.gpg] https://miguelrodo.github.io/apt-miguelrodo stable main" \
           > /etc/apt/sources.list.d/apt-miguelrodo.list
-
+        
         echo "Setting up GitHub CLI repository..."
         mkdir -p -m 755 /etc/apt/keyrings
         wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
@@ -104,30 +104,37 @@ fi
 # ── Install setupmjr ──────────────────────────────────────────────────────
 if [ "${INSTALL_SETUPMJR}" = "true" ]; then
     echo "Installing setupmjr..."
-    MISSING_DEPS=()
-    if ! hash bash git curl 2>/dev/null; then
-        for dep in bash git curl; do
-            if ! command -v "$dep" >/dev/null 2>&1; then
-                MISSING_DEPS+=("$dep")
-            fi
-        done
+    
+    if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
+        echo "Using APT installation method for setupmjr..."
+        apt-get install -y setupmjr
+    else
+        # Fallback to source compilation for non-Debian systems
+        MISSING_DEPS=()
+        if ! hash bash git curl 2>/dev/null; then
+            for dep in bash git curl; do
+                if ! command -v "$dep" >/dev/null 2>&1; then
+                    MISSING_DEPS+=("$dep")
+                fi
+            done
+        fi
+
+        if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
+            echo "Error: Missing required dependencies: ${MISSING_DEPS[*]}" >&2
+            echo "Please install them manually for your system." >&2
+            exit 1
+        fi
+
+        echo "Using Local Release Installer for setupmjr..."
+        TEMP_DIR=$(mktemp -d)
+        git clone https://github.com/MiguelRodo/setupmjr.git "$TEMP_DIR/setupmjr"
+
+        cd "$TEMP_DIR/setupmjr"
+        bash install-local.sh
+        cd - >/dev/null
+
+        rm -rf "${TEMP_DIR:?}"
     fi
-
-    if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
-        echo "Error: Missing required dependencies: ${MISSING_DEPS[*]}" >&2
-        echo "Please install them manually for your system." >&2
-        exit 1
-    fi
-
-    echo "Using Local Release Installer for setupmjr..."
-    TEMP_DIR=$(mktemp -d)
-    git clone https://github.com/MiguelRodo/setupmjr.git "$TEMP_DIR/setupmjr"
-
-    cd "$TEMP_DIR/setupmjr"
-    bash install-local.sh
-    cd - >/dev/null
-
-    rm -rf "${TEMP_DIR:?}"
 fi
 
 # ── Cleanup Debian/Ubuntu ─────────────────────────────────────────────────
