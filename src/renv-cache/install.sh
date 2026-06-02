@@ -464,14 +464,14 @@ if [ -n "$PKG" ]; then
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
         renv::init(bare = TRUE, restart = FALSE)
         pkgs <- trimws(unlist(strsplit('${PKG}', ',')))
-        renv::install(pkgs)
+        try(renv::install(pkgs))
     \""
     popd > /dev/null
     rm -rf "$TMP_PKG_DIR"
 fi
 
 # 4. Generate Single Unified Lockfile
-if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
+if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
     
     # Only build the unified project if the option is true
     if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
@@ -485,10 +485,13 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
         # Create bare project framework
         su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::init(bare = TRUE, restart = FALSE)\""
 
-        # Extract all dependency packages and generate _dependencies.R
+        # Extract all dependency packages (from both lockfiles and explicit PKG) and generate _dependencies.R
+        export PKG
         su "${USERNAME}" -c "Rscript -e \"
-            lockfiles <- readLines('/tmp/renv_lockfiles_to_combine.txt')
+            lockfiles <- if (file.exists('/tmp/renv_lockfiles_to_combine.txt')) readLines('/tmp/renv_lockfiles_to_combine.txt') else character()
             all_pkgs <- character()
+            
+            # 1. Add packages from all cached lockfiles
             for (lf in lockfiles) {
                 tryCatch({
                     json_data <- renv:::renv_json_read(lf)
@@ -497,6 +500,14 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
                     }
                 }, error = function(e) message('[WARN] Could not read package names from ', lf))
             }
+            
+            # 2. Add explicit packages defined in the PKG option
+            pkg_env <- Sys.getenv('PKG')
+            if (nchar(pkg_env) > 0) {
+                explicit_pkgs <- trimws(unlist(strsplit(pkg_env, ',')))
+                all_pkgs <- c(all_pkgs, explicit_pkgs)
+            }
+
             all_pkgs <- unique(all_pkgs)
             if (length(all_pkgs) > 0) {
                 writeLines(paste0('library(', all_pkgs, ')'), '_dependencies.R')
@@ -504,14 +515,26 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
         \""
 
         # Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
-        while IFS= read -r lf; do
-            if [ -f "$lf" ]; then
-                echo "[INFO] Accumulating dependencies from $lf..."
-                cp "$lf" renv.lock
-                chown "${USERNAME}:${USERNAME}" renv.lock
-                su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_restore(clean = FALSE)\""
-            fi
-        done < /tmp/renv_lockfiles_to_combine.txt
+        if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
+            while IFS= read -r lf; do
+                if [ -f "$lf" ]; then
+                    echo "[INFO] Accumulating dependencies from $lf..."
+                    cp "$lf" renv.lock
+                    chown "${USERNAME}:${USERNAME}" renv.lock
+                    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_restore(clean = FALSE)\""
+                fi
+            done < /tmp/renv_lockfiles_to_combine.txt
+        fi
+
+        # Install explicit packages into the unified project
+        if [ -n "$PKG" ]; then
+            echo "[INFO] Accumulating explicit packages ($PKG) into unified project..."
+            su "${USERNAME}" -c "Rscript -e \"
+                options(repos = c(CRAN = '${CRAN_MIRROR}'))
+                pkgs <- trimws(unlist(strsplit(Sys.getenv('PKG'), ',')))
+                try(renv::install(pkgs, prompt = FALSE))
+            \""
+        fi
 
         # 4a. Take snapshot of unified original restores
         echo "[INFO] Taking unified RESTORE snapshot..."
