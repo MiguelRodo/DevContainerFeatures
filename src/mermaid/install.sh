@@ -185,6 +185,7 @@ install_nodejs() {
         ubuntu|debian)
             mkdir -p /usr/share/keyrings
             curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+            
             cat <<EOF > /etc/apt/sources.list.d/nodesource.sources
 Types: deb
 URIs: https://deb.nodesource.com/node_${RESOLVED_NODE_VERSION}.x
@@ -192,6 +193,14 @@ Suites: nodistro
 Components: main
 Signed-By: /usr/share/keyrings/nodesource.gpg
 EOF
+
+            # 🛠️ ADD THIS: Force apt to prefer NodeSource packages
+            cat <<EOF > /etc/apt/preferences.d/nodesource
+Package: nodejs
+Pin: origin deb.nodesource.com
+Pin-Priority: 1001
+EOF
+
             apt-get update -y
             # NodeSource nodejs bundles npm; installing Ubuntu's npm package conflicts
             pkg_install nodejs
@@ -226,6 +235,12 @@ EOF
             exit 1
             ;;
     esac
+
+    # Safety fallback if Node was installed but NPM was missing
+    if command -v node >/dev/null 2>&1 && ! command -v npm >/dev/null 2>&1; then
+        echo "[WARN] nodejs was installed but npm is missing. Installing npm explicitly..."
+        pkg_install npm
+    fi
 }
 
 setup_mermaid() {
