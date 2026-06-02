@@ -311,7 +311,7 @@ install_renvvv() {
     su "${USERNAME}" -c "Rscript -e \"if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = '${CRAN_MIRROR}')\""
     
     # Install renvvv
-    su "${USERNAME}" -c "Rscript -e \"remotes::install_github('MiguelRodo/renvvv', upgrade = 'never')\""
+    su "${USERNAME}" -c "Rscript -e \"remotes::install_github('MiguelRodo/renvvv')\""
 }
 
 update_renv_cache() {
