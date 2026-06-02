@@ -2,81 +2,148 @@
 
 set -e
 
+CACHE_DIR="/usr/local/share/renv-cache/lockfiles"
 TARGET_PATH="./renv.lock"
 OVERWRITE=false
 PREFER_UPDATE=false
+ACTION="copy"
+SELECTED_PROJECT="_combined"
 
 usage() {
-    echo "Usage: renv-cache-copy-lockfile [PATH] [--overwrite] [--update]"
+    echo "Usage: renv-cache-copy-lockfile [OPTIONS] [PATH]"
     echo ""
-    echo "Copies the unified, combined renv.lock file generated during the build"
-    echo "to your working directory."
+    echo "Copies a cached renv.lock file to your working directory."
     echo ""
     echo "Arguments:"
-    echo "  PATH           Destination path (default: ./renv.lock)"
+    echo "  PATH                     Destination path (default: ./renv.lock)"
+    echo ""
     echo "Options:"
-    echo "  --overwrite    Overwrite the destination file if it already exists"
-    echo "  --update       Prefer the updated combined lockfile over the originally restored one"
-    echo "  -h, --help     Show this help message"
+    echo "  --list                   List all available cached projects and their lockfile states."
+    echo "  -p, --project <name>     Specify a specific project to copy instead of the overall combined one."
+    echo "                           (Use --list to see available names. Default: renv-cache-overall)"
+    echo "  --update                 Prefer the updated lockfile over the originally restored one."
+    echo "  --overwrite              Overwrite the destination file if it already exists."
+    echo "  -h, --help               Show this help message."
     exit 0
 }
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --overwrite) OVERWRITE=true; shift ;;
+        --list) ACTION="list"; shift ;;
+        -p|--project) SELECTED_PROJECT="$2"; shift 2 ;;
         --update) PREFER_UPDATE=true; shift ;;
+        --overwrite) OVERWRITE=true; shift ;;
         -h|--help) usage ;;
         -*) echo "[ERROR] Unknown option: $1"; exit 1 ;;
         *) TARGET_PATH="$1"; shift ;;
     esac
 done
 
-# If the provided path is a directory, append /renv.lock
-if [ -d "$TARGET_PATH" ]; then
-    TARGET_PATH="${TARGET_PATH%/}/renv.lock"
+if [ ! -d "$CACHE_DIR" ]; then
+    echo "[INFO] Internal cache directory not found: $CACHE_DIR"
+    exit 0
 fi
 
-# Check for existence and --overwrite flag
-if [ -f "$TARGET_PATH" ] && [ "$OVERWRITE" = "false" ]; then
-    echo "[ERROR] File '$TARGET_PATH' already exists."
-    echo "To overwrite, use the --overwrite flag:"
-    echo "  renv-cache-copy-lockfile \"$TARGET_PATH\" --overwrite"
-    exit 1
+# ==========================================
+# ACTION: LIST
+# ==========================================
+if [ "$ACTION" = "list" ]; then
+    echo "Available cached lockfiles:"
+    echo "--------------------------------------------------------"
+    for proj_dir in "$CACHE_DIR"/*; do
+        if [ -d "$proj_dir" ]; then
+            proj_name=$(basename "$proj_dir")
+            
+            # Surface the internal '_combined' folder as 'renv-cache-overall'
+            if [ "$proj_name" = "_combined" ]; then
+                echo "📦 renv-cache-overall [DEFAULT PROJECT]"
+                echo "   (Unified lockfile containing all dependencies)"
+            else
+                echo "📁 Project: $proj_name"
+            fi
+
+            if [ -f "$proj_dir/restore/renv.lock" ]; then
+                echo "   - Restored state available (Original)"
+            fi
+            if [ -f "$proj_dir/update/renv.lock" ]; then
+                echo "   - Updated state available (--update)"
+            fi
+            echo ""
+        fi
+    done
+    echo "--------------------------------------------------------"
+    echo "Run 'renv-cache-copy-lockfile' to copy the default overall project."
+    echo "Run 'renv-cache-copy-lockfile --project <name>' to copy a specific project."
+    exit 0
 fi
 
-COMBINED_RESTORE="/usr/local/share/renv-cache/lockfiles/_combined/restore/renv.lock"
-COMBINED_UPDATE="/usr/local/share/renv-cache/lockfiles/_combined/update/renv.lock"
-
-if [ ! -f "$COMBINED_RESTORE" ] && [ ! -f "$COMBINED_UPDATE" ]; then
-    echo "[ERROR] No combined renv.lock files were cached during the container build."
-    exit 1
-fi
-
-SOURCE_FILE=""
-
-if [ "$PREFER_UPDATE" = "true" ]; then
-    if [ -f "$COMBINED_UPDATE" ]; then
-        SOURCE_FILE="$COMBINED_UPDATE"
-        echo "[INFO] --update specified: Copying the updated combined lockfile."
-    elif [ -f "$COMBINED_RESTORE" ]; then
-        SOURCE_FILE="$COMBINED_RESTORE"
-        echo "[WARN] --update specified, but no updated lockfile was found in cache."
-        echo "       Copying the original (restored) combined lockfile instead."
+# ==========================================
+# ACTION: COPY
+# ==========================================
+if [ "$ACTION" = "copy" ]; then
+    # If the provided path is a directory, append /renv.lock
+    if [ -d "$TARGET_PATH" ]; then
+        TARGET_PATH="${TARGET_PATH%/}/renv.lock"
     fi
-else
-    # Default behavior (prefer the base restored lockfile)
-    if [ -f "$COMBINED_RESTORE" ]; then
-        SOURCE_FILE="$COMBINED_RESTORE"
-        echo "[INFO] Copying the original (restored) combined lockfile."
-    elif [ -f "$COMBINED_UPDATE" ]; then
-        SOURCE_FILE="$COMBINED_UPDATE"
-        echo "[INFO] Original restored lockfile not found. Copying the updated combined lockfile instead."
+
+    # Check for existence and --overwrite flag
+    if [ -f "$TARGET_PATH" ] && [ "$OVERWRITE" = "false" ]; then
+        echo "[ERROR] File '$TARGET_PATH' already exists."
+        echo "To overwrite, use the --overwrite flag:"
+        echo "  renv-cache-copy-lockfile \"$TARGET_PATH\" --overwrite"
+        exit 1
     fi
+
+    # Map the user-friendly name back to the internal combined folder
+    if [ "$SELECTED_PROJECT" = "renv-cache-overall" ]; then
+        SELECTED_PROJECT="_combined"
+    fi
+
+    PROJ_DIR="$CACHE_DIR/$SELECTED_PROJECT"
+
+    if [ ! -d "$PROJ_DIR" ]; then
+        echo "[ERROR] Project '$SELECTED_PROJECT' not found in cache."
+        echo "Run 'renv-cache-copy-lockfile --list' to see available projects."
+        exit 1
+    fi
+
+    RESTORE_FILE="$PROJ_DIR/restore/renv.lock"
+    UPDATE_FILE="$PROJ_DIR/update/renv.lock"
+
+    if [ ! -f "$RESTORE_FILE" ] && [ ! -f "$UPDATE_FILE" ]; then
+        echo "[ERROR] No renv.lock files were cached for project '$SELECTED_PROJECT'."
+        exit 1
+    fi
+
+    SOURCE_FILE=""
+    DISPLAY_NAME=$([ "$SELECTED_PROJECT" = "_combined" ] && echo "renv-cache-overall" || echo "$SELECTED_PROJECT")
+
+    # Handle Update Preference
+    if [ "$PREFER_UPDATE" = "true" ]; then
+        if [ -f "$UPDATE_FILE" ]; then
+            SOURCE_FILE="$UPDATE_FILE"
+            echo "[INFO] Selected updated lockfile for '$DISPLAY_NAME'."
+        elif [ -f "$RESTORE_FILE" ]; then
+            SOURCE_FILE="$RESTORE_FILE"
+            echo "[WARN] --update specified, but no updated lockfile found."
+            echo "       Using original restored state instead."
+        fi
+    else
+        # Handle Default (Original Restore Preference)
+        if [ -f "$RESTORE_FILE" ]; then
+            SOURCE_FILE="$RESTORE_FILE"
+            echo "[INFO] Selected original (restored) lockfile for '$DISPLAY_NAME'."
+        elif [ -f "$UPDATE_FILE" ]; then
+            SOURCE_FILE="$UPDATE_FILE"
+            echo "[INFO] Original restored lockfile not found."
+            echo "       Using updated lockfile instead."
+        fi
+    fi
+
+    # Ensure parent directories exist
+    mkdir -p "$(dirname "$TARGET_PATH")"
+
+    # Execute the copy
+    cp "$SOURCE_FILE" "$TARGET_PATH"
+    echo "[OK] Successfully copied lockfile to $TARGET_PATH"
 fi
-
-# Ensure parent directories exist
-mkdir -p "$(dirname "$TARGET_PATH")"
-
-# Execute the copy
-cp "$SOURCE_FILE" "$TARGET_PATH"
-echo "[OK] Successfully copied lockfile to $TARGET_PATH"

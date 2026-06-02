@@ -143,7 +143,7 @@ restore_project() {
     debug "project_dir: $project_dir"
     
     # Construct the command as an array
-    local command=(/usr/local/bin/renv-cache-renv-restore --directory "$project_dir")
+    local command=(/usr/local/bin/renv-cache-restore --directory "$project_dir")
 
     # Append options based on conditions
     if [ "$RESTORE" = "true" ]; then
@@ -175,7 +175,7 @@ restore_project() {
 
     # Execute the command with error handling
     if ! "${command[@]}"; then
-        echo "[ERROR] renv-cache-renv-restore failed with command: ${command[*]}"
+        echo "[ERROR] renv-cache-restore failed with command: ${command[*]}"
     fi
 }
 

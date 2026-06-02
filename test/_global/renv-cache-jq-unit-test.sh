@@ -6,7 +6,7 @@ source dev-container-features-test-lib
 
 echo "🧪 Testing ensure_jq with mocked package managers..."
 
-sed -n '/ensure_jq() {/,/^}/p' /usr/local/bin/renv-cache-renv-restore-build > /tmp/ensure_jq.sh
+sed -n '/ensure_jq() {/,/^}/p' /usr/local/bin/renv-cache-restore-build > /tmp/ensure_jq.sh
 
 test_apt_get() {
   (

@@ -23,10 +23,10 @@ check "Rscript is available" bash -c "command -v Rscript"
 # Check that renv-cache scripts are installed
 check "renv-cache-post-create exists" bash -c "test -f /usr/local/bin/renv-cache-post-create"
 check "renv-cache-post-create is executable" bash -c "test -x /usr/local/bin/renv-cache-post-create"
-check "renv-cache-renv-restore exists" bash -c "test -f /usr/local/bin/renv-cache-renv-restore"
-check "renv-cache-renv-restore is executable" bash -c "test -x /usr/local/bin/renv-cache-renv-restore"
-check "renv-cache-renv-restore-build exists" bash -c "test -f /usr/local/bin/renv-cache-renv-restore-build"
-check "renv-cache-renv-restore-build is executable" bash -c "test -x /usr/local/bin/renv-cache-renv-restore-build"
+check "renv-cache-restore exists" bash -c "test -f /usr/local/bin/renv-cache-restore"
+check "renv-cache-restore is executable" bash -c "test -x /usr/local/bin/renv-cache-restore"
+check "renv-cache-restore-build exists" bash -c "test -f /usr/local/bin/renv-cache-restore-build"
+check "renv-cache-restore-build is executable" bash -c "test -x /usr/local/bin/renv-cache-restore-build"
 
 # Verify that session-time token management scripts are NOT installed by renv-cache
 # (this functionality is now provided by the separate github-tokens feature)
@@ -43,10 +43,10 @@ check "remotes is installed" Rscript -e "if (!requireNamespace('remotes', quietl
 check "renv is installed" Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) quit(status = 1)"
 
 # Test that renv-restore help works
-check "renv-restore help works" bash -c "/usr/local/bin/renv-cache-renv-restore --help"
+check "renv-restore help works" bash -c "/usr/local/bin/renv-cache-restore --help"
 
 # Test that renv-restore-build help works
-check "renv-restore-build help works" bash -c "/usr/local/bin/renv-cache-renv-restore-build --help"
+check "renv-restore-build help works" bash -c "/usr/local/bin/renv-cache-restore-build --help"
 
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.

@@ -69,8 +69,8 @@ When the container image is built:
    - `/workspaces/.cache/R/pkgcache/pkg` - pak cache directory
 
 3. **Packages are installed** from `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/renv`):
-   - The `install.sh` script calls `renv-cache-renv-restore-build`
-   - For each subdirectory containing an `renv.lock` file, `renv-cache-renv-restore` is invoked
+   - The `install.sh` script calls `renv-cache-restore-build`
+   - For each subdirectory containing an `renv.lock` file, `renv-cache-restore` is invoked
    - Packages are restored using `renvvv::renvvv_restore()` (or `renvvv_update()` / `renvvv_restore_and_update()` based on options)
    - Installed packages are automatically cached in `/renv/cache` due to the `RENV_PATHS_CACHE` setting
 

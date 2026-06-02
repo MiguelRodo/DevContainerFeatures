@@ -403,6 +403,8 @@ set_tokens_for_install
 
 # Install the user-facing command
 copy_and_set_execute_bit copy-lockfile
+copy_and_set_execute_bit renv-restore       # Keep your other tools
+copy_and_set_execute_bit renv-restore-build # Keep your other tools
 
 # 1. Process Local Lockfile (Backward Compatibility)
 if [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
