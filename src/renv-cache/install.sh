@@ -74,89 +74,102 @@ export CRAN_MIRROR
 apt-get update -y && apt-get install -y --no-install-recommends jq git curl lsb-release
 
 if [ -n "$GITHUB_PAT" ]; then
-export GITHUB_TOKEN="$GITHUB_PAT"
+    export GITHUB_TOKEN="$GITHUB_PAT"
 elif [ -n "$GITHUB_TOKEN" ]; then
-export GITHUB_PAT="$GITHUB_TOKEN"
+    export GITHUB_PAT="$GITHUB_TOKEN"
 fi
 
 # CORE FUNCTION: Process a directory containing an renv lockfile
 
 process_renv_dir() {
-local TARGET_DIR=$1
-local PROFILE=$2
+    local TARGET_DIR=$1
+    local PROFILE=$2
 
-if [ -n "$PROFILE" ]; then
-    export RENV_PROFILE="$PROFILE"
-    local LOCK_PATH="renv/profiles/$PROFILE/renv.lock"
-else
-    unset RENV_PROFILE
-    local LOCK_PATH="renv.lock"
-fi
-
-if [ ! -f "$TARGET_DIR/$LOCK_PATH" ]; then
-    echo "No lockfile found at $TARGET_DIR/$LOCK_PATH. Skipping."
-    return 0
-fi
-
-echo "Processing lockfile $LOCK_PATH in $TARGET_DIR..."
-pushd "$TARGET_DIR" > /dev/null
-chown -R "${USERNAME}:${USERNAME}" .
-
-# System Requirements Check via Posit API
-if [ "${INSTALL_SYSREQS}" = "true" ]; then
-    echo "Resolving system requirements..."
-    PKGS=$(jq -r '.Packages | keys[]' "$LOCK_PATH" | paste -sd, -)
-    OS_DIST=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
-    OS_RELEASE=$(lsb_release -cs)
-    SYSREQ_URL="https://packagemanager.posit.co/__api__/repos/1/sysreqs?all=false&pkgname=${PKGS}&distribution=${OS_DIST}&release=${OS_RELEASE}"
-    APT_PKGS=$(curl -sL "$SYSREQ_URL" | jq -r '.requirements[]?.requirements?.packages[]?' | sort -u | paste -sd" " -)
-    if [ -n "$APT_PKGS" ]; then
-        export DEBIAN_FRONTEND=noninteractive
-        apt-get install -y --no-install-recommends $APT_PKGS
+    if [ -n "$PROFILE" ]; then
+        export RENV_PROFILE="$PROFILE"
+        local LOCK_PATH="renv/profiles/$PROFILE/renv.lock"
+    else
+        unset RENV_PROFILE
+        local LOCK_PATH="renv.lock"
     fi
-fi
 
-# Recursive Strip & Purge (Security)
-if [ -n "$PKG_EXCLUDE" ]; then
-    echo "Recursively stripping skipped packages and purging cache..."
-    export PKG_EXCLUDE="$PKG_EXCLUDE"
-    export RENV_LOCK_PATH="$LOCK_PATH"
+    if [ ! -f "$TARGET_DIR/$LOCK_PATH" ]; then
+        echo "No lockfile found at $TARGET_DIR/$LOCK_PATH. Skipping."
+        return 0
+    fi
 
-    su "${USERNAME}" -c "Rscript -e \"
-        skip_list <- trimws(unlist(strsplit(Sys.getenv('PKG_EXCLUDE'), ',')))
-        lock_path <- Sys.getenv('RENV_LOCK_PATH')
-        lock_data <- renv:::renv_json_read(lock_path)
+    echo "Processing lockfile $LOCK_PATH in $TARGET_DIR..."
+    pushd "$TARGET_DIR" > /dev/null
+    chown -R "${USERNAME}:${USERNAME}" .
 
-        if (!is.null(lock_data\\\$Packages)) {
-            changed <- TRUE
-            while (changed) {
-                changed <- FALSE
-                for (pkg_name in names(lock_data\\\$Packages)) {
-                    reqs <- lock_data\\\$Packages[[pkg_name]]\\\$Requirements
-                    if (!is.null(reqs) && any(reqs %in% skip_list)) {
-                        if (!(pkg_name %in% skip_list)) {
-                            skip_list <- c(skip_list, pkg_name)
-                            changed <- TRUE
+    # System Requirements Check via Posit API
+    if [ "${INSTALL_SYSREQS}" = "true" ]; then
+        echo "Resolving system requirements..."
+        PKGS=$(jq -r '.Packages | keys[]' "$LOCK_PATH" | paste -sd, -)
+        OS_DIST=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+        OS_RELEASE=$(lsb_release -cs)
+        SYSREQ_URL="https://packagemanager.posit.co/__api__/repos/1/sysreqs?all=false&pkgname=${PKGS}&distribution=${OS_DIST}&release=${OS_RELEASE}"
+        APT_PKGS=$(curl -sL "$SYSREQ_URL" | jq -r '.requirements[]?.requirements?.packages[]?' | sort -u | paste -sd" " -)
+        if [ -n "$APT_PKGS" ]; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get install -y --no-install-recommends $APT_PKGS
+        fi
+    fi
+
+    # Recursive Strip & Purge (Security)
+    if [ -n "$PKG_EXCLUDE" ]; then
+        echo "Recursively stripping skipped packages and purging cache..."
+        export PKG_EXCLUDE="$PKG_EXCLUDE"
+        export RENV_LOCK_PATH="$LOCK_PATH"
+
+        su "${USERNAME}" -c "Rscript -e \"
+            skip_list <- trimws(unlist(strsplit(Sys.getenv('PKG_EXCLUDE'), ',')))
+            lock_path <- Sys.getenv('RENV_LOCK_PATH')
+            lock_data <- renv:::renv_json_read(lock_path)
+
+            if (!is.null(lock_data\\\$Packages)) {
+                changed <- TRUE
+                while (changed) {
+                    changed <- FALSE
+                    for (pkg_name in names(lock_data\\\$Packages)) {
+                        reqs <- lock_data\\\$Packages[[pkg_name]]\\\$Requirements
+                        if (!is.null(reqs) && any(reqs %in% skip_list)) {
+                            if (!(pkg_name %in% skip_list)) {
+                                skip_list <- c(skip_list, pkg_name)
+                                changed <- TRUE
+                            }
                         }
                     }
                 }
+                for (pkg in skip_list) lock_data\\\$Packages[[pkg]] <- NULL
+                renv:::renv_json_write(lock_data, file = lock_path)
             }
-            for (pkg in skip_list) lock_data\\\$Packages[[pkg]] <- NULL
-            renv:::renv_json_write(lock_data, file = lock_path)
-        }
 
-        for (pkg in skip_list) {
-            tryCatch({
-                renv::purge(pkg, prompt = FALSE)
-                message('Purged ', pkg, ' from global cache.')
-            }, error = function(e) NULL)
-        }
-    \""
-fi
+            for (pkg in skip_list) {
+                tryCatch({
+                    renv::purge(pkg, prompt = FALSE)
+                    message('Purged ', pkg, ' from global cache.')
+                }, error = function(e) NULL)
+            }
+        \""
+    fi
 
-echo "Warming cache from $TARGET_DIR (Profile: ${PROFILE:-default})..."
-su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::restore()\""
-popd > /dev/null
+    echo "Warming cache from $TARGET_DIR (Profile: ${PROFILE:-default})..."
+
+    # Construct the robust renvvv command based on feature options
+    if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
+        R_CMD="renvvv::renvvv_restore_and_update()"
+    elif [ "$UPDATE" = "true" ]; then
+        R_CMD="renvvv::renvvv_update()"
+    elif [ "$RESTORE" = "true" ]; then
+        R_CMD="renvvv::renvvv_restore()"
+    else
+        R_CMD="message('Neither restore nor update selected; skipping.')"
+    fi
+
+    # Execute the constructed command
+    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); ${R_CMD}\""
+    popd > /dev/null
 }
 
 
