@@ -101,6 +101,9 @@ process_renv_dir() {
     echo "Processing lockfile $LOCK_PATH in $TARGET_DIR..."
     pushd "$TARGET_DIR" > /dev/null
     chown -R "${USERNAME}:${USERNAME}" .
+    
+    # Track the lockfile path for the combined build step later
+    echo "$(pwd)/$LOCK_PATH" >> /tmp/renv_lockfiles_to_combine.txt
 
     # System Requirements Check via Posit API
     if [ "${INSTALL_SYSREQS}" = "true" ]; then
@@ -398,6 +401,9 @@ create_path_post_create_command
 set_r_libs
 set_tokens_for_install
 
+# Install the user-facing command
+copy_and_set_execute_bit copy-lockfile
+
 # 1. Process Local Lockfile (Backward Compatibility)
 if [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
     # We must look for renv.lock in subdirectories of RENV_DIR
@@ -407,22 +413,20 @@ if [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
 fi
 
 # 2. Process Dynamic Repositories
+TMP_REPO_DIR=""
 if [ -n "$REPOSITORIES" ]; then
     TMP_REPO_DIR=$(mktemp -d)
     IFS=',' read -ra REPO_ARRAY <<< "$REPOSITORIES"
 
     for REPO_SPEC in "${REPO_ARRAY[@]}"; do
+        # (Original git clone logic)
         REPO_SPEC=$(echo "$REPO_SPEC" | xargs)
-
-        # Extract Profile (everything after the colon)
         if [[ "$REPO_SPEC" == *":"* ]]; then
             PROFILE="${REPO_SPEC##*:}"
             REPO_SPEC="${REPO_SPEC%:*}"
         else
             PROFILE=""
         fi
-
-        # Extract Branch (everything after the @)
         if [[ "$REPO_SPEC" == *"@"* ]]; then
             REPO_PATH="${REPO_SPEC%%@*}"
             BRANCH="${REPO_SPEC##*@}"
@@ -443,7 +447,7 @@ if [ -n "$REPOSITORIES" ]; then
 
         process_renv_dir "$TARGET_DIR" "$PROFILE"
     done
-    rm -rf "$TMP_REPO_DIR"
+    # Note: We do NOT remove TMP_REPO_DIR here yet. It gets removed at the very end.
 fi
 
 # 3. Process Explicit Packages (No Lockfile)
@@ -463,6 +467,74 @@ if [ -n "$PKG" ]; then
     rm -rf "$TMP_PKG_DIR"
 fi
 
+# 4. Generate Single Combined Lockfile
+if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
+    echo "=========================================================="
+    echo "[INFO] Building unified/combined renv.lock file..."
+    COMBINED_DIR="/usr/local/share/renv-cache/combined_project"
+    mkdir -p "$COMBINED_DIR"
+    chown -R "${USERNAME}:${USERNAME}" "$COMBINED_DIR"
+    pushd "$COMBINED_DIR" > /dev/null
+
+    # Create bare project framework
+    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::init(bare = TRUE, restart = FALSE)\""
+
+    # Extract all dependency packages and generate _dependencies.R
+    su "${USERNAME}" -c "Rscript -e \"
+        lockfiles <- readLines('/tmp/renv_lockfiles_to_combine.txt')
+        all_pkgs <- character()
+        for (lf in lockfiles) {
+            tryCatch({
+                json_data <- renv:::renv_json_read(lf)
+                if (!is.null(json_data\\\$Packages)) {
+                    all_pkgs <- c(all_pkgs, names(json_data\\\$Packages))
+                }
+            }, error = function(e) message('[WARN] Could not read package names from ', lf))
+        }
+        all_pkgs <- unique(all_pkgs)
+        if (length(all_pkgs) > 0) {
+            writeLines(paste0('library(', all_pkgs, ')'), '_dependencies.R')
+        }
+    \""
+
+    # Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
+    while IFS= read -r lf; do
+        if [ -f "$lf" ]; then
+            echo "[INFO] Accumulating dependencies from $lf..."
+            cp "$lf" renv.lock
+            chown "${USERNAME}:${USERNAME}" renv.lock
+            su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::restore(clean = FALSE, prompt = FALSE)\""
+        fi
+    done < /tmp/renv_lockfiles_to_combine.txt
+
+    # 4a. Take snapshot of combined original restores
+    echo "[INFO] Taking combined RESTORE snapshot..."
+    mkdir -p "/usr/local/share/renv-cache/lockfiles/_combined/restore"
+    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/restore/renv.lock', prompt = FALSE)\""
+    chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_combined/restore"
+
+    # 4b. Apply updates and take updated snapshot
+    if [ "$UPDATE" = "true" ]; then
+        echo "[INFO] Updating combined project..."
+        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_update()\""
+        echo "[INFO] Taking combined UPDATE snapshot..."
+        mkdir -p "/usr/local/share/renv-cache/lockfiles/_combined/update"
+        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/update/renv.lock', prompt = FALSE)\""
+        chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_combined/update"
+    fi
+
+    popd > /dev/null
+    rm -rf "$COMBINED_DIR"
+    rm -f /tmp/renv_lockfiles_to_combine.txt
+    echo "=========================================================="
+fi
+
+# Final Cleanup (Now it is safe to remove TMP_REPO_DIR)
+if [ -n "$TMP_REPO_DIR" ] && [ -d "$TMP_REPO_DIR" ]; then
+    rm -rf "$TMP_REPO_DIR"
+fi
+
 echo "renv-cache installation complete!"
 reset_tokens_after_install
 clean_up
+

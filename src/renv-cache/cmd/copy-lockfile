@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+set -e
+
+TARGET_PATH="./renv.lock"
+OVERWRITE=false
+PREFER_UPDATE=false
+
+usage() {
+    echo "Usage: renv-cache-copy-lockfile [PATH] [--overwrite] [--update]"
+    echo ""
+    echo "Copies the unified, combined renv.lock file generated during the build"
+    echo "to your working directory."
+    echo ""
+    echo "Arguments:"
+    echo "  PATH           Destination path (default: ./renv.lock)"
+    echo "Options:"
+    echo "  --overwrite    Overwrite the destination file if it already exists"
+    echo "  --update       Prefer the updated combined lockfile over the originally restored one"
+    echo "  -h, --help     Show this help message"
+    exit 0
+}
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --overwrite) OVERWRITE=true; shift ;;
+        --update) PREFER_UPDATE=true; shift ;;
+        -h|--help) usage ;;
+        -*) echo "[ERROR] Unknown option: $1"; exit 1 ;;
+        *) TARGET_PATH="$1"; shift ;;
+    esac
+done
+
+# If the provided path is a directory, append /renv.lock
+if [ -d "$TARGET_PATH" ]; then
+    TARGET_PATH="${TARGET_PATH%/}/renv.lock"
+fi
+
+# Check for existence and --overwrite flag
+if [ -f "$TARGET_PATH" ] && [ "$OVERWRITE" = "false" ]; then
+    echo "[ERROR] File '$TARGET_PATH' already exists."
+    echo "To overwrite, use the --overwrite flag:"
+    echo "  renv-cache-copy-lockfile \"$TARGET_PATH\" --overwrite"
+    exit 1
+fi
+
+COMBINED_RESTORE="/usr/local/share/renv-cache/lockfiles/_combined/restore/renv.lock"
+COMBINED_UPDATE="/usr/local/share/renv-cache/lockfiles/_combined/update/renv.lock"
+
+if [ ! -f "$COMBINED_RESTORE" ] && [ ! -f "$COMBINED_UPDATE" ]; then
+    echo "[ERROR] No combined renv.lock files were cached during the container build."
+    exit 1
+fi
+
+SOURCE_FILE=""
+
+if [ "$PREFER_UPDATE" = "true" ]; then
+    if [ -f "$COMBINED_UPDATE" ]; then
+        SOURCE_FILE="$COMBINED_UPDATE"
+        echo "[INFO] --update specified: Copying the updated combined lockfile."
+    elif [ -f "$COMBINED_RESTORE" ]; then
+        SOURCE_FILE="$COMBINED_RESTORE"
+        echo "[WARN] --update specified, but no updated lockfile was found in cache."
+        echo "       Copying the original (restored) combined lockfile instead."
+    fi
+else
+    # Default behavior (prefer the base restored lockfile)
+    if [ -f "$COMBINED_RESTORE" ]; then
+        SOURCE_FILE="$COMBINED_RESTORE"
+        echo "[INFO] Copying the original (restored) combined lockfile."
+    elif [ -f "$COMBINED_UPDATE" ]; then
+        SOURCE_FILE="$COMBINED_UPDATE"
+        echo "[INFO] Original restored lockfile not found. Copying the updated combined lockfile instead."
+    fi
+fi
+
+# Ensure parent directories exist
+mkdir -p "$(dirname "$TARGET_PATH")"
+
+# Execute the copy
+cp "$SOURCE_FILE" "$TARGET_PATH"
+echo "[OK] Successfully copied lockfile to $TARGET_PATH"
