@@ -21,27 +21,30 @@ Configure R with renv cache
 | update | Whether to run package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used. Default is false. | boolean | false |
 | renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set. | string | /usr/local/share/renv-cache/renv |
 | pkgExclude | Comma-separated list of packages to exclude from the renv snapshot restore process. | string | - |
-| usePak | Whether to use `pak` for package installation. | boolean | false |
+| usePak | Whether to use `pak` for package installation. For some reason, restoring from the `renv` cache has not worked when using `pak` to build the image, so this is not recommended. | boolean | false |
 | debug | Whether to print debug information during package restore. | boolean | false |
 | debugRenv | Whether to print debug information during renv restore. | boolean | false |
-| repositories | Comma-separated list of GitHub repos to clone. Must support branch and profile syntax: user/repo@branch:profile. If :profile is omitted, it defaults to the root renv.lock. | string | - |
+| repositories | Comma-separated list of GitHub repos whose `renv.lock` files it will restore, e.g. `myUsername/repo1,myUsername/repo2`. By default, uses the `renv.lock` file at the root of the repository. Can specify branch (e.g., `myUsername/repo1@branch`), `renv` profile (e.g., `myUsername/repo1:renvProfile`) or both (e.g., `myUsername/repo1@branch:renvProfile`) | string | - |
 | pkg | Comma-separated list of specific packages to cache explicitly. | string | - |
 | installSystemRequirements | Uses the Posit API to install apt-dependencies. | boolean | true |
 | cranMirror | - | string | https://cloud.r-project.org |
 
 ## renv Global Cache Configuration
 
-This feature configures the container to use renv's global package cache, which allows packages to be installed once during the image build and then reused when the container runs. This significantly speeds up container rebuilds by avoiding repeated package downloads and installations.
+This feature configures the container to use renv's global package cache, which allows packages to be installed once during the image build and reused when the container runs.
+This significantly speeds up container rebuilds by avoiding repeated package downloads and installations.
 
 ### How It Works
 
 #### 1. R Configuration Files Modified
 
-The feature modifies the **site-wide `Renviron.site`** file during the build process. This file is located at `$R_HOME/lib/R/etc/Renviron.site` (typically `/usr/local/lib/R/etc/Renviron.site` or similar depending on R installation).
+The feature modifies the site-wide `Renviron.site` file during the build process.
+This file is located at `$R_HOME/lib/R/etc/Renviron.site` (typically `/usr/local/lib/R/etc/Renviron.site` or similar depending on R installation).
 
 Two different configurations are applied at different stages:
 
 **During Image Build** (`scripts/r-lib.sh`):
+
 ```bash
 RENV_PATHS_ROOT=/renv/local
 RENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library
@@ -61,115 +64,131 @@ R_LIBS=/workspaces/.local/lib/R
 
 When the container image is built:
 
-1. **Renviron.site is configured** with initial paths by `scripts/r-lib.sh`
-2. **Directories are created**:
-   - `/renv/local` - renv project root during build
-   - `/renv/cache` - global package cache (persists in image)
-   - `/workspaces/.local/lib/R/library` - library root
-   - `/workspaces/.cache/R/pkgcache/pkg` - pak cache directory
-
-3. **Packages are installed** from `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/renv`):
-   - The `install.sh` script calls `renv-cache-restore-build`
-   - For each subdirectory containing an `renv.lock` file, `renv-cache-restore` is invoked
-   - Packages are restored using `renvvv::renvvv_restore()` (or `renvvv_update()` / `renvvv_restore_and_update()` based on options)
-   - Installed packages are automatically cached in `/renv/cache` due to the `RENV_PATHS_CACHE` setting
-
-4. **Cache permissions** are set via environment variables:
-   - `RENV_CACHE_MODE=0755` ensures proper permissions
-   - `RENV_CACHE_USER` is set to `$_REMOTE_USER` if available
+1. `Renviron.site` is configured with initial paths by `scripts/r-lib.sh`.
+2. Directories are created for the renv project root during build (`/renv/local`), the global package cache (`/renv/cache`), the library root (`/workspaces/.local/lib/R/library`), and the pak cache directory (`/workspaces/.cache/R/pkgcache/pkg`).
+3. Packages are installed from multiple potential sources.
+   These sources include `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/renv`), remote GitHub repositories specified via the `repositories` option, and explicit package strings specified via the `pkg` option.
+   For each source, packages are restored using `renvvv::renvvv_restore()` (or `renvvv_update()` / `renvvv_restore_and_update()` based on options).
+   Installed packages are automatically cached in `/renv/cache` due to the `RENV_PATHS_CACHE` setting.
+4. A Unified Lockfile is Generated.
+  After processing all individual projects and repositories, the feature natively aggregates all unique package dependencies and performs a combined `renv::restore(clean = FALSE)` followed by a `renv::snapshot()`.
+  This creates a single, master `renv.lock` containing the union of all dependencies.
+  Both this combined lockfile and the individual project lockfiles are saved to an internal container cache (`/usr/local/share/renv-cache/lockfiles`).
+5. Cache permissions are set via environment variables to ensure proper access for the runtime user.
 
 #### 3. Container Runtime Phase
 
 When the container starts:
 
-1. **Renviron.site is updated** by `scripts/r-lib-update.sh` (called during post-create):
-   - `RENV_PATHS_CACHE` is updated to `/workspaces/.cache/renv:/renv/cache`
-   - This creates a two-level cache: workspace-specific cache first, then the built-in cache as fallback
-   - `RENV_PATHS_ROOT` points to `/workspaces/.local/renv` for workspace-specific project data
+1. `Renviron.site` is updated by `scripts/r-lib-update.sh` (called during post-create).
+   `RENV_PATHS_CACHE` is updated to `/workspaces/.cache/renv:/renv/cache`.
+   This creates a two-level cache: workspace-specific cache first, then the built-in cache as fallback.
+   `RENV_PATHS_ROOT` points to `/workspaces/.local/renv` for workspace-specific project data.
+2. Packages from the build cache are automatically available.
+  When renv needs a package, it first checks `/workspaces/.cache/renv`.
+  If not found, it checks `/renv/cache` (populated during build).
+  If found in either cache, renv links the package instead of reinstalling.
 
-2. **Packages from the build cache are automatically available**:
-   - When renv needs a package, it first checks `/workspaces/.cache/renv`
-   - If not found, it checks `/renv/cache` (populated during build)
-   - If found in either cache, renv links the package instead of reinstalling
+### The `renv-cache-copy-lockfile` CLI
+
+This feature installs a built-in CLI tool, `renv-cache-copy-lockfile`, which allows you to easily copy the cached `renv.lock` files out of the internal cache and into your workspace.
+
+By default, it copies the unified, combined lockfile (containing all dependencies from all projects and repos) to your current directory.
+
+**Basic usage:**
+
+```bash
+# Copy the unified lockfile to your current directory
+renv-cache-copy-lockfile
+
+# Copy the unified lockfile to a specific path
+renv-cache-copy-lockfile ./my-project/renv.lock
+```
+
+- `--list`: Lists all available cached projects (including the default `renv-cache-overall` combined lockfile and any specific remote repos/local subdirectories) and whether they have updated versions available.
+- `-p, --project <name>`: Copy a specific project's lockfile instead of the overall combined one (e.g., `-p M72_CITEseqHIVE_scRNAseq_Pipeline`).
+- `--update`: If `update: true` was set in the feature options, prefer copying the updated lockfile over the originally restored one.
+- `--overwrite`: Overwrite the destination file if it already exists.
 
 ### How to Use This Feature
 
-#### Basic Usage
+To cache your dependencies during the image build phase, the feature needs access to your lockfiles *before* the VS Code workspace is mounted.
+You can provide these lockfiles using local directories, remote repositories, or a combination of both.
 
-1. **Create the renv directory structure** in your repository:
-   ```
-   .devcontainer/
-   └── renv/
-       ├── project1/
-       │   └── renv.lock
-       ├── project2/
-       │   └── renv.lock
-       └── shared/
-           └── renv.lock
-   ```
+#### Method A: Using Local Lockfiles
 
-2. **Configure the feature** in your `devcontainer.json`:
-   ```json
-   {
-     "features": {
-       "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
-         "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv"
-       }
-     }
-   }
-   ```
+If you have local `renv.lock` files, you must copy them into the image using a minimal Dockerfile so the feature can see them during the build.
+First, organize your lockfiles in a `.devcontainer/renv/` directory (e.g., `.devcontainer/renv/project1/renv.lock`).
+Next, create a `Dockerfile` in your `.devcontainer` folder that copies this directory into the feature's default internal path:
 
-3. **Mount the renv directory** so it's available during build:
-   ```json
-   {
-     "mounts": [
-       "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/renv,type=bind"
-     ]
-   }
-   ```
+```dockerfile
+FROM bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2
 
-   Or if using a custom `renvDir`:
-   ```json
-   {
-     "mounts": [
-       "source=${localWorkspaceFolder}/.devcontainer/renv,target=${containerWorkspaceFolder}/.devcontainer/renv,type=bind"
-     ],
-     "features": {
-       "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
-         "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv"
-       }
-     }
-   }
-   ```
+# Copy lockfiles so the feature can process them during the build
+COPY .devcontainer/renv /usr/local/share/renv-cache/renv
+```
 
-#### How Packages Get Cached
+Finally, reference this Dockerfile and the feature in your `devcontainer.json`:
 
-1. **During build**: All packages from `renv.lock` files in `renvDir` subdirectories are installed and cached in `/renv/cache`
-2. **During runtime**: When you use renv in your project:
-   - Run `renv::restore()` in your project
-   - renv checks the cache first (`/workspaces/.cache/renv:/renv/cache`)
-   - Packages already in cache are linked (fast) instead of downloaded (slow)
-   - New packages are downloaded and added to `/workspaces/.cache/renv`
+```json
+{
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {}
+  }
+}
+```
+
+#### Method B: Using Remote Repositories
+
+If your dependencies are defined in remote GitHub repositories, you do not need a custom Dockerfile.
+You can use a standard image and pass the repository targets directly to the feature via the `repositories` option:
+
+```json
+{
+  "image": "bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
+      "repositories": "MiguelRodo/projr@main,MiguelRodo/renvvv"
+    }
+  }
+}
+```
+
+By default, the feature assumes there is a standard `renv.lock` file located at the root of the cloned repository.
+
+#### Targeting Branches and Profiles
+
+You can target specific branches or `renv` profiles within your remote repositories using the syntax `user/repo@branch:profile`.
+If you append `@branch` (e.g., `MiguelRodo/projr@v2`), the feature will clone that specific branch instead of the default branch.
+If you append `:profile` (e.g., `MiguelRodo/projr:dev`), the feature will restore using that specific `renv` profile, expecting the lockfile to be located at `renv/profiles/<profile>/renv.lock`.
+You can combine both options using the full syntax (e.g., `MiguelRodo/projr@main:dev`).
+
+#### Final Step: Initialize Your Workspace
+
+Once the container finishes building and starts, your dependencies are securely cached inside the image.
+To activate them in your current workspace, run the copy command to extract the pre-warmed, unified lockfile and restore the project:
+
+```bash
+renv-cache-copy-lockfile
+Rscript -e "renv::restore()"
+```
 
 #### Advanced: Custom Scripts
 
-You can place custom scripts in your renv subdirectories:
-- `renv-cache-renv.R` - R script executed after restore
-- `renv-cache-renv.sh` - Bash script executed after restore
-
-These scripts receive the `pkgExclude` parameter and run in the project directory context.
+You can place custom scripts in your local renv subdirectories.
+`renv-cache-renv.R` executes an R script after restore.
+`renv-cache-renv.sh` executes a Bash script after restore.
+These scripts receive the `pkgExclude` parameter and run in the project directory context during the build.
 
 ## Package Restoration
 
-This feature uses [`renvvv::renvvv_restore()`](https://github.com/MiguelRodo/renvvv) for package restoration instead of the default `renv::restore()`. This provides more robust restoration logic that:
-
-- Continues past individual package failures
-- Retries failed packages individually  
-- Reports what couldn't be installed
-- Handles GitHub, CRAN, and Bioconductor packages
-- Provides better error recovery
-- Supports skipping specific packages via the `pkgExclude` option
-
+This feature uses `renvvv::renvvv_restore()` for package restoration instead of the default `renv::restore()`.
+This provides more robust restoration logic that continues past individual package failures, retries failed packages individually, and reports what couldn't be installed.
+It also handles GitHub, CRAN, and Bioconductor packages while providing better error recovery.
+Additionally, it supports skipping specific packages via the `pkgExclude` option.
 The `renvvv` package is automatically installed during feature setup.
 
 ### Skipping Packages
@@ -178,16 +197,13 @@ You can exclude specific packages from being restored by using the `pkgExclude` 
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
         "pkgExclude": "package1,package2,package3"
     }
 }
 ```
 
-This is useful when:
-- Certain packages fail to install in your environment
-- You want to manually manage specific package versions
-- Some packages are not needed for your workflow
+This is useful when certain packages fail to install in your environment, you want to manually manage specific package versions, or some packages are simply not needed for your workflow.
 
 ## Acknowledgments
 
@@ -201,15 +217,16 @@ During the image build phase, `renv-cache` temporarily overrides GitHub authenti
 
 **What it does:**
 
-1. **Saves** the current values of `GITHUB_TOKEN` and `GITHUB_PAT`
-2. **Sets `GITHUB_PAT`** from the best available token (priority: `GITHUB_PAT` > `GH_TOKEN` > `GITHUB_TOKEN`) if not already set
-3. **Overrides `GITHUB_TOKEN`** with the most permissive token available (priority: `GITHUB_PAT` > `GH_TOKEN`) so R tools find it first
-4. **Runs** the renv package restore/install
-5. **Resets** `GITHUB_TOKEN` and `GITHUB_PAT` to their original values (or unsets them if they were not set before)
+1. Saves the current values of `GITHUB_TOKEN` and `GITHUB_PAT`
+2. Sets `GITHUB_PAT` from the best available token (priority: `GITHUB_PAT` > `GH_TOKEN` > `GITHUB_TOKEN`) if not already set
+3. Overrides `GITHUB_TOKEN` with the most permissive token available (priority: `GITHUB_PAT` > `GH_TOKEN`) so R tools find it first
+4. Runs the renv package restore/install
+5. Resets `GITHUB_TOKEN` and `GITHUB_PAT` to their original values (or unsets them if they were not set before)
 
 This is a simple, blunt approach: it applies only during the feature install step and has no persistent effect on the container.
 
 **To opt out:**
+
 ```json
 {
   "features": {
@@ -237,11 +254,6 @@ If you also want GitHub token elevation on every shell startup (e.g., for intera
 
 `renv-cache` only manages tokens **during the image build phase** (feature install). It does not modify `~/.bashrc`, `~/.bashrc.d/`, or any other shell startup files.
 
-### References
-
-- [renv issue #1285: Token lookup order and private packages](https://github.com/r-lib/renv/issues/1285)
-- [GitHub Actions: Automatic token authentication](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
-- [GitHub Actions: Permissions for the GITHUB_TOKEN](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
 
 
 ---
