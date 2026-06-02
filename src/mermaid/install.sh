@@ -268,7 +268,7 @@ setup_mermaid() {
     # Install Chrome for Puppeteer (skip on Alpine - uses system Chromium)
     if [ "$OS_ID" != "alpine" ]; then
         echo "[INFO] Installing Chrome Headless Shell for $USERNAME..."
-        su -s /bin/bash - "$USERNAME" -c "npx puppeteer browsers install chrome-headless-shell"
+        su -s /bin/bash - "$USERNAME" -c "npx -y puppeteer browsers install chrome-headless-shell"
     fi
 }
 
