@@ -541,7 +541,7 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
             su "${USERNAME}" -c "Rscript -e \"
                 options(repos = c(CRAN = '${CRAN_MIRROR}'))
                 pkgs <- trimws(unlist(strsplit(Sys.getenv('PKG'), ',')))
-                try(renv::install(pkgs, prompt = FALSE))
+                try(renvvv::renvvv_install(pkgs))
             \""
         fi
         
