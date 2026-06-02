@@ -460,12 +460,24 @@ if [ -n "$PKG" ]; then
     pushd "$TMP_PKG_DIR" > /dev/null
 
     echo "Warming cache with explicit packages: ${PKG}..."
+    # Create bare project framework and link renvvv into the sandbox
     su "${USERNAME}" -c "Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
         renv::init(bare = TRUE, restart = FALSE)
-        pkgs <- trimws(unlist(strsplit('${PKG}', ',')))
-        try(renv::install(pkgs))
     \""
+
+    # Explicitly install renvvv directly into the newly created local project sandbox
+    su "${USERNAME}" -c "Rscript -e \"
+        options(repos = c(CRAN = '${CRAN_MIRROR}'))
+        renv::install('MiguelRodo/renvvv', prompt = FALSE)
+    \""
+
+    su "${USERNAME}" -c "Rscript -e \"
+        options(repos = c(CRAN = '${CRAN_MIRROR}'))
+        pkgs <- trimws(unlist(strsplit('${PKG}', ',')))
+        try(renvvv::renvvv_install(pkgs))
+    \""
+
     popd > /dev/null
     rm -rf "$TMP_PKG_DIR"
 fi
