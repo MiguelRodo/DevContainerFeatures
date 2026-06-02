@@ -81,32 +81,64 @@ renv-cache-copy-lockfile ./my-project/renv.lock
 
 ### How to Use This Feature
 
-1. Configure the feature in your `devcontainer.json`.
-   You can pass a local directory of lockfiles, remote repositories, or both:
+To cache your dependencies during the image build phase, the feature needs access to your lockfiles *before* the VS Code workspace is mounted.
+You can provide these lockfiles using local directories, remote repositories, or a combination of both.
+
+#### Method A: Using Local Lockfiles
+
+If you have local `renv.lock` files, you must copy them into the image using a minimal Dockerfile so the feature can see them during the build.
+First, organize your lockfiles in a `.devcontainer/renv/` directory (e.g., `.devcontainer/renv/project1/renv.lock`).
+Next, create a `Dockerfile` in your `.devcontainer` folder that copies this directory into the feature's default internal path:
+
+```dockerfile
+FROM bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2
+
+# Copy lockfiles so the feature can process them during the build
+COPY .devcontainer/renv /usr/local/share/renv-cache/renv
+```
+
+Finally, reference this Dockerfile and the feature in your `devcontainer.json`:
 
 ```json
 {
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {}
+  }
+}
+```
+
+#### Method B: Using Remote Repositories
+
+If your dependencies are defined in remote GitHub repositories, you do not need a custom Dockerfile.
+You can use a standard image and pass the repository targets directly to the feature via the `repositories` option:
+
+```json
+{
+  "image": "bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2",
   "features": {
     "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
-      "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv",
       "repositories": "MiguelRodo/projr@main,MiguelRodo/renvvv"
     }
   }
 }
 ```
 
-2. Mount the renv directory (if using `renvDir`):
+By default, the feature assumes there is a standard `renv.lock` file located at the root of the cloned repository.
 
-```json
-{
-  "mounts": [
-    "source=${localWorkspaceFolder}/.devcontainer/renv,target=${containerWorkspaceFolder}/.devcontainer/renv,type=bind"
-  ]
-}
-```
+#### Targeting Branches and Profiles
 
-3. Initialize your workspace.
-   Once the container builds and starts, simply run the copy command to grab your pre-warmed, unified lockfile and activate your project:
+You can target specific branches or `renv` profiles within your remote repositories using the syntax `user/repo@branch:profile`.
+If you append `@branch` (e.g., `MiguelRodo/projr@v2`), the feature will clone that specific branch instead of the default branch.
+If you append `:profile` (e.g., `MiguelRodo/projr:dev`), the feature will restore using that specific `renv` profile, expecting the lockfile to be located at `renv/profiles/<profile>/renv.lock`.
+You can combine both options using the full syntax (e.g., `MiguelRodo/projr@main:dev`).
+
+#### Final Step: Initialize Your Workspace
+
+Once the container finishes building and starts, your dependencies are securely cached inside the image.
+To activate them in your current workspace, run the copy command to extract the pre-warmed, unified lockfile and restore the project:
 
 ```bash
 renv-cache-copy-lockfile
