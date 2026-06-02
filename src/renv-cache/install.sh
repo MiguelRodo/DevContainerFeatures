@@ -542,7 +542,7 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
                     echo "[INFO] Accumulating dependencies from $lf..."
                     cp "$lf" renv.lock
                     chown "${USERNAME}:${USERNAME}" renv.lock
-                    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_restore(clean = FALSE)\""
+                    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_restore(args_restore = list(clean = FALSE))\""
                 fi
             done < /tmp/renv_lockfiles_to_combine.txt
         fi
