@@ -512,16 +512,17 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
     # 4a. Take snapshot of combined original restores
     echo "[INFO] Taking combined RESTORE snapshot..."
     mkdir -p "/usr/local/share/renv-cache/lockfiles/_combined/restore"
-    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/restore/renv.lock', prompt = FALSE)\""
+    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/restore/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
     chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_combined/restore"
 
     # 4b. Apply updates and take updated snapshot
     if [ "$UPDATE" = "true" ]; then
         echo "[INFO] Updating combined project..."
         su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_update()\""
+        
         echo "[INFO] Taking combined UPDATE snapshot..."
         mkdir -p "/usr/local/share/renv-cache/lockfiles/_combined/update"
-        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/update/renv.lock', prompt = FALSE)\""
+        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/update/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
         chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_combined/update"
     fi
 
