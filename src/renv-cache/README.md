@@ -15,17 +15,18 @@ Configure R with renv cache
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| setRLibPaths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | boolean | true |
-| overrideTokensAtInstall | If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually. | boolean | true |
+| repositories | Comma-separated list of GitHub repos whose `renv.lock` files it will restore, e.g. `myUsername/repo1,myUsername/repo2`. By default, uses the `renv.lock` file at the root of the repository. Can specify branch (e.g., `myUsername/repo1@branch`), `renv` profile (e.g., `myUsername/repo1:renvProfile`) or both (e.g., `myUsername/repo1@branch:renvProfile`) | string | - |
+| pkg | Comma-separated list of specific packages to cache explicitly. | string | - |
+| pkgExclude | Comma-separated list of packages to exclude from the renv snapshot restore process. | string | - |
 | restore | Whether to run package restoration using renvvv::renvvv_restore(). Default is true. | boolean | true |
 | update | Whether to run package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used. Default is false. | boolean | false |
+| createUnifiedLockfile | Whether to create a single unified `renv.lock` file combining dependencies from all provided lockfiles. Defaults to true. | boolean | true |
+| setRLibPaths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | boolean | true |
+| overrideTokensAtInstall | If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually. | boolean | true |
 | renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set. | string | /usr/local/share/renv-cache/renv |
-| pkgExclude | Comma-separated list of packages to exclude from the renv snapshot restore process. | string | - |
 | usePak | Whether to use `pak` for package installation. For some reason, restoring from the `renv` cache has not worked when using `pak` to build the image, so this is not recommended. | boolean | false |
 | debug | Whether to print debug information during package restore. | boolean | false |
 | debugRenv | Whether to print debug information during renv restore. | boolean | false |
-| repositories | Comma-separated list of GitHub repos whose `renv.lock` files it will restore, e.g. `myUsername/repo1,myUsername/repo2`. By default, uses the `renv.lock` file at the root of the repository. Can specify branch (e.g., `myUsername/repo1@branch`), `renv` profile (e.g., `myUsername/repo1:renvProfile`) or both (e.g., `myUsername/repo1@branch:renvProfile`) | string | - |
-| pkg | Comma-separated list of specific packages to cache explicitly. | string | - |
 | installSystemRequirements | Uses the Posit API to install apt-dependencies. | boolean | true |
 | cranMirror | - | string | https://cloud.r-project.org |
 
