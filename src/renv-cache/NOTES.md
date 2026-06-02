@@ -37,9 +37,9 @@ When the container image is built:
    - `/workspaces/.local/lib/R/library` - library root
    - `/workspaces/.cache/R/pkgcache/pkg` - pak cache directory
 
-3. **Packages are installed** from `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/config-r/renv`):
-   - The `install.sh` script calls `config-r-renv-restore-build`
-   - For each subdirectory containing an `renv.lock` file, `config-r-renv-restore` is invoked
+3. **Packages are installed** from `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/renv`):
+   - The `install.sh` script calls `renv-cache-renv-restore-build`
+   - For each subdirectory containing an `renv.lock` file, `renv-cache-renv-restore` is invoked
    - Packages are restored using `renvvv::renvvv_restore()` (or `renvvv_update()` / `renvvv_restore_and_update()` based on options)
    - Installed packages are automatically cached in `/renv/cache` due to the `RENV_PATHS_CACHE` setting
 
@@ -81,7 +81,7 @@ When the container starts:
    ```json
    {
      "features": {
-       "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+       "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
          "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv"
        }
      }
@@ -92,7 +92,7 @@ When the container starts:
    ```json
    {
      "mounts": [
-       "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/config-r/renv,type=bind"
+       "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/renv,type=bind"
      ]
    }
    ```
@@ -104,7 +104,7 @@ When the container starts:
        "source=${localWorkspaceFolder}/.devcontainer/renv,target=${containerWorkspaceFolder}/.devcontainer/renv,type=bind"
      ],
      "features": {
-       "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+       "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
          "renvDir": "${containerWorkspaceFolder}/.devcontainer/renv"
        }
      }
@@ -123,8 +123,8 @@ When the container starts:
 #### Advanced: Custom Scripts
 
 You can place custom scripts in your renv subdirectories:
-- `config-r-renv.R` - R script executed after restore
-- `config-r-renv.sh` - Bash script executed after restore
+- `renv-cache-renv.R` - R script executed after restore
+- `renv-cache-renv.sh` - Bash script executed after restore
 
 These scripts receive the `pkgExclude` parameter and run in the project directory context.
 
@@ -147,7 +147,7 @@ You can exclude specific packages from being restored by using the `pkgExclude` 
 
 ```json
 "features": {
-    "ghcr.io/MiguelRodo/DevContainerFeatures/config-r:2": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
         "pkgExclude": "package1,package2,package3"
     }
 }
