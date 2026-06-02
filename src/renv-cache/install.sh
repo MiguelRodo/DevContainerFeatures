@@ -482,8 +482,17 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
         chown -R "${USERNAME}:${USERNAME}" "$UNIFIED_DIR"
         pushd "$UNIFIED_DIR" > /dev/null
 
-        # Create bare project framework
-        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::init(bare = TRUE, restart = FALSE)\""
+        # Create bare project framework and link renvvv into the sandbox
+        su "${USERNAME}" -c "Rscript -e \"
+            options(repos = c(CRAN = '${CRAN_MIRROR}'))
+            renv::init(bare = TRUE, restart = FALSE)
+        \""
+
+        # Explicitly install renvvv directly into the newly created local project sandbox
+        su "${USERNAME}" -c "Rscript -e \"
+            options(repos = c(CRAN = '${CRAN_MIRROR}'))
+            renv::install('MiguelRodo/renvvv', prompt = FALSE)
+        \""
 
         # Extract all dependency packages (from both lockfiles and explicit PKG) and generate _dependencies.R
         export PKG
@@ -535,6 +544,7 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
                 try(renv::install(pkgs, prompt = FALSE))
             \""
         fi
+        
 
         # 4a. Take snapshot of unified original restores
         echo "[INFO] Taking unified RESTORE snapshot..."
