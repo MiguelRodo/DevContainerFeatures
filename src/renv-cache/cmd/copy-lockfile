@@ -7,7 +7,7 @@ TARGET_PATH="./renv.lock"
 OVERWRITE=false
 PREFER_UPDATE=false
 ACTION="copy"
-SELECTED_PROJECT="_combined"
+SELECTED_PROJECT="_unified"
 
 usage() {
     echo "Usage: renv-cache-copy-lockfile [OPTIONS] [PATH]"
@@ -19,8 +19,8 @@ usage() {
     echo ""
     echo "Options:"
     echo "  --list                   List all available cached projects and their lockfile states."
-    echo "  -p, --project <name>     Specify a specific project to copy instead of the overall combined one."
-    echo "                           (Use --list to see available names. Default: renv-cache-overall)"
+    echo "  -p, --project <name>     Specify a specific project to copy instead of the unified one."
+    echo "                           (Use --list to see available names. Default: renv-cache-unified)"
     echo "  --update                 Prefer the updated lockfile over the originally restored one."
     echo "  --overwrite              Overwrite the destination file if it already exists."
     echo "  -h, --help               Show this help message."
@@ -54,9 +54,8 @@ if [ "$ACTION" = "list" ]; then
         if [ -d "$proj_dir" ]; then
             proj_name=$(basename "$proj_dir")
             
-            # Surface the internal '_combined' folder as 'renv-cache-overall'
-            if [ "$proj_name" = "_combined" ]; then
-                echo "📦 renv-cache-overall [DEFAULT PROJECT]"
+            if [ "$proj_name" = "_unified" ]; then
+                echo "📦 renv-cache-unified [DEFAULT PROJECT]"
                 echo "   (Unified lockfile containing all dependencies)"
             else
                 echo "📁 Project: $proj_name"
@@ -72,7 +71,7 @@ if [ "$ACTION" = "list" ]; then
         fi
     done
     echo "--------------------------------------------------------"
-    echo "Run 'renv-cache-copy-lockfile' to copy the default overall project."
+    echo "Run 'renv-cache-copy-lockfile' to copy the default unified project."
     echo "Run 'renv-cache-copy-lockfile --project <name>' to copy a specific project."
     exit 0
 fi
@@ -94,9 +93,20 @@ if [ "$ACTION" = "copy" ]; then
         exit 1
     fi
 
-    # Map the user-friendly name back to the internal combined folder
-    if [ "$SELECTED_PROJECT" = "renv-cache-overall" ]; then
-        SELECTED_PROJECT="_combined"
+    # Map user-friendly name back to the internal folder
+    if [ "$SELECTED_PROJECT" = "renv-cache-unified" ]; then
+        SELECTED_PROJECT="_unified"
+    fi
+
+    # Smart Fallback: If they requested the unified file but it doesn't exist
+    # (e.g. they opted out), check if there is exactly ONE project available.
+    if [ "$SELECTED_PROJECT" = "_unified" ] && [ ! -d "$CACHE_DIR/_unified" ]; then
+        PROJ_COUNT=$(find "$CACHE_DIR" -mindepth 1 -maxdepth 1 -type d | wc -l)
+        if [ "$PROJ_COUNT" -eq 1 ]; then
+            SELECTED_PROJECT=$(basename "$(find "$CACHE_DIR" -mindepth 1 -maxdepth 1 -type d)")
+            echo "[INFO] Unified lockfile disabled, but only one project exists."
+            echo "       Automatically defaulting to project: '$SELECTED_PROJECT'."
+        fi
     fi
 
     PROJ_DIR="$CACHE_DIR/$SELECTED_PROJECT"
@@ -116,7 +126,7 @@ if [ "$ACTION" = "copy" ]; then
     fi
 
     SOURCE_FILE=""
-    DISPLAY_NAME=$([ "$SELECTED_PROJECT" = "_combined" ] && echo "renv-cache-overall" || echo "$SELECTED_PROJECT")
+    DISPLAY_NAME=$([ "$SELECTED_PROJECT" = "_unified" ] && echo "renv-cache-unified" || echo "$SELECTED_PROJECT")
 
     # Handle Update Preference
     if [ "$PREFER_UPDATE" = "true" ]; then

@@ -35,6 +35,7 @@ DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
+CREATE_UNIFIED_LOCKFILE="${CREATEUNIFIEDLOCKFILE:-true}"
 
 REPOSITORIES="${REPOSITORIES:-""}"
 PKG="${PKG:-""}"
@@ -469,67 +470,75 @@ if [ -n "$PKG" ]; then
     rm -rf "$TMP_PKG_DIR"
 fi
 
-# 4. Generate Single Combined Lockfile
+# 4. Generate Single Unified Lockfile
 if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
-    echo "=========================================================="
-    echo "[INFO] Building unified/combined renv.lock file..."
-    COMBINED_DIR="/usr/local/share/renv-cache/combined_project"
-    mkdir -p "$COMBINED_DIR"
-    chown -R "${USERNAME}:${USERNAME}" "$COMBINED_DIR"
-    pushd "$COMBINED_DIR" > /dev/null
+    
+    # Only build the unified project if the option is true
+    if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
+        echo "=========================================================="
+        echo "[INFO] Building unified renv.lock file..."
+        UNIFIED_DIR="/usr/local/share/renv-cache/unified_project"
+        mkdir -p "$UNIFIED_DIR"
+        chown -R "${USERNAME}:${USERNAME}" "$UNIFIED_DIR"
+        pushd "$UNIFIED_DIR" > /dev/null
 
-    # Create bare project framework
-    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::init(bare = TRUE, restart = FALSE)\""
+        # Create bare project framework
+        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::init(bare = TRUE, restart = FALSE)\""
 
-    # Extract all dependency packages and generate _dependencies.R
-    su "${USERNAME}" -c "Rscript -e \"
-        lockfiles <- readLines('/tmp/renv_lockfiles_to_combine.txt')
-        all_pkgs <- character()
-        for (lf in lockfiles) {
-            tryCatch({
-                json_data <- renv:::renv_json_read(lf)
-                if (!is.null(json_data\\\$Packages)) {
-                    all_pkgs <- c(all_pkgs, names(json_data\\\$Packages))
-                }
-            }, error = function(e) message('[WARN] Could not read package names from ', lf))
-        }
-        all_pkgs <- unique(all_pkgs)
-        if (length(all_pkgs) > 0) {
-            writeLines(paste0('library(', all_pkgs, ')'), '_dependencies.R')
-        }
-    \""
+        # Extract all dependency packages and generate _dependencies.R
+        su "${USERNAME}" -c "Rscript -e \"
+            lockfiles <- readLines('/tmp/renv_lockfiles_to_combine.txt')
+            all_pkgs <- character()
+            for (lf in lockfiles) {
+                tryCatch({
+                    json_data <- renv:::renv_json_read(lf)
+                    if (!is.null(json_data\\\$Packages)) {
+                        all_pkgs <- c(all_pkgs, names(json_data\\\$Packages))
+                    }
+                }, error = function(e) message('[WARN] Could not read package names from ', lf))
+            }
+            all_pkgs <- unique(all_pkgs)
+            if (length(all_pkgs) > 0) {
+                writeLines(paste0('library(', all_pkgs, ')'), '_dependencies.R')
+            }
+        \""
 
-    # Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
-    while IFS= read -r lf; do
-        if [ -f "$lf" ]; then
-            echo "[INFO] Accumulating dependencies from $lf..."
-            cp "$lf" renv.lock
-            chown "${USERNAME}:${USERNAME}" renv.lock
-            su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_restore(clean = FALSE)\""
+        # Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
+        while IFS= read -r lf; do
+            if [ -f "$lf" ]; then
+                echo "[INFO] Accumulating dependencies from $lf..."
+                cp "$lf" renv.lock
+                chown "${USERNAME}:${USERNAME}" renv.lock
+                su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_restore(clean = FALSE)\""
+            fi
+        done < /tmp/renv_lockfiles_to_combine.txt
+
+        # 4a. Take snapshot of unified original restores
+        echo "[INFO] Taking unified RESTORE snapshot..."
+        mkdir -p "/usr/local/share/renv-cache/lockfiles/_unified/restore"
+        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_unified/restore/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
+        chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_unified/restore"
+
+        # 4b. Apply updates and take updated snapshot
+        if [ "$UPDATE" = "true" ]; then
+            echo "[INFO] Updating unified project..."
+            su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_update()\""
+            
+            echo "[INFO] Taking unified UPDATE snapshot..."
+            mkdir -p "/usr/local/share/renv-cache/lockfiles/_unified/update"
+            su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_unified/update/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
+            chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_unified/update"
         fi
-    done < /tmp/renv_lockfiles_to_combine.txt
 
-    # 4a. Take snapshot of combined original restores
-    echo "[INFO] Taking combined RESTORE snapshot..."
-    mkdir -p "/usr/local/share/renv-cache/lockfiles/_combined/restore"
-    su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/restore/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
-    chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_combined/restore"
-
-    # 4b. Apply updates and take updated snapshot
-    if [ "$UPDATE" = "true" ]; then
-        echo "[INFO] Updating combined project..."
-        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_update()\""
-        
-        echo "[INFO] Taking combined UPDATE snapshot..."
-        mkdir -p "/usr/local/share/renv-cache/lockfiles/_combined/update"
-        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_combined/update/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
-        chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_combined/update"
+        popd > /dev/null
+        rm -rf "$UNIFIED_DIR"
+        echo "=========================================================="
+    else
+        echo "[INFO] createUnifiedLockfile is false; skipping unified lockfile generation."
     fi
 
-    popd > /dev/null
-    rm -rf "$COMBINED_DIR"
+    # Always clean up the tracking file
     rm -f /tmp/renv_lockfiles_to_combine.txt
-    echo "=========================================================="
 fi
 
 # Final Cleanup (Now it is safe to remove TMP_REPO_DIR)

@@ -5,15 +5,20 @@
     "description": "Configure R with renv cache",
     "postCreateCommand": "/usr/local/bin/renv-cache-post-create",
     "options": {
-        "setRLibPaths": {
-            "type": "boolean",
-            "description": "Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild.",
-            "default": true
+        "repositories": {
+            "type": "string",
+            "description": "Comma-separated list of GitHub repos whose `renv.lock` files it will restore, e.g. `myUsername/repo1,myUsername/repo2`. By default, uses the `renv.lock` file at the root of the repository. Can specify branch (e.g., `myUsername/repo1@branch`), `renv` profile (e.g., `myUsername/repo1:renvProfile`) or both (e.g., `myUsername/repo1@branch:renvProfile`)",
+            "default": ""
         },
-        "overrideTokensAtInstall": {
-            "description": "If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually.",
-            "type": "boolean",
-            "default": true
+        "pkg": {
+            "type": "string",
+            "description": "Comma-separated list of specific packages to cache explicitly.",
+            "default": ""
+        },
+        "pkgExclude": {
+            "type": "string",
+            "description": "Comma-separated list of packages to exclude from the renv snapshot restore process.",
+            "default": ""
         },
         "restore": {
             "type": "boolean",
@@ -25,15 +30,25 @@
             "description": "Whether to run package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used. Default is false.",
             "default": false
         },
+        "createUnifiedLockfile": {
+            "type": "boolean",
+            "description": "Whether to create a single unified `renv.lock` file combining dependencies from all provided lockfiles. Defaults to true.",
+            "default": true
+        },
+        "setRLibPaths": {
+            "type": "boolean",
+            "description": "Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild.",
+            "default": true
+        },
+        "overrideTokensAtInstall": {
+            "description": "If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually.",
+            "type": "boolean",
+            "default": true
+        },
         "renvDir": {
             "type": "string",
             "description": "Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set.",
             "default": "/usr/local/share/renv-cache/renv"
-        },
-        "pkgExclude": {
-            "type": "string",
-            "description": "Comma-separated list of packages to exclude from the renv snapshot restore process.",
-            "default": ""
         },
         "usePak": {
             "type": "boolean",
@@ -49,16 +64,6 @@
             "type": "boolean",
             "description": "Whether to print debug information during renv restore.",
             "default": false
-        },
-        "repositories": {
-            "type": "string",
-            "description": "Comma-separated list of GitHub repos whose `renv.lock` files it will restore, e.g. `myUsername/repo1,myUsername/repo2`. By default, uses the `renv.lock` file at the root of the repository. Can specify branch (e.g., `myUsername/repo1@branch`), `renv` profile (e.g., `myUsername/repo1:renvProfile`) or both (e.g., `myUsername/repo1@branch:renvProfile`)",
-            "default": ""
-        },
-        "pkg": {
-            "type": "string",
-            "description": "Comma-separated list of specific packages to cache explicitly.",
-            "default": ""
         },
         "installSystemRequirements": {
             "type": "boolean",
