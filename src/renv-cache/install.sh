@@ -401,10 +401,10 @@ create_path_post_create_command
 set_r_libs
 set_tokens_for_install
 
-# Install the user-facing command
+# Install the user-facing commands
 copy_and_set_execute_bit copy-lockfile
-copy_and_set_execute_bit renv-restore       # Keep your other tools
-copy_and_set_execute_bit renv-restore-build # Keep your other tools
+copy_and_set_execute_bit renv-restore
+copy_and_set_execute_bit renv-restore-build
 
 # 1. Process Local Lockfile (Backward Compatibility)
 if [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
@@ -539,4 +539,3 @@ fi
 echo "renv-cache installation complete!"
 reset_tokens_after_install
 clean_up
-
