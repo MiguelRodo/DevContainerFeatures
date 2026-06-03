@@ -245,18 +245,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#options" id="toc-options" class="nav-link" data-scroll-target="#options">Options</a></li>
   <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How It Works</a>
   <ul class="collapse">
-  <li><a href="#r-configuration-files-modified" id="toc-r-configuration-files-modified" class="nav-link" data-scroll-target="#r-configuration-files-modified">R Configuration Files Modified</a></li>
-  <li><a href="#image-build-phase" id="toc-image-build-phase" class="nav-link" data-scroll-target="#image-build-phase">Image Build Phase</a></li>
-  <li><a href="#container-runtime-phase" id="toc-container-runtime-phase" class="nav-link" data-scroll-target="#container-runtime-phase">Container Runtime Phase</a></li>
+  <li><a href="#r-configuration-files-modified" id="toc-r-configuration-files-modified" class="nav-link" data-scroll-target="#r-configuration-files-modified">1. R Configuration Files Modified</a></li>
+  <li><a href="#image-build-phase" id="toc-image-build-phase" class="nav-link" data-scroll-target="#image-build-phase">2. Image Build Phase</a></li>
+  <li><a href="#container-runtime-phase" id="toc-container-runtime-phase" class="nav-link" data-scroll-target="#container-runtime-phase">3. Container Runtime Phase</a></li>
   </ul></li>
-  <li><a href="#basic-setup" id="toc-basic-setup" class="nav-link" data-scroll-target="#basic-setup">Basic Setup</a></li>
-  <li><a href="#package-restoration" id="toc-package-restoration" class="nav-link" data-scroll-target="#package-restoration">Package Restoration</a></li>
-  <li><a href="#github-token-management" id="toc-github-token-management" class="nav-link" data-scroll-target="#github-token-management">GitHub Token Management</a>
+  <li><a href="#the-renv-cache-restore-cli" id="toc-the-renv-cache-restore-cli" class="nav-link" data-scroll-target="#the-renv-cache-restore-cli">The <code>renv-cache-restore</code> CLI</a>
   <ul class="collapse">
+  <li><a href="#forced-cache-usage" id="toc-forced-cache-usage" class="nav-link" data-scroll-target="#forced-cache-usage">Forced Cache Usage</a></li>
+  </ul></li>
+  <li><a href="#the-renv-cache-copy-lockfile-cli" id="toc-the-renv-cache-copy-lockfile-cli" class="nav-link" data-scroll-target="#the-renv-cache-copy-lockfile-cli">The <code>renv-cache-copy-lockfile</code> CLI</a></li>
+  <li><a href="#how-to-use-this-feature" id="toc-how-to-use-this-feature" class="nav-link" data-scroll-target="#how-to-use-this-feature">How to Use This Feature</a>
+  <ul class="collapse">
+  <li><a href="#method-a-using-local-lockfiles" id="toc-method-a-using-local-lockfiles" class="nav-link" data-scroll-target="#method-a-using-local-lockfiles">Method A: Using Local Lockfiles</a></li>
+  <li><a href="#method-b-using-remote-repositories" id="toc-method-b-using-remote-repositories" class="nav-link" data-scroll-target="#method-b-using-remote-repositories">Method B: Using Remote Repositories</a></li>
+  <li><a href="#final-step-initialize-your-workspace" id="toc-final-step-initialize-your-workspace" class="nav-link" data-scroll-target="#final-step-initialize-your-workspace">Final Step: Initialize Your Workspace</a></li>
+  </ul></li>
+  <li><a href="#package-restoration" id="toc-package-restoration" class="nav-link" data-scroll-target="#package-restoration">Package Restoration</a></li>
+  <li><a href="#skipping-packages" id="toc-skipping-packages" class="nav-link" data-scroll-target="#skipping-packages">Skipping Packages</a></li>
+  <li><a href="#unified-lockfile-control" id="toc-unified-lockfile-control" class="nav-link" data-scroll-target="#unified-lockfile-control">Unified Lockfile Control</a></li>
+  <li><a href="#cache-size-optimization-purging" id="toc-cache-size-optimization-purging" class="nav-link" data-scroll-target="#cache-size-optimization-purging">Cache Size Optimization (Purging)</a></li>
+  <li><a href="#github-token-management" id="toc-github-token-management" class="nav-link" data-scroll-target="#github-token-management">GitHub Token Management</a></li>
   <li><a href="#build-time-token-override-overridetokensatinstall" id="toc-build-time-token-override-overridetokensatinstall" class="nav-link" data-scroll-target="#build-time-token-override-overridetokensatinstall">Build-Time Token Override (<code>overrideTokensAtInstall</code>)</a></li>
   <li><a href="#session-time-token-management" id="toc-session-time-token-management" class="nav-link" data-scroll-target="#session-time-token-management">Session-Time Token Management</a></li>
-  </ul></li>
-  <li><a href="#source" id="toc-source" class="nav-link" data-scroll-target="#source">Source</a></li>
+  <li><a href="#acknowledgments" id="toc-acknowledgments" class="nav-link" data-scroll-target="#acknowledgments">Acknowledgments</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/MiguelRodo/DevContainerFeatures/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -293,90 +304,125 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"image"</span><span class="fu">:</span> <span class="st">"ghcr.io/rocker-org/devcontainer/r-ver:4.4"</span><span class="fu">,</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"repositories"</span><span class="fu">:</span> <span class="st">"MiguelRodo/projr@main"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>With a custom renv directory and selective package exclusion:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"renvDir"</span><span class="fu">:</span> <span class="st">"${containerWorkspaceFolder}/.devcontainer/renv"</span><span class="fu">,</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"pkgExclude"</span><span class="fu">:</span> <span class="st">"package1,package2"</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"repositories"</span><span class="fu">:</span> <span class="st">"myUsername/repo1,myUsername/repo2@dev:shiny"</span><span class="fu">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"pkg"</span><span class="fu">:</span> <span class="st">"dplyr,ggplot2"</span><span class="fu">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"createUnifiedLockfile"</span><span class="fu">:</span> <span class="st">"true"</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"purgePostUnification"</span><span class="fu">:</span> <span class="st">"keep-one"</span><span class="fu">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"pkgExclude"</span><span class="fu">:</span> <span class="st">"problematicPkg"</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="options" class="level2">
 <h2 class="anchored" data-anchor-id="options">Options</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 16%">
 <col style="width: 25%">
-<col style="width: 36%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>Option</th>
-<th>Type</th>
-<th>Default</th>
+<th>Options Id</th>
 <th>Description</th>
+<th>Type</th>
+<th>Default Value</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>setRLibPaths</code></td>
-<td>boolean</td>
-<td><code>true</code></td>
-<td>Set default paths for R libraries (including for <code>renv</code>) to avoid reinstalling upon rebuild.</td>
-</tr>
-<tr class="even">
-<td><code>overrideTokensAtInstall</code></td>
-<td>boolean</td>
-<td><code>true</code></td>
-<td>Temporarily override <code>GITHUB_TOKEN</code> / set <code>GITHUB_PAT</code> from the best available token during the renv install phase, then reset afterwards.</td>
-</tr>
-<tr class="odd">
-<td><code>restore</code></td>
-<td>boolean</td>
-<td><code>true</code></td>
-<td>Run package restoration using <code>renvvv::renvvv_restore()</code>.</td>
-</tr>
-<tr class="even">
-<td><code>update</code></td>
-<td>boolean</td>
-<td><code>false</code></td>
-<td>Run package update using <code>renvvv::renvvv_update()</code>. If both <code>restore</code> and <code>update</code> are <code>true</code>, <code>renvvv::renvvv_restore_and_update()</code> is used.</td>
-</tr>
-<tr class="odd">
-<td><code>renvDir</code></td>
+<td>repositories</td>
+<td>Comma-separated list of GitHub repos whose <code>renv.lock</code> files it will restore, e.g.&nbsp;<code>myUsername/repo1,myUsername/repo2</code>. By default, uses the <code>renv.lock</code> file at the root of the repository. Can specify branch (e.g., <code>myUsername/repo1@branch</code>), <code>renv</code> profile (e.g., <code>myUsername/repo1:renvProfile</code>) or both (e.g., <code>myUsername/repo1@branch:renvProfile</code>)</td>
 <td>string</td>
-<td><code>"/usr/local/share/renv-cache/lockfiles"</code></td>
-<td>Path to directory containing subdirectories with <code>renv.lock</code> files.</td>
+<td>-</td>
 </tr>
 <tr class="even">
-<td><code>pkgExclude</code></td>
+<td>pkg</td>
+<td>Comma-separated list of specific packages to cache explicitly.</td>
 <td>string</td>
-<td><code>""</code></td>
-<td>Comma-separated list of packages to exclude from renv snapshot restore.</td>
+<td>-</td>
 </tr>
 <tr class="odd">
-<td><code>usePak</code></td>
-<td>boolean</td>
-<td><code>false</code></td>
-<td>Use <code>pak</code> for package installation.</td>
+<td>pkgExclude</td>
+<td>Comma-separated list of packages to exclude from the renv snapshot restore process.</td>
+<td>string</td>
+<td>-</td>
 </tr>
 <tr class="even">
-<td><code>debug</code></td>
+<td>restore</td>
+<td>Whether to run package restoration using renvvv::renvvv_restore(). Default is true.</td>
 <td>boolean</td>
-<td><code>false</code></td>
-<td>Print debug information during package restore.</td>
+<td>true</td>
 </tr>
 <tr class="odd">
-<td><code>debugRenv</code></td>
+<td>update</td>
+<td>Whether to run package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used. Default is false.</td>
 <td>boolean</td>
-<td><code>false</code></td>
-<td>Print debug information during renv restore.</td>
+<td>false</td>
+</tr>
+<tr class="even">
+<td>createUnifiedLockfile</td>
+<td>Whether to create a single unified <code>renv.lock</code> file combining dependencies. ‘auto’ creates it only if multiple lockfiles or explicit packages are provided. ‘true’ always creates it. ‘false’ skips creation.</td>
+<td>string</td>
+<td>auto</td>
+</tr>
+<tr class="odd">
+<td>purgePostUnification</td>
+<td>Determines which package versions to keep when purging the global cache to save disk space (if a unified lockfile is created). ‘none’ disables purging. ‘keep-one’ retains the update-based lockfile packages if <code>update</code> is true and the restore-based lockfile otherwise. ‘keep-both’ retains both. If no unified lockfile is create, this option is ignored.</td>
+<td>string</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td>setRLibPaths</td>
+<td>Whether to set default paths for R libraries (including for <code>renv</code>) to avoid needing to reinstall upon codespace rebuild.</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr class="odd">
+<td>overrideTokensAtInstall</td>
+<td>If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT &gt; GH_TOKEN &gt; GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually.</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr class="even">
+<td>lockfileDir</td>
+<td>Path to the directory containing subdirectories with <code>renv.lock</code> files. Defaults to <code>/usr/local/share/renv-cache/lockfiles</code>.</td>
+<td>string</td>
+<td>/usr/local/share/renv-cache/lockfiles</td>
+</tr>
+<tr class="odd">
+<td>usePak</td>
+<td>Whether to use <code>pak</code> for package installation. For some reason, restoring from the <code>renv</code> cache has not worked when using <code>pak</code> to build the image, so this is not recommended.</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr class="even">
+<td>debugRenv</td>
+<td>Whether to use verbose renv output. Sets <code>RENV_CONFIG_INSTALL_VERBOSE</code> and <code>RENV_VERBOSE</code> to true when enabled.</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr class="odd">
+<td>installSystemRequirements</td>
+<td>Uses the Posit API to install apt-dependencies.</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr class="even">
+<td>cranMirror</td>
+<td>-</td>
+<td>string</td>
+<td>https://cloud.r-project.org</td>
 </tr>
 </tbody>
 </table>
@@ -384,114 +430,197 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="how-it-works" class="level2">
 <h2 class="anchored" data-anchor-id="how-it-works">How It Works</h2>
 <section id="r-configuration-files-modified" class="level3">
-<h3 class="anchored" data-anchor-id="r-configuration-files-modified">R Configuration Files Modified</h3>
-<p>The feature modifies the site-wide <code>Renviron.site</code> file (<code>$R_HOME/lib/R/etc/Renviron.site</code>). Two different configurations are applied at different stages:</p>
+<h3 class="anchored" data-anchor-id="r-configuration-files-modified">1. R Configuration Files Modified</h3>
+<p>The feature modifies the site-wide <code>Renviron.site</code> file during the build process. This file is located at <code>$R_HOME/lib/R/etc/Renviron.site</code> (typically <code>/usr/local/lib/R/etc/Renviron.site</code> or similar depending on R installation).</p>
+<p>Two different configurations are applied at different stages:</p>
 <p><strong>During Image Build</strong> (<code>scripts/r-lib.sh</code>):</p>
-<pre><code>RENV_PATHS_ROOT=/renv/local
-RENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library
-RENV_PATHS_CACHE=/renv/cache
-R_LIBS=/workspaces/.local/lib/R</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="va">RENV_PATHS_ROOT</span><span class="op">=</span>/renv/local</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="va">RENV_PATHS_LIBRARY_ROOT</span><span class="op">=</span>/workspaces/.local/lib/R/library</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="va">RENV_PATHS_CACHE</span><span class="op">=</span>/renv/cache</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">R_LIBS</span><span class="op">=</span>/workspaces/.local/lib/R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>After Container Creation</strong> (<code>scripts/r-lib-update.sh</code>):</p>
-<pre><code>RENV_PATHS_ROOT=/workspaces/.local/renv
-RENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library
-RENV_PATHS_CACHE=/workspaces/.cache/renv:/renv/cache
-R_LIBS=/workspaces/.local/lib/R</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="va">RENV_PATHS_ROOT</span><span class="op">=</span>/workspaces/.local/renv</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">RENV_PATHS_LIBRARY_ROOT</span><span class="op">=</span>/workspaces/.local/lib/R/library</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">RENV_PATHS_CACHE</span><span class="op">=</span>/workspaces/.cache/renv:/renv/cache</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">R_LIBS</span><span class="op">=</span>/workspaces/.local/lib/R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="image-build-phase" class="level3">
-<h3 class="anchored" data-anchor-id="image-build-phase">Image Build Phase</h3>
+<h3 class="anchored" data-anchor-id="image-build-phase">2. Image Build Phase</h3>
+<p>When the container image is built:</p>
 <ol type="1">
-<li><code>Renviron.site</code> is configured with initial paths.</li>
-<li>Required directories are created (<code>/renv/local</code>, <code>/renv/cache</code>, <code>/workspaces/.local/lib/R/library</code>).</li>
-<li>Packages are installed from <code>renv.lock</code> files located in subdirectories of <code>renvDir</code>.</li>
-<li>Installed packages are automatically cached in <code>/renv/cache</code>.</li>
+<li><code>Renviron.site</code> is configured with initial paths by <code>scripts/r-lib.sh</code>.</li>
+<li>Directories are created for the renv project root during build (<code>/renv/local</code>), the global package cache (<code>/renv/cache</code>), the library root (<code>/workspaces/.local/lib/R/library</code>), and the pak cache directory (<code>/workspaces/.cache/R/pkgcache/pkg</code>).</li>
+<li>Packages are installed from multiple potential sources. These sources include <code>renv.lock</code> files located in subdirectories of the <code>lockfileDir</code> (default: <code>/usr/local/share/renv-cache/lockfiles</code>), remote GitHub repositories specified via the <code>repositories</code> option, and explicit package strings specified via the <code>pkg</code> option. For each source, packages are restored using <code>renvvv::renvvv_restore()</code> (or <code>renvvv_update()</code> / <code>renvvv_restore_and_update()</code> based on options). Installed packages are automatically cached in <code>/renv/cache</code> due to the <code>RENV_PATHS_CACHE</code> setting.</li>
+<li>A Unified Lockfile is Generated (Optional/Auto). By default (when <code>createUnifiedLockfile</code> is set to <code>auto</code>), if you provided multiple lockfiles or specified explicit packages, the feature aggregates all unique package dependencies and performs a combined <code>renv::restore(clean = FALSE)</code> followed by a <code>renv::snapshot()</code>. This creates a single, master <code>renv.lock</code> containing the union of all dependencies. Both this combined lockfile and the individual project lockfiles are saved to an internal container cache (<code>/usr/local/share/renv-cache/lockfiles</code>).</li>
+<li>Unused Package Versions are Purged (Optional). If <code>purgePostUnification</code> is set to <code>"keep-one"</code> or <code>"keep-both"</code> (and <code>createUnifiedLockfile</code> evaluates to <code>true</code>), the feature scans the global package cache and deletes all package versions except the exact ones tracked by the final unified environment to minimize image size.</li>
+<li>Cache permissions are set via environment variables to ensure proper access for the runtime user.</li>
 </ol>
 </section>
 <section id="container-runtime-phase" class="level3">
-<h3 class="anchored" data-anchor-id="container-runtime-phase">Container Runtime Phase</h3>
-<p>When the container starts, <code>RENV_PATHS_CACHE</code> is updated to <code>/workspaces/.cache/renv:/renv/cache</code>, creating a two-level cache:</p>
+<h3 class="anchored" data-anchor-id="container-runtime-phase">3. Container Runtime Phase</h3>
+<p>When the container starts:</p>
 <ol type="1">
-<li>Workspace-specific cache (<code>/workspaces/.cache/renv</code>) is checked first.</li>
-<li>The build-time cache (<code>/renv/cache</code>) is used as a fallback.</li>
+<li><code>Renviron.site</code> is updated by <code>scripts/r-lib-update.sh</code> (called during post-create). <code>RENV_PATHS_CACHE</code> is updated to <code>/workspaces/.cache/renv:/renv/cache</code>. This creates a two-level cache: workspace-specific cache first, then the built-in cache as fallback. <code>RENV_PATHS_ROOT</code> points to <code>/workspaces/.local/renv</code> for workspace-specific project data.</li>
+<li>Packages from the build cache are automatically available. When renv needs a package, it first checks <code>/workspaces/.cache/renv</code>. If not found, it checks <code>/renv/cache</code> (populated during build). If found in either cache, renv links the package instead of reinstalling.</li>
 </ol>
-<p>Packages already in the cache are linked instead of reinstalled, making subsequent starts very fast.</p>
 </section>
 </section>
-<section id="basic-setup" class="level2">
-<h2 class="anchored" data-anchor-id="basic-setup">Basic Setup</h2>
-<ol type="1">
-<li>Create an renv directory structure in your repository:</li>
-</ol>
-<pre><code>.devcontainer/
-└── renv/
-    ├── project1/
-    │   └── renv.lock
-    └── shared/
-        └── renv.lock</code></pre>
-<ol start="2" type="1">
-<li>Configure the feature in <code>devcontainer.json</code>:</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"renvDir"</span><span class="fu">:</span> <span class="st">"${containerWorkspaceFolder}/.devcontainer/renv"</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ol start="3" type="1">
-<li>Mount the renv directory so it is available during the build:</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"mounts"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/lockfiles,type=bind"</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="the-renv-cache-restore-cli" class="level2">
+<h2 class="anchored" data-anchor-id="the-renv-cache-restore-cli">The <code>renv-cache-restore</code> CLI</h2>
+<p>This feature also installs a built-in CLI tool, <code>renv-cache-restore</code>, which serves as a robust wrapper around <code>renvvv::renvvv_restore()</code>. It handles environment activation, ensures the correct version of <code>renv</code> is synced, and provides advanced cache-targeting capabilities.</p>
+<p><strong>Basic usage:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Restore the project in the current directory</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-restore</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Restore a project in a specific directory</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-restore</span> <span class="at">-d</span> ./my-project</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="forced-cache-usage" class="level3">
+<h3 class="anchored" data-anchor-id="forced-cache-usage">Forced Cache Usage</h3>
+<p>If you want to ensure the fastest possible initialization times without hitting external networks (like CRAN or Bioconductor), you can use the <code>--force-cache-version</code> flag.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-restore</span> <span class="at">-c</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-restore</span> <span class="at">--force-cache-version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>How it works:</strong> When this flag is passed, the script temporarily hot-swaps your <code>renv.lock</code> file in memory before the restoration begins. It scans the container’s global package cache for standard CRAN and Bioconductor packages. If your lockfile specifies a version of a package not available in the cache but the cache contains other version(s) of that package, then it forcibly injects the highest-available version and cache hash into the lockfile.</p>
+<p>This improves usage of the cache. The original <code>renv.lock</code> file is automatically rolled back to its unmodified state immediately after the restoration process finishes. Run <code>renv::snapshot()</code> if you are happy with the updated versions afterwards.</p>
+<p><em>(Note: This forced cache override ignores GitHub, Git, and Local package sources).</em></p>
+<p><strong>Other useful options:</strong> * <code>-u, --update</code>: Run <code>renvvv_update()</code> alongside or instead of a standard restore. * <code>-e, --exclude &lt;pkg1,pkg2&gt;</code>: Temporarily skip specific packages during the restoration process. * <code>-p, --pak</code>: Enable the <code>pak</code> backend for this specific restore.`</p>
+</section>
+</section>
+<section id="the-renv-cache-copy-lockfile-cli" class="level2">
+<h2 class="anchored" data-anchor-id="the-renv-cache-copy-lockfile-cli">The <code>renv-cache-copy-lockfile</code> CLI</h2>
+<p>This feature installs a built-in CLI tool, <code>renv-cache-copy-lockfile</code>, which allows you to easily copy the cached <code>renv.lock</code> files out of the internal cache and into your workspace.</p>
+<p>By default, it copies the unified, combined lockfile (containing all dependencies from all projects and repos) to your current directory.</p>
+<p><strong>Basic usage:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the unified lockfile to your current directory</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the unified lockfile to a specific path</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span> ./my-project/renv.lock</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><code>--list</code>: Lists all available cached projects (including the default <code>renv-cache-overall</code> combined lockfile and any specific remote repos/local subdirectories) and whether they have updated versions available.</li>
+<li><code>-p, --project &lt;name&gt;</code>: Copy a specific project’s lockfile instead of the overall combined one (e.g., <code>-p M72_CITEseqHIVE_scRNAseq_Pipeline</code>).</li>
+<li><code>--update</code>: If <code>update: true</code> was set in the feature options, prefer copying the updated lockfile over the originally restored one.</li>
+<li><code>--overwrite</code>: Overwrite the destination file if it already exists.</li>
+</ul>
+</section>
+<section id="how-to-use-this-feature" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-use-this-feature">How to Use This Feature</h2>
+<p>To cache your dependencies during the image build phase, the feature needs access to your lockfiles <em>before</em> the VS Code workspace is mounted. You can provide these lockfiles using local directories, remote repositories, or a combination of both.</p>
+<section id="method-a-using-local-lockfiles" class="level3">
+<h3 class="anchored" data-anchor-id="method-a-using-local-lockfiles">Method A: Using Local Lockfiles</h3>
+<p>If you have local <code>renv.lock</code> files, you must copy them into the image using a minimal Dockerfile so the feature can see them during the build. First, organize your lockfiles in a <code>.devcontainer/renv/</code> directory (e.g., <code>.devcontainer/renv/project1/renv.lock</code>). Next, create a <code>Dockerfile</code> in your <code>.devcontainer</code> folder that copies this directory into the feature’s default internal path:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode dockerfile code-with-copy"><code class="sourceCode dockerfile"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy lockfiles so the feature can process them during the build</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .devcontainer/renv /usr/local/share/renv-cache/lockfiles</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Finally, reference this Dockerfile and the feature in your <code>devcontainer.json</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"build"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"dockerfile"</span><span class="fu">:</span> <span class="st">"Dockerfile"</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="method-b-using-remote-repositories" class="level3">
+<h3 class="anchored" data-anchor-id="method-b-using-remote-repositories">Method B: Using Remote Repositories</h3>
+<p>If your dependencies are defined in remote GitHub repositories, you do not need a custom Dockerfile. You can use a standard image and pass the repository targets directly to the feature via the <code>repositories</code> option:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"image"</span><span class="fu">:</span> <span class="st">"bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2"</span><span class="fu">,</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"repositories"</span><span class="fu">:</span> <span class="st">"MiguelRodo/projr@main,MiguelRodo/renvvv"</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>By default, the feature assumes there is a standard <code>renv.lock</code> file located at the root of the cloned repository.</p>
+<section id="targeting-branches-and-profiles" class="level4">
+<h4 class="anchored" data-anchor-id="targeting-branches-and-profiles">Targeting Branches and Profiles</h4>
+<p>You can target specific branches or <code>renv</code> profiles within your remote repositories using the syntax <code>user/repo@branch:profile</code>. If you append <code>@branch</code> (e.g., <code>MiguelRodo/projr@v2</code>), the feature will clone that specific branch instead of the default branch. If you append <code>:profile</code> (e.g., <code>MiguelRodo/projr:dev</code>), the feature will restore using that specific <code>renv</code> profile, expecting the lockfile to be located at <code>renv/profiles/&lt;profile&gt;/renv.lock</code>. You can combine both options using the full syntax (e.g., <code>MiguelRodo/projr@main:dev</code>).</p>
+</section>
+</section>
+<section id="final-step-initialize-your-workspace" class="level3">
+<h3 class="anchored" data-anchor-id="final-step-initialize-your-workspace">Final Step: Initialize Your Workspace</h3>
+<p>Once the container finishes building and starts, your dependencies are securely cached inside the image. To activate them in your current workspace, run the copy command to extract the pre-warmed, unified lockfile and restore the project:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"renv::restore()"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
 </section>
 <section id="package-restoration" class="level2">
 <h2 class="anchored" data-anchor-id="package-restoration">Package Restoration</h2>
-<p>This feature uses <a href="https://github.com/MiguelRodo/renvvv"><code>renvvv::renvvv_restore()</code></a> instead of the default <code>renv::restore()</code>. This provides more robust restoration logic that:</p>
+<p>This feature uses <code>renvvv::renvvv_restore()</code> for package restoration instead of the default <code>renv::restore()</code>. This provides more robust restoration logic that continues past individual package failures, retries failed packages individually, and reports what couldn’t be installed. It also handles GitHub, CRAN, and Bioconductor packages while providing better error recovery. Additionally, it supports skipping specific packages via the <code>pkgExclude</code> option. The <code>renvvv</code> package is automatically installed during feature setup.</p>
+</section>
+<section id="skipping-packages" class="level2">
+<h2 class="anchored" data-anchor-id="skipping-packages">Skipping Packages</h2>
+<p>You can exclude specific packages from being restored by using the <code>pkgExclude</code> option with a comma-separated list of package names:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="st">"features"</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"pkgExclude"</span><span class="fu">:</span> <span class="st">"package1,package2,package3"</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is useful when certain packages fail to install in your environment, you want to manually manage specific package versions, or some packages are simply not needed for your workflow.</p>
+</section>
+<section id="unified-lockfile-control" class="level2">
+<h2 class="anchored" data-anchor-id="unified-lockfile-control">Unified Lockfile Control</h2>
+<p>By default, the feature intelligently decides whether to create a single, master <code>renv.lock</code> file based on how many environments you pass it. You can explicitly override this behavior using the <code>createUnifiedLockfile</code> option:</p>
 <ul>
-<li>Continues past individual package failures</li>
-<li>Retries failed packages individually</li>
-<li>Reports packages that could not be installed</li>
-<li>Handles GitHub, CRAN, and Bioconductor packages</li>
-<li>Supports skipping specific packages via <code>pkgExclude</code></li>
+<li><code>"auto"</code> (default): Creates the unified lockfile <em>only</em> if multiple sources (e.g., multiple lockfiles across local subdirectories or remotes) or explicit packages via <code>pkg</code> are provided.</li>
+<li><code>"true"</code>: Always creates a unified lockfile, even if you only provided a single project.</li>
+<li><code>"false"</code>: Disables unified lockfile generation entirely.</li>
 </ul>
+<p>If disabled, the <code>renv-cache-copy-lockfile</code> CLI tool will automatically default to serving the lockfile of your single cached project.</p>
+</section>
+<section id="cache-size-optimization-purging" class="level2">
+<h2 class="anchored" data-anchor-id="cache-size-optimization-purging">Cache Size Optimization (Purging)</h2>
+<p>When combining multiple projects with conflicting package versions, or heavily using the <code>pkgExclude</code> option to strip out certain dependencies, the global <code>renv</code> cache inside the Docker image can become bloated with unused package versions.</p>
+<p>To minimize the size of your final Docker image, you can enable post-unification purging:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="st">"features"</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"purgePostUnification"</span><span class="fu">:</span> <span class="st">"keep-one"</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<blockquote class="blockquote">
+<p>Note on purging strategies: * <code>"keep-one"</code>: Retains only the updated package versions (if <code>update</code> is <code>true</code>) or the originally restored versions (if <code>update</code> is <code>false</code>). * <code>"keep-both"</code>: Safely retains both the original and updated versions of the packages in the cache. * <code>"none"</code>: Disables purging entirely. The default.</p>
+</blockquote>
 </section>
 <section id="github-token-management" class="level2">
 <h2 class="anchored" data-anchor-id="github-token-management">GitHub Token Management</h2>
-<section id="build-time-token-override-overridetokensatinstall" class="level3">
-<h3 class="anchored" data-anchor-id="build-time-token-override-overridetokensatinstall">Build-Time Token Override (<code>overrideTokensAtInstall</code>)</h3>
-<p>During the build phase, <code>renv-cache</code> temporarily overrides GitHub authentication tokens so that <code>renv</code> package installation can authenticate with GitHub:</p>
+</section>
+<section id="build-time-token-override-overridetokensatinstall" class="level2">
+<h2 class="anchored" data-anchor-id="build-time-token-override-overridetokensatinstall">Build-Time Token Override (<code>overrideTokensAtInstall</code>)</h2>
+<p>During the image build phase, <code>renv-cache</code> temporarily overrides GitHub authentication tokens so that <code>renv</code> package installation can authenticate with GitHub. This is controlled by the <code>overrideTokensAtInstall</code> option (default: <code>true</code>).</p>
+<p><strong>What it does:</strong></p>
 <ol type="1">
-<li>Saves the current values of <code>GITHUB_TOKEN</code> and <code>GITHUB_PAT</code>.</li>
-<li>Sets <code>GITHUB_PAT</code> from the best available token (priority: <code>GITHUB_PAT</code> &gt; <code>GH_TOKEN</code> &gt; <code>GITHUB_TOKEN</code>).</li>
-<li>Overrides <code>GITHUB_TOKEN</code> with the most permissive token available.</li>
-<li>Runs the renv restore.</li>
-<li>Resets both variables to their original values.</li>
+<li>Saves the current values of <code>GITHUB_TOKEN</code> and <code>GITHUB_PAT</code></li>
+<li>Sets <code>GITHUB_PAT</code> from the best available token (priority: <code>GITHUB_PAT</code> &gt; <code>GH_TOKEN</code> &gt; <code>GITHUB_TOKEN</code>) if not already set</li>
+<li>Overrides <code>GITHUB_TOKEN</code> with the most permissive token available (priority: <code>GITHUB_PAT</code> &gt; <code>GH_TOKEN</code>) so R tools find it first</li>
+<li>Runs the renv package restore/install</li>
+<li>Resets <code>GITHUB_TOKEN</code> and <code>GITHUB_PAT</code> to their original values (or unsets them if they were not set before)</li>
 </ol>
-<p>To opt out:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"overrideTokensAtInstall"</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is a simple, blunt approach: it applies only during the feature install step and has no persistent effect on the container.</p>
+<p><strong>To opt out:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"overrideTokensAtInstall"</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="session-time-token-management" class="level3">
-<h3 class="anchored" data-anchor-id="session-time-token-management">Session-Time Token Management</h3>
-<p>For GitHub token elevation on every shell startup (e.g., for interactive R sessions), use the companion <a href="../features/github-tokens.html"><code>github-tokens</code></a> feature:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="session-time-token-management" class="level2">
+<h2 class="anchored" data-anchor-id="session-time-token-management">Session-Time Token Management</h2>
+<p>If you also want GitHub token elevation on every shell startup (e.g., for interactive R sessions), use the companion <code>github-tokens</code> feature:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-</section>
-<section id="source" class="level2">
-<h2 class="anchored" data-anchor-id="source">Source</h2>
-<p><a href="https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/renv-cache"><code>src/renv-cache</code></a></p>
+<section id="acknowledgments" class="level2">
+<h2 class="anchored" data-anchor-id="acknowledgments">Acknowledgments</h2>
+<p>This project incorporates code from <a href="https://github.com/rocker-org/devcontainer-features">AwesomeProject</a>, which is licensed under the MIT License.</p>
 
 
 </section>
