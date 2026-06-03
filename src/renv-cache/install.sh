@@ -32,7 +32,7 @@ OVERRIDE_TOKENS_AT_INSTALL="${OVERRIDETOKENSATINSTALL:-true}"
 RESTORE="${RESTORE:-true}"
 UPDATE="${UPDATE:-false}"
 USE_PAK="${USEPAK:-false}"
-RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/lockfiles"}"
+LOCKFILE_DIR="${LOCKFILEDIR:-"/usr/local/share/renv-cache/lockfiles"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 CREATE_UNIFIED_LOCKFILE="${CREATEUNIFIEDLOCKFILE:-auto}"
 PURGE_POST_UNIFICATION="${PURGEPOSTUNIFICATION:-false}"
@@ -43,7 +43,7 @@ PKG_EXCLUDE="${PKGEXCLUDE:-""}"
 INSTALL_SYSREQS="${INSTALLSYSTEMREQUIREMENTS:-"true"}"
 CRAN_MIRROR="${CRANMIRROR:-"https://cloud.r-project.org"}"
 
-if [ -n "$PKG" ] || [ -n "$REPOSITORIES" ] || { [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; }; then
+if [ -n "$PKG" ] || [ -n "$REPOSITORIES" ] || { [ -n "$LOCKFILE_DIR" ] && [ -d "$LOCKFILE_DIR" ]; }; then
     if ! command -v Rscript >/dev/null 2>&1; then
         echo "(!) Cannot run Rscript. Please ensure R is installed before running the renv-cache feature."
         exit 1
@@ -89,7 +89,7 @@ fi
 
 # CORE FUNCTION: Process a directory containing an renv lockfile
 
-process_renv_dir() {
+process_lockfile_dir() {
     local TARGET_DIR=$1
     local PROFILE=$2
 
@@ -405,26 +405,14 @@ set_tokens_for_install
 copy_and_set_execute_bit copy-lockfile
 copy_and_set_execute_bit restore
 
-# 1. Process Local Lockfile (Backward Compatibility)
-N_RENV_DIR=0
-if [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
-    # We must look for renv.lock in subdirectories of RENV_DIR
-    for dir in $(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null); do
-        N_RENV_DIR=$((N_RENV_DIR + 1))
-        process_renv_dir "$dir" ""
-    done
-fi
-
-# 2. Process Dynamic Repositories
-TMP_REPO_DIR=""
-N_REPOSITORIES=0
+# 1. Fetch Dynamic Repositories (Downloads renv.lock directly via GitHub API)
 if [ -n "$REPOSITORIES" ]; then
-    TMP_REPO_DIR=$(mktemp -d)
+    echo "[INFO] Fetching remote lockfiles..."
+    mkdir -p "$LOCKFILE_DIR"
     IFS=',' read -ra REPO_ARRAY <<< "$REPOSITORIES"
 
     for REPO_SPEC in "${REPO_ARRAY[@]}"; do
-        N_REPOSITORIES=$((N_REPOSITORIES + 1))
-        # (Original git clone logic)
+        # Parse REPO_SPEC
         REPO_SPEC=$(echo "$REPO_SPEC" | xargs)
         if [[ "$REPO_SPEC" == *":"* ]]; then
             PROFILE="${REPO_SPEC##*:}"
@@ -440,26 +428,60 @@ if [ -n "$REPOSITORIES" ]; then
             BRANCH=""
         fi
 
-        TARGET_DIR="${TMP_REPO_DIR}/${REPO_PATH##*/}"
-        CLONE_URL="https://${GITHUB_PAT:-}@github.com/${REPO_PATH}.git"
-
-        echo "Cloning ${REPO_PATH}..."
-        if [ -n "$BRANCH" ]; then
-            git clone --branch "$BRANCH" --single-branch "$CLONE_URL" "$TARGET_DIR"
+        # Determine file path based on profile
+        if [ -n "$PROFILE" ]; then
+            FILE_PATH="renv/profiles/$PROFILE/renv.lock"
         else
-            git clone "$CLONE_URL" "$TARGET_DIR"
+            FILE_PATH="renv.lock"
         fi
 
-        process_renv_dir "$TARGET_DIR" "$PROFILE"
+        # Construct API URL
+        API_URL="https://api.github.com/repos/${REPO_PATH}/contents/${FILE_PATH}"
+        if [ -n "$BRANCH" ]; then
+            API_URL="${API_URL}?ref=${BRANCH}"
+        fi
+
+        echo "[INFO] Downloading ${FILE_PATH} from ${REPO_PATH}..."
+        
+        # Create a safe, unique directory name based on the repo details
+        SAFE_NAME=$(echo "${REPO_PATH}_${BRANCH}_${PROFILE}" | sed 's/[^a-zA-Z0-9]/_/g')
+        DEST_DIR="${LOCKFILE_DIR}/remote_${SAFE_NAME}"
+        mkdir -p "$DEST_DIR"
+
+        # Build secure curl options array
+        CURL_OPTS=(-s -L -w "%{http_code}" -H "Accept: application/vnd.github.v3.raw" -o "$DEST_DIR/renv.lock")
+        if [ -n "$GITHUB_PAT" ]; then
+            CURL_OPTS+=(-H "Authorization: token $GITHUB_PAT")
+        fi
+
+        # Download directly using the GitHub API
+        HTTP_CODE=$(curl "${CURL_OPTS[@]}" "$API_URL")
+
+        if [ "$HTTP_CODE" = "200" ]; then
+            echo "[INFO] Successfully downloaded remote lockfile into $DEST_DIR"
+        else
+            echo "[WARN] Failed to download lockfile for ${REPO_PATH} (HTTP $HTTP_CODE). Skipping."
+            rm -rf "$DEST_DIR"
+        fi
     done
-    # Note: We do NOT remove TMP_REPO_DIR here yet. It gets removed at the very end.
+fi
+
+# 2. Process All Cached Lockfiles (Local + Remote)
+N_LOCKFILE_DIR=0
+if [ -n "$LOCKFILE_DIR" ] && [ -d "$LOCKFILE_DIR" ]; then
+    for dir in $(find "$LOCKFILE_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null); do
+        N_LOCKFILE_DIR=$((N_LOCKFILE_DIR + 1))
+        # Pass empty profile because the lockfile is now standardly located at the root of the sandbox
+        process_lockfile_dir "$dir" ""
+    done
 fi
 
 # 3. Process Explicit Packages (No Lockfile)
 if [ -n "$PKG" ]; then
     ANY_PKG=true
     TMP_PKG_DIR=$(mktemp -d)
-    chown "${USERNAME}:${USERNAME}" "$TMP_PKG_DIR"
+    chown "${USERNAME}:${USERNAME}" "$
+    PKG_DIR"
     pushd "$TMP_PKG_DIR" > /dev/null
 
     echo "Warming cache with explicit packages: ${PKG}..."
@@ -491,7 +513,7 @@ fi
 if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
 
     if [ "$CREATE_UNIFIED_LOCKFILE" = "auto" ]; then
-        N_LOCKFILE=$((N_RENV_DIR + N_REPOSITORIES))
+        N_LOCKFILE=$N_LOCKFILE_DIR
         if [ "$N_LOCKFILE" -gt 1 ] || [ "$ANY_PKG" = true ]; then
             CREATE_UNIFIED_LOCKFILE=true
         else
@@ -676,11 +698,6 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
 
     # Always clean up the tracking file
     rm -f /tmp/renv_lockfiles_to_combine.txt
-fi
-
-# Final Cleanup (Now it is safe to remove TMP_REPO_DIR)
-if [ -n "$TMP_REPO_DIR" ] && [ -d "$TMP_REPO_DIR" ]; then
-    rm -rf "$TMP_REPO_DIR"
 fi
 
 echo "renv-cache installation complete!"
