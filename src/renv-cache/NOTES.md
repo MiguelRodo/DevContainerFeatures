@@ -44,9 +44,9 @@ When the container image is built:
     This creates a single, master `renv.lock` containing the union of all dependencies.
     Both this combined lockfile and the individual project lockfiles are saved to an internal container cache (`/usr/local/share/renv-cache/lockfiles`).
 5. Unused Package Versions are Purged (Optional).
-    If `purgePostUnification` is set to `true` (and `createUnifiedLockfile` evaluates to `true`), the feature scans the global package cache and deletes all package versions except the exact ones tracked by the final unified environment to minimize image size.
+    If `purgePostUnification` is set to `"keep-one"` or `"keep-both"` (and `createUnifiedLockfile` evaluates to `true`), the feature scans the global package cache and deletes all package versions except the exact ones tracked by the final unified environment to minimize image size.
 6. Cache permissions are set via environment variables to ensure proper access for the runtime user.
-
+   
 #### 3. Container Runtime Phase
 
 When the container starts:
@@ -59,6 +59,41 @@ When the container starts:
   When renv needs a package, it first checks `/workspaces/.cache/renv`.
   If not found, it checks `/renv/cache` (populated during build).
   If found in either cache, renv links the package instead of reinstalling.
+
+### The `renv-cache-restore` CLI
+
+This feature also installs a built-in CLI tool, `renv-cache-restore`, which serves as a robust wrapper around `renvvv::renvvv_restore()`. It handles environment activation, ensures the correct version of `renv` is synced, and provides advanced cache-targeting capabilities.
+
+**Basic usage:**
+
+```bash
+# Restore the project in the current directory
+renv-cache-restore
+
+# Restore a project in a specific directory
+renv-cache-restore -d ./my-project
+```
+
+#### Forced Cache Usage
+
+If you want to ensure the fastest possible initialization times without hitting external networks (like CRAN or Bioconductor), you can use the `--force-cache-version` flag.
+
+```bash
+renv-cache-restore -c
+# or
+renv-cache-restore --force-cache-version
+```
+
+**How it works:** When this flag is passed, the script temporarily hot-swaps your `renv.lock` file in memory before the restoration begins. It scans the container's global package cache for standard CRAN and Bioconductor packages. If a valid version of a required package already exists in the cache, it forcibly injects that exact version and cache hash into the lockfile.
+
+This guarantees a 100% cache hit and prevents `renv` from attempting to download missing versions from the internet. The original `renv.lock` file is automatically rolled back to its unmodified state immediately after the restoration process finishes.
+
+*(Note: This forced cache override ignores GitHub, Git, and Local package sources).*
+
+**Other useful options:**
+* `-u, --update`: Run `renvvv_update()` alongside or instead of a standard restore.
+* `-e, --exclude <pkg1,pkg2>`: Temporarily skip specific packages during the restoration process.
+* `-p, --pak`: Enable the `pak` backend for this specific restore.`
 
 ### The `renv-cache-copy-lockfile` CLI
 
@@ -188,14 +223,15 @@ To minimize the size of your final Docker image, you can enable post-unification
 ```json
 "features": {
     "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
-        "purgePostUnification": true
+        "purgePostUnification": "keep-one"
     }
 }
 ```
 
-**How it works:** When set to `true`, the feature performs a final, aggressive cleanup step.
-It scans the global cache against the final unified lockfile and physically deletes any package versions that are not explicitly required by the unified environment.
-*(Note: This feature relies on the unified lockfile being created, so it will not run if `createUnifiedLockfile` resolves to `false`).*
+> Note on purging strategies:
+> * `"keep-one"`: Retains only the updated package versions (if `update` is `true`) or the originally restored versions (if `update` is `false`).
+> * `"keep-both"`: Safely retains both the original and updated versions of the packages in the cache. 
+> * `"none"`: Disables purging entirely. The default.
 
 ## Acknowledgments
 
