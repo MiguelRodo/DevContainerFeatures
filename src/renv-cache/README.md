@@ -127,6 +127,29 @@ This improves usage of the cache. The original `renv.lock` file is automatically
 * `-e, --exclude <pkg1,pkg2>`: Temporarily skip specific packages during the restoration process.
 * `-p, --pak`: Enable the `pak` backend for this specific restore.`
 
+### The `renv-cache-init` CLI
+
+If you are starting a brand new project, or migrating an existing project that doesn't have an `renv.lock` file yet, you can use the `renv-cache-init` tool to bootstrap your environment end-to-end.
+
+**Basic usage:**
+
+```bash
+# Initialize the project in the current directory
+renv-cache-init
+
+# Initialize a project in a specific directory
+renv-cache-init -d ./my-new-project
+```
+
+**How it works:**
+Instead of blindly downloading the latest packages from CRAN, this script acts as a "Cache-First Bootstrapper":
+
+1. **Scaffolds Infrastructure:** It automatically sets up the basic `renv` infrastructure (`renv/activate.R`, `.Rprofile`) if it isn't already present.
+2. **Scans Dependencies:** It uses `renv::dependencies()` to discover exactly which packages your project depends on.
+3. **Cross-References the Cache:** It matches the list of discovered packages against the container's global package cache.
+4. **Prioritizes Cached Versions:** If a required package is found inside the cache, it explicitly installs that specific cached version to save time and bandwidth. If a package is completely missing from the cache, it gracefully falls back to downloading and installing the latest available version from CRAN or Bioconductor.
+5. **Locks the Environment:** Once the local project library is fully populated, it triggers a fresh `renv::snapshot()` to generate an up-to-date `renv.lock` file for your workspace.
+
 ### The `renv-cache-copy-lockfile` CLI
 
 This feature installs a built-in CLI tool, `renv-cache-copy-lockfile`, which allows you to easily copy the cached `renv.lock` files out of the internal cache and into your workspace.
