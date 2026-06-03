@@ -253,6 +253,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#forced-cache-usage" id="toc-forced-cache-usage" class="nav-link" data-scroll-target="#forced-cache-usage">Forced Cache Usage</a></li>
   </ul></li>
+  <li><a href="#the-renv-cache-init-cli" id="toc-the-renv-cache-init-cli" class="nav-link" data-scroll-target="#the-renv-cache-init-cli">The <code>renv-cache-init</code> CLI</a></li>
   <li><a href="#the-renv-cache-copy-lockfile-cli" id="toc-the-renv-cache-copy-lockfile-cli" class="nav-link" data-scroll-target="#the-renv-cache-copy-lockfile-cli">The <code>renv-cache-copy-lockfile</code> CLI</a></li>
   <li><a href="#how-to-use-this-feature" id="toc-how-to-use-this-feature" class="nav-link" data-scroll-target="#how-to-use-this-feature">How to Use This Feature</a>
   <ul class="collapse">
@@ -486,16 +487,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Other useful options:</strong> * <code>-u, --update</code>: Run <code>renvvv_update()</code> alongside or instead of a standard restore. * <code>-e, --exclude &lt;pkg1,pkg2&gt;</code>: Temporarily skip specific packages during the restoration process. * <code>-p, --pak</code>: Enable the <code>pak</code> backend for this specific restore.`</p>
 </section>
 </section>
+<section id="the-renv-cache-init-cli" class="level2">
+<h2 class="anchored" data-anchor-id="the-renv-cache-init-cli">The <code>renv-cache-init</code> CLI</h2>
+<p>If you are starting a brand new project, or migrating an existing project that doesn’t have an <code>renv.lock</code> file yet, you can use the <code>renv-cache-init</code> tool to bootstrap your environment end-to-end.</p>
+<p><strong>Basic usage:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize the project in the current directory</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-init</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize a project in a specific directory</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-init</span> <span class="at">-d</span> ./my-new-project</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>How it works:</strong> Instead of blindly downloading the latest packages from CRAN, this script acts as a “Cache-First Bootstrapper”:</p>
+<ol type="1">
+<li><strong>Scaffolds Infrastructure:</strong> It automatically sets up the basic <code>renv</code> infrastructure (<code>renv/activate.R</code>, <code>.Rprofile</code>) if it isn’t already present.</li>
+<li><strong>Scans Dependencies:</strong> It uses <code>renv::dependencies()</code> to discover exactly which packages your project depends on.</li>
+<li><strong>Cross-References the Cache:</strong> It matches the list of discovered packages against the container’s global package cache.</li>
+<li><strong>Prioritizes Cached Versions:</strong> If a required package is found inside the cache, it explicitly installs that specific cached version to save time and bandwidth. If a package is completely missing from the cache, it gracefully falls back to downloading and installing the latest available version from CRAN or Bioconductor.</li>
+<li><strong>Locks the Environment:</strong> Once the local project library is fully populated, it triggers a fresh <code>renv::snapshot()</code> to generate an up-to-date <code>renv.lock</code> file for your workspace.</li>
+</ol>
+</section>
 <section id="the-renv-cache-copy-lockfile-cli" class="level2">
 <h2 class="anchored" data-anchor-id="the-renv-cache-copy-lockfile-cli">The <code>renv-cache-copy-lockfile</code> CLI</h2>
 <p>This feature installs a built-in CLI tool, <code>renv-cache-copy-lockfile</code>, which allows you to easily copy the cached <code>renv.lock</code> files out of the internal cache and into your workspace.</p>
 <p>By default, it copies the unified, combined lockfile (containing all dependencies from all projects and repos) to your current directory.</p>
 <p><strong>Basic usage:</strong></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the unified lockfile to your current directory</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the unified lockfile to a specific path</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span> ./my-project/renv.lock</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the unified lockfile to your current directory</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the unified lockfile to a specific path</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span> ./my-project/renv.lock</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><code>--list</code>: Lists all available cached projects (including the default <code>renv-cache-overall</code> combined lockfile and any specific remote repos/local subdirectories) and whether they have updated versions available.</li>
 <li><code>-p, --project &lt;name&gt;</code>: Copy a specific project’s lockfile instead of the overall combined one (e.g., <code>-p M72_CITEseqHIVE_scRNAseq_Pipeline</code>).</li>
@@ -509,31 +528,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="method-a-using-local-lockfiles" class="level3">
 <h3 class="anchored" data-anchor-id="method-a-using-local-lockfiles">Method A: Using Local Lockfiles</h3>
 <p>If you have local <code>renv.lock</code> files, you must copy them into the image using a minimal Dockerfile so the feature can see them during the build. First, organize your lockfiles in a <code>.devcontainer/renv/</code> directory (e.g., <code>.devcontainer/renv/project1/renv.lock</code>). Next, create a <code>Dockerfile</code> in your <code>.devcontainer</code> folder that copies this directory into the feature’s default internal path:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode dockerfile code-with-copy"><code class="sourceCode dockerfile"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy lockfiles so the feature can process them during the build</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .devcontainer/renv /usr/local/share/renv-cache/lockfiles</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode dockerfile code-with-copy"><code class="sourceCode dockerfile"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy lockfiles so the feature can process them during the build</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .devcontainer/renv /usr/local/share/renv-cache/lockfiles</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Finally, reference this Dockerfile and the feature in your <code>devcontainer.json</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"build"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"dockerfile"</span><span class="fu">:</span> <span class="st">"Dockerfile"</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"build"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"dockerfile"</span><span class="fu">:</span> <span class="st">"Dockerfile"</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="method-b-using-remote-repositories" class="level3">
 <h3 class="anchored" data-anchor-id="method-b-using-remote-repositories">Method B: Using Remote Repositories</h3>
 <p>If your dependencies are defined in remote GitHub repositories, you do not need a custom Dockerfile. You can use a standard image and pass the repository targets directly to the feature via the <code>repositories</code> option:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"image"</span><span class="fu">:</span> <span class="st">"bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2"</span><span class="fu">,</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"repositories"</span><span class="fu">:</span> <span class="st">"MiguelRodo/projr@main,MiguelRodo/renvvv"</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"image"</span><span class="fu">:</span> <span class="st">"bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2"</span><span class="fu">,</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"repositories"</span><span class="fu">:</span> <span class="st">"MiguelRodo/projr@main,MiguelRodo/renvvv"</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>By default, the feature assumes there is a standard <code>renv.lock</code> file located at the root of the cloned repository.</p>
 <section id="targeting-branches-and-profiles" class="level4">
 <h4 class="anchored" data-anchor-id="targeting-branches-and-profiles">Targeting Branches and Profiles</h4>
@@ -543,8 +562,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="final-step-initialize-your-workspace" class="level3">
 <h3 class="anchored" data-anchor-id="final-step-initialize-your-workspace">Final Step: Initialize Your Workspace</h3>
 <p>Once the container finishes building and starts, your dependencies are securely cached inside the image. To activate them in your current workspace, run the copy command to extract the pre-warmed, unified lockfile and restore the project:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"renv::restore()"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">renv-cache-copy-lockfile</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"renv::restore()"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="package-restoration" class="level2">
@@ -554,11 +573,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="skipping-packages" class="level2">
 <h2 class="anchored" data-anchor-id="skipping-packages">Skipping Packages</h2>
 <p>You can exclude specific packages from being restored by using the <code>pkgExclude</code> option with a comma-separated list of package names:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="st">"features"</span><span class="er">:</span> <span class="fu">{</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"pkgExclude"</span><span class="fu">:</span> <span class="st">"package1,package2,package3"</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="st">"features"</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"pkgExclude"</span><span class="fu">:</span> <span class="st">"package1,package2,package3"</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is useful when certain packages fail to install in your environment, you want to manually manage specific package versions, or some packages are simply not needed for your workflow.</p>
 </section>
 <section id="unified-lockfile-control" class="level2">
@@ -575,11 +594,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="cache-size-optimization-purging">Cache Size Optimization (Purging)</h2>
 <p>When combining multiple projects with conflicting package versions, or heavily using the <code>pkgExclude</code> option to strip out certain dependencies, the global <code>renv</code> cache inside the Docker image can become bloated with unused package versions.</p>
 <p>To minimize the size of your final Docker image, you can enable post-unification purging:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="st">"features"</span><span class="er">:</span> <span class="fu">{</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"purgePostUnification"</span><span class="fu">:</span> <span class="st">"keep-one"</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="st">"features"</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"purgePostUnification"</span><span class="fu">:</span> <span class="st">"keep-one"</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <blockquote class="blockquote">
 <p>Note on purging strategies: * <code>"keep-one"</code>: Retains only the updated package versions (if <code>update</code> is <code>true</code>) or the originally restored versions (if <code>update</code> is <code>false</code>). * <code>"keep-both"</code>: Safely retains both the original and updated versions of the packages in the cache. * <code>"none"</code>: Disables purging entirely. The default.</p>
 </blockquote>
@@ -600,23 +619,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ol>
 <p>This is a simple, blunt approach: it applies only during the feature install step and has no persistent effect on the container.</p>
 <p><strong>To opt out:</strong></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"overrideTokensAtInstall"</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"overrideTokensAtInstall"</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="session-time-token-management" class="level2">
 <h2 class="anchored" data-anchor-id="session-time-token-management">Session-Time Token Management</h2>
 <p>If you also want GitHub token elevation on every shell startup (e.g., for interactive R sessions), use the companion <code>github-tokens</code> feature:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1"</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1"</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="acknowledgments" class="level2">
 <h2 class="anchored" data-anchor-id="acknowledgments">Acknowledgments</h2>

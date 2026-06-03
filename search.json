@@ -100,6 +100,16 @@
     ]
   },
   {
+    "objectID": "features/renv-cache.html#the-renv-cache-init-cli",
+    "href": "features/renv-cache.html#the-renv-cache-init-cli",
+    "title": "renv-cache",
+    "section": "The renv-cache-init CLI",
+    "text": "The renv-cache-init CLI\nIf you are starting a brand new project, or migrating an existing project that doesn’t have an renv.lock file yet, you can use the renv-cache-init tool to bootstrap your environment end-to-end.\nBasic usage:\n# Initialize the project in the current directory\nrenv-cache-init\n\n# Initialize a project in a specific directory\nrenv-cache-init -d ./my-new-project\nHow it works: Instead of blindly downloading the latest packages from CRAN, this script acts as a “Cache-First Bootstrapper”:\n\nScaffolds Infrastructure: It automatically sets up the basic renv infrastructure (renv/activate.R, .Rprofile) if it isn’t already present.\nScans Dependencies: It uses renv::dependencies() to discover exactly which packages your project depends on.\nCross-References the Cache: It matches the list of discovered packages against the container’s global package cache.\nPrioritizes Cached Versions: If a required package is found inside the cache, it explicitly installs that specific cached version to save time and bandwidth. If a package is completely missing from the cache, it gracefully falls back to downloading and installing the latest available version from CRAN or Bioconductor.\nLocks the Environment: Once the local project library is fully populated, it triggers a fresh renv::snapshot() to generate an up-to-date renv.lock file for your workspace.",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
     "objectID": "features/renv-cache.html#the-renv-cache-copy-lockfile-cli",
     "href": "features/renv-cache.html#the-renv-cache-copy-lockfile-cli",
     "title": "renv-cache",
