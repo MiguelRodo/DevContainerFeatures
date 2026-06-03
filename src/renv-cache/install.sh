@@ -35,7 +35,7 @@ DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
-CREATE_UNIFIED_LOCKFILE="${CREATEUNIFIEDLOCKFILE:-true}"
+CREATE_UNIFIED_LOCKFILE="${CREATEUNIFIEDLOCKFILE:-auto}"
 
 REPOSITORIES="${REPOSITORIES:-""}"
 PKG="${PKG:-""}"
@@ -408,20 +408,24 @@ copy_and_set_execute_bit renv-restore
 copy_and_set_execute_bit renv-restore-build
 
 # 1. Process Local Lockfile (Backward Compatibility)
+N_RENV_DIR=0
 if [ -n "$RENV_DIR" ] && [ -d "$RENV_DIR" ]; then
     # We must look for renv.lock in subdirectories of RENV_DIR
     for dir in $(find "$RENV_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null); do
+        N_RENV_DIR=$((N_RENV_DIR + 1))
         process_renv_dir "$dir" ""
     done
 fi
 
 # 2. Process Dynamic Repositories
 TMP_REPO_DIR=""
+N_REPOSITORIES=0
 if [ -n "$REPOSITORIES" ]; then
     TMP_REPO_DIR=$(mktemp -d)
     IFS=',' read -ra REPO_ARRAY <<< "$REPOSITORIES"
 
     for REPO_SPEC in "${REPO_ARRAY[@]}"; do
+        N_REPOSITORIES=$((N_REPOSITORIES + 1))
         # (Original git clone logic)
         REPO_SPEC=$(echo "$REPO_SPEC" | xargs)
         if [[ "$REPO_SPEC" == *":"* ]]; then
@@ -455,6 +459,7 @@ fi
 
 # 3. Process Explicit Packages (No Lockfile)
 if [ -n "$PKG" ]; then
+    ANY_PKG=true
     TMP_PKG_DIR=$(mktemp -d)
     chown "${USERNAME}:${USERNAME}" "$TMP_PKG_DIR"
     pushd "$TMP_PKG_DIR" > /dev/null
@@ -480,10 +485,21 @@ if [ -n "$PKG" ]; then
 
     popd > /dev/null
     rm -rf "$TMP_PKG_DIR"
+else 
+    ANY_PKG=false
 fi
 
 # 4. Generate Single Unified Lockfile
 if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
+
+    if [ "$CREATE_UNIFIED_LOCKFILE" = "auto" ]; then
+        N_LOCKFILE=$((N_RENV_DIR + N_REPOSITORIES))
+        if [ "$N_LOCKFILE" -gt 1 ] || [ "$ANY_PKG" = true ]; then
+            CREATE_UNIFIED_LOCKFILE=true
+        else
+            CREATE_UNIFIED_LOCKFILE=false
+        fi
+    fi
     
     # Only build the unified project if the option is true
     if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then

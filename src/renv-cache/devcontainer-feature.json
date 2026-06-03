@@ -1,7 +1,7 @@
 {
     "name": "renv cache",
     "id": "renv-cache",
-    "version": "1.8.4",
+    "version": "1.9.0",
     "description": "Configure R with renv cache",
     "postCreateCommand": "/usr/local/bin/renv-cache-post-create",
     "options": {
@@ -31,9 +31,19 @@
             "default": false
         },
         "createUnifiedLockfile": {
+            "type": "string",
+            "enum": [
+                "auto",
+                "true",
+                "false"
+            ],
+            "description": "Whether to create a single unified `renv.lock` file combining dependencies. 'auto' creates it only if multiple lockfiles or explicit packages are provided. 'true' always creates it. 'false' skips creation.",
+            "default": "auto"
+        },
+        "purgePostUnification": {
             "type": "boolean",
-            "description": "Whether to create a single unified `renv.lock` file combining dependencies from all provided lockfiles. Defaults to true.",
-            "default": true
+            "description": "If true, removes all packages from the global cache that are not present in the final unified lockfile, if created. Useful for saving disk space, but may mean specific package versions for specific lock files may not be available. Note that if `update` is true, then the purge is performed to retain the packages and versions in the updated unified lockfile, rather than the original (restore-based) unified lockfile. Defaults to false.",
+            "default": false
         },
         "setRLibPaths": {
             "type": "boolean",

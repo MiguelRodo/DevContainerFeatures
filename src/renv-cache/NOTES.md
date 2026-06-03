@@ -39,11 +39,13 @@ When the container image is built:
    These sources include `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/renv`), remote GitHub repositories specified via the `repositories` option, and explicit package strings specified via the `pkg` option.
    For each source, packages are restored using `renvvv::renvvv_restore()` (or `renvvv_update()` / `renvvv_restore_and_update()` based on options).
    Installed packages are automatically cached in `/renv/cache` due to the `RENV_PATHS_CACHE` setting.
-4. A Unified Lockfile is Generated.
-  After processing all individual projects and repositories, the feature natively aggregates all unique package dependencies and performs a combined `renv::restore(clean = FALSE)` followed by a `renv::snapshot()`.
-  This creates a single, master `renv.lock` containing the union of all dependencies.
-  Both this combined lockfile and the individual project lockfiles are saved to an internal container cache (`/usr/local/share/renv-cache/lockfiles`).
-5. Cache permissions are set via environment variables to ensure proper access for the runtime user.
+4. A Unified Lockfile is Generated (Optional/Auto).
+    By default (when `createUnifiedLockfile` is set to `auto`), if you provided multiple lockfiles or specified explicit packages, the feature aggregates all unique package dependencies and performs a combined `renv::restore(clean = FALSE)` followed by a `renv::snapshot()`.
+    This creates a single, master `renv.lock` containing the union of all dependencies.
+    Both this combined lockfile and the individual project lockfiles are saved to an internal container cache (`/usr/local/share/renv-cache/lockfiles`).
+5. Unused Package Versions are Purged (Optional).
+    If `purgePostUnification` is set to `true` (and `createUnifiedLockfile` evaluates to `true`), the feature scans the global package cache and deletes all package versions except the exact ones tracked by the final unified environment to minimize image size.
+6. Cache permissions are set via environment variables to ensure proper access for the runtime user.
 
 #### 3. Container Runtime Phase
 
@@ -173,6 +175,34 @@ You can exclude specific packages from being restored by using the `pkgExclude` 
 ```
 
 This is useful when certain packages fail to install in your environment, you want to manually manage specific package versions, or some packages are simply not needed for your workflow.
+
+### Unified Lockfile Control
+
+By default, the feature intelligently decides whether to create a single, master `renv.lock` file based on how many environments you pass it. You can explicitly override this behavior using the `createUnifiedLockfile` option:
+
+* `"auto"` (default): Creates the unified lockfile *only* if multiple sources (e.g., multiple lockfiles across local subdirectories or remotes) or explicit packages via `pkg` are provided.
+* `"true"`: Always creates a unified lockfile, even if you only provided a single project.
+* `"false"`: Disables unified lockfile generation entirely. 
+
+If disabled, the `renv-cache-copy-lockfile` CLI tool will automatically default to serving the lockfile of your single cached project.
+
+### Cache Size Optimization (Purging)
+
+When combining multiple projects with conflicting package versions, or heavily using the `pkgExclude` option to strip out certain dependencies, the global `renv` cache inside the Docker image can become bloated with unused package versions.
+
+To minimize the size of your final Docker image, you can enable post-unification purging:
+
+```json
+"features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1": {
+        "purgePostUnification": true
+    }
+}
+```
+
+**How it works:** When set to `true`, the feature performs a final, aggressive cleanup step.
+It scans the global cache against the final unified lockfile and physically deletes any package versions that are not explicitly required by the unified environment.
+*(Note: This feature relies on the unified lockfile being created, so it will not run if `createUnifiedLockfile` resolves to `false`).*
 
 ## Acknowledgments
 
