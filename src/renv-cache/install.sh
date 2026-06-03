@@ -31,11 +31,11 @@ SET_R_LIB_PATHS="${SETRLIBPATHS:-true}"
 OVERRIDE_TOKENS_AT_INSTALL="${OVERRIDETOKENSATINSTALL:-true}"
 RESTORE="${RESTORE:-true}"
 UPDATE="${UPDATE:-false}"
-DEBUG="${DEBUG:-false}"
 USE_PAK="${USEPAK:-false}"
 RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 CREATE_UNIFIED_LOCKFILE="${CREATEUNIFIEDLOCKFILE:-auto}"
+PURGE_POST_UNIFICATION="${PURGEPOSTUNIFICATION:-false}"
 
 REPOSITORIES="${REPOSITORIES:-""}"
 PKG="${PKG:-""}"
@@ -71,6 +71,13 @@ fi
 export USERNAME
 export INSTALL_SYSREQS
 export CRAN_MIRROR
+
+# Enable strict verbosity for renv if requested
+if [ "$DEBUG_RENV" = "true" ]; then
+    echo "[INFO] Enabling renv verbose debugging..."
+    export RENV_VERBOSE=TRUE
+    export RENV_CONFIG_INSTALL_VERBOSE=TRUE
+fi
 
 apt-get update -y && apt-get install -y --no-install-recommends jq git curl lsb-release
 
@@ -174,14 +181,6 @@ process_renv_dir() {
     # Execute the constructed command
     su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); ${R_CMD}\""
     popd > /dev/null
-}
-
-
-# Function to log debug messages if enabled
-debug() {
-    if [ "$DEBUG" = true ]; then
-        echo "DEBUG: $1"
-    fi
 }
 
 # Function to create the post-create command path and initialize the command file
@@ -522,7 +521,7 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
             renv::install('MiguelRodo/renvvv@*release', prompt = FALSE)
         \""
 
-        # Extract all dependency packages (from both lockfiles and explicit PKG) and generate _dependencies.R
+        # 4a. Extract all dependency packages (from both lockfiles and explicit PKG) and generate _dependencies.R
         export PKG
         su "${USERNAME}" -c "Rscript -e \"
             lockfiles <- if (file.exists('/tmp/renv_lockfiles_to_combine.txt')) readLines('/tmp/renv_lockfiles_to_combine.txt') else character()
@@ -551,7 +550,7 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
             }
         \""
 
-        # Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
+        # 4b. Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
         if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
             while IFS= read -r lf; do
                 if [ -f "$lf" ]; then
@@ -563,7 +562,7 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
             done < /tmp/renv_lockfiles_to_combine.txt
         fi
 
-        # Install explicit packages into the unified project
+        # 4c. Install explicit packages into the unified project
         if [ -n "$PKG" ]; then
             echo "[INFO] Accumulating explicit packages ($PKG) into unified project..."
             su "${USERNAME}" -c "Rscript -e \"
@@ -574,13 +573,13 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
         fi
         
 
-        # 4a. Take snapshot of unified original restores
+        # 4d. Take snapshot of unified original restores
         echo "[INFO] Taking unified RESTORE snapshot..."
         mkdir -p "/usr/local/share/renv-cache/lockfiles/_unified/restore"
         su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_unified/restore/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
         chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_unified/restore"
 
-        # 4b. Apply updates and take updated snapshot
+        # 4e. Apply updates and take updated snapshot
         if [ "$UPDATE" = "true" ]; then
             echo "[INFO] Updating unified project..."
             su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_update()\""
@@ -589,6 +588,82 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
             mkdir -p "/usr/local/share/renv-cache/lockfiles/_unified/update"
             su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_unified/update/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
             chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_unified/update"
+        fi
+
+        # 4f. Purge orphaned packages and old versions from the global cache
+        if [ "$PURGE_POST_UNIFICATION" = "true" ]; then
+            echo "[INFO] Purging orphaned packages and unused versions from global cache..."
+            su "${USERNAME}" -c "Rscript -e \"
+                cache_path <- renv::paths\\\$cache()
+                if (dir.exists(cache_path)) {
+                    # 1. Gather exact packages and versions to KEEP
+                    keep_pkgs <- list()
+                    
+                    add_to_keep <- function(lf) {
+                        if (file.exists(lf)) {
+                            lf_data <- tryCatch(renv:::renv_json_read(lf), error = function(e) NULL)
+                            if (!is.null(lf_data\\\$Packages)) {
+                                for (pkg in names(lf_data\\\$Packages)) {
+                                    ver <- lf_data\\\$Packages[[pkg]]\\\$Version
+                                    keep_pkgs[[pkg]] <<- unique(c(keep_pkgs[[pkg]], ver))
+                                }
+                            }
+                        }
+                    }
+                    
+                    add_to_keep('/usr/local/share/renv-cache/lockfiles/_unified/restore/renv.lock')
+                    add_to_keep('/usr/local/share/renv-cache/lockfiles/_unified/update/renv.lock')
+                    
+                    # Always preserve core tools (all versions just to be safe)
+                    core_tools <- c('renv', 'renvvv', 'remotes', 'cli')
+                    
+                    # 2. Scan the cache for all installed packages
+                    desc_files <- list.files(cache_path, pattern = '^DESCRIPTION$', recursive = TRUE, full.names = TRUE)
+                    
+                    purged_count <- 0
+                    already_purged <- character()
+                    
+                    for (desc in desc_files) {
+                        tryCatch({
+                            dcf <- read.dcf(desc)
+                            pkg_name <- as.character(dcf[1, 'Package'])
+                            pkg_version <- as.character(dcf[1, 'Version'])
+                            pkg_id <- paste0(pkg_name, '@', pkg_version)
+                            
+                            if (pkg_id %in% already_purged) next
+                            
+                            keep <- FALSE
+
+                            # Defensive check: ensure variables are non-empty scalar characters
+                            is_valid_pkg     <- !is.null(pkg_name)    && length(pkg_name) == 1L    && nzchar(pkg_name)    && !is.na(pkg_name)
+                            is_valid_version <- !is.null(pkg_version) && length(pkg_version) == 1L && nzchar(pkg_version) && !is.na(pkg_version)
+
+                            if (is_valid_pkg) {
+                                if (pkg_name %in% core_tools) {
+                                    keep <- TRUE
+                                } else if (pkg_name %in% names(keep_pkgs) && is_valid_version) {
+                                    # Extract safely and handle potential NULL or empty list structures cleanly
+                                    target_versions <- keep_pkgs[[pkg_name]]
+                                    if (!is.null(target_versions) && length(target_versions) > 0L) {
+                                        if (pkg_version %in% target_versions) {
+                                            keep <- TRUE
+                                        }
+                                    }
+                                }
+                            }
+                                                        
+                            if (!keep) {
+                                renv::purge(pkg_name, version = pkg_version, prompt = FALSE)
+                                message(' - Purged: ', pkg_name, ' (v', pkg_version, ')')
+                                already_purged <- c(already_purged, pkg_id)
+                                purged_count <- purged_count + 1
+                            }
+                        }, error = function(e) NULL)
+                    }
+                    
+                    message('[INFO] Purged ', purged_count, ' unused package versions from the global cache.')
+                }
+            \""
         fi
 
         popd > /dev/null
