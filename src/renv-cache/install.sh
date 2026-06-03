@@ -254,7 +254,19 @@ process_lockfile_dir() {
         if (!requireNamespace('gitcreds', quietly = TRUE)) {
             message('[INFO] Installing gitcreds for authentication...')
             tryCatch(
-                renvvv::renvvv_install('gitcreds'),
+                renv::install('gitcreds'),
+                error = function(e) message('[WARN] Failed to install gitcreds: ', e\\\$message)
+            )
+        }
+    \""
+    
+    # Install renvvv into project library
+    su "${USERNAME}" -c "Rscript -e \"
+        options(repos = c(CRAN = '${CRAN_MIRROR}'))
+        if (!requireNamespace('gitcreds', quietly = TRUE)) {
+            message('[INFO] Installing gitcreds for authentication...')
+            tryCatch(
+                renv::install('MiguelRodo/renvvv@*release'),
                 error = function(e) message('[WARN] Failed to install gitcreds: ', e\\\$message)
             )
         }
@@ -653,20 +665,26 @@ if [ -n "$PKG" ]; then
         renv::init(bare = TRUE, restart = FALSE)
     \""
 
-    # Explicitly install the latest release of renvvv directly into the newly created local project sandbox
-    su "${USERNAME}" -c "Rscript -e \"
-        options(repos = c(CRAN = '${CRAN_MIRROR}'))
-        renv::install('MiguelRodo/renvvv@*release', prompt = FALSE)
-    \""
-
     # Install gitcreds so that `renv` finds Git authentication more easily
     su "${USERNAME}" -c "Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
         if (!requireNamespace('gitcreds', quietly = TRUE)) {
             message('[INFO] Installing gitcreds for authentication...')
             tryCatch(
-                renvvv::renvvv_install('gitcreds'),
+                renv::install('gitcreds'),
                 error = function(e) message('[WARN] Failed to install gitcreds: ', e\\\$message)
+            )
+        }
+    \""
+    
+    # Install renvvv into project library
+    su "${USERNAME}" -c "Rscript -e \"
+        options(repos = c(CRAN = '${CRAN_MIRROR}'))
+        if (!requireNamespace('renvvvv', quietly = TRUE)) {
+            message('[INFO] Installing renvvv...')
+            tryCatch(
+                renv::install('MiguelRodo/renvvv@*release'),
+                error = function(e) message('[WARN] Failed to install renvvv: ', e\\\$message)
             )
         }
     \""
@@ -691,7 +709,7 @@ if [ -n "$PKG" ]; then
         done
         
         # Add the correct environment variable to .Renviron so renv natively uses pak
-        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> ".Renviron"
+        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> "${TARGET_DIR}/.Renviron"
 
         # Force pak usage
         for i in 1 2; do
@@ -730,21 +748,76 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
     mkdir -p "$UNIFIED_DIR"
     chown -R "${USERNAME}:${USERNAME}" "$UNIFIED_DIR"
     pushd "$UNIFIED_DIR" > /dev/null
-
+    
     # Create bare project framework and link renvvv into the sandbox
     su "${USERNAME}" -c "Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
         renv::init(bare = TRUE, restart = FALSE)
     \""
-    
 
-
-
-    # Explicitly install the latest release of renvvv directly into the newly created local project sandbox
+    # Install gitcreds so that `renv` finds Git authentication more easily
     su "${USERNAME}" -c "Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
-        renv::install('MiguelRodo/renvvv@*release', prompt = FALSE)
+        if (!requireNamespace('gitcreds', quietly = TRUE)) {
+            message('[INFO] Installing gitcreds for authentication...')
+            tryCatch(
+                renv::install('gitcreds'),
+                error = function(e) message('[WARN] Failed to install gitcreds: ', e\\\$message)
+            )
+        }
     \""
+    
+    # Install renvvv into project library
+    su "${USERNAME}" -c "Rscript -e \"
+        options(repos = c(CRAN = '${CRAN_MIRROR}'))
+        if (!requireNamespace('renvvv', quietly = TRUE)) {
+            message('[INFO] Installing renvvv...')
+            tryCatch(
+                renv::install('MiguelRodo/renvvv@*release'),
+                error = function(e) message('[WARN] Failed to install renvvv: ', e\\\$message)
+            )
+        }
+    \""
+
+    # If required, install pak
+    if [ "$USE_PAK" = "true" ]; then
+        echo "[INFO] Installing pak package manager..."
+        
+        # Loop up to 3 times to mitigate subprocess crashes during pak compilation
+        for i in 1 2 3; do
+            su "${USERNAME}" -c "Rscript -e \"
+                options(repos = c(CRAN = '${CRAN_MIRROR}'))
+                if (!requireNamespace('pak', quietly = TRUE)) {
+                    message('[INFO] Attempt $i to install pak...')
+                    tryCatch(
+                        renvvv::renvvv_install('pak'),
+                        error = function(e) message('[WARN] Failed to install pak: ', e\\\$message)
+                    )
+                }
+            \""
+            sleep 1
+        done
+        
+        # Add the correct environment variable to .Renviron so renv natively uses pak
+        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> "${TARGET_DIR}/.Renviron"
+
+        # Force pak usage
+        for i in 1 2; do
+            su "${USERNAME}" -c "Rscript -e \"
+                options(repos = c(CRAN = '${CRAN_MIRROR}'))
+                if (!requireNamespace('pak', quietly = TRUE)) {
+                    message('[INFO] Attempt $i to install pak...')
+                    tryCatch(
+                        renvvv::renvvv_install('pak'),
+                        error = function(e) message('[WARN] Failed to install pak: ', e\\\$message)
+                    )
+                }
+                try(renvvv::renvvv_install('tinytest', args_install = list(rebuild = TRUE)))
+            \""
+            sleep 1
+        done
+    fi
+
 
     # 4a. Extract all dependency packages (from both lockfiles and explicit PKG) and generate _dependencies.R
     export PKG
@@ -775,58 +848,6 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
         }
     \""
 
-    
-    # Install gitcreds so that `renv` finds Git authentication more easily
-    su "${USERNAME}" -c "Rscript -e \"
-        options(repos = c(CRAN = '${CRAN_MIRROR}'))
-        if (!requireNamespace('gitcreds', quietly = TRUE)) {
-            message('[INFO] Installing gitcreds for authentication...')
-            tryCatch(
-                renvvv::renvvv_install('gitcreds'),
-                error = function(e) message('[WARN] Failed to install gitcreds: ', e\\\$message)
-            )
-        }
-    \""
-
-    # If required, install pak
-    if [ "$USE_PAK" = "true" ]; then
-        echo "[INFO] Installing pak package manager..."
-        
-        # Loop up to 3 times to mitigate subprocess crashes during pak compilation
-        for i in 1 2 3; do
-            su "${USERNAME}" -c "Rscript -e \"
-                options(repos = c(CRAN = '${CRAN_MIRROR}'))
-                if (!requireNamespace('pak', quietly = TRUE)) {
-                    message('[INFO] Attempt $i to install pak...')
-                    tryCatch(
-                        renvvv::renvvv_install('pak'),
-                        error = function(e) message('[WARN] Failed to install pak: ', e\\\$message)
-                    )
-                }
-            \""
-            sleep 1
-        done
-        
-        # Add the correct environment variable to .Renviron so renv natively uses pak
-        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> ".Renviron"
-
-        # Force pak usage
-        for i in 1 2; do
-            su "${USERNAME}" -c "Rscript -e \"
-                options(repos = c(CRAN = '${CRAN_MIRROR}'))
-                if (!requireNamespace('pak', quietly = TRUE)) {
-                    message('[INFO] Attempt $i to install pak...')
-                    tryCatch(
-                        renvvv::renvvv_install('pak'),
-                        error = function(e) message('[WARN] Failed to install pak: ', e\\\$message)
-                    )
-                }
-                try(renvvv::renvvv_install('tinytest', args_install = list(rebuild = TRUE)))
-            \""
-            sleep 1
-        done
-    fi
-
     # 4b. Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
     if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
         while IFS= read -r lf; do
@@ -848,7 +869,6 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
             try(renvvv::renvvv_install(pkgs))
         \""
     fi
-    
 
     # 4d. Take snapshot of unified original restores
     echo "[INFO] Taking unified RESTORE snapshot..."
