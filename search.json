@@ -1,31 +1,133 @@
 [
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "DevContainer Features",
+    "objectID": "features/apptainer.html",
+    "href": "features/apptainer.html",
+    "title": "apptainer",
     "section": "",
-    "text": "A collection of reusable DevContainer Features for various development tools and workflows, published to the GitHub Container Registry."
+    "text": "Install Apptainer, a container system widely used in High Performance Computing (HPC) environments.",
+    "crumbs": [
+      "apptainer"
+    ]
   },
   {
-    "objectID": "index.html#features",
-    "href": "index.html#features",
-    "title": "DevContainer Features",
-    "section": "Features",
-    "text": "Features\nEach feature can be added to your devcontainer.json file by referencing it from ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;.\n\n\n\nFeature\nDescription\n\n\n\n\napptainer\nInstall Apptainer for HPC containerization\n\n\ncmdstan\nInstall CmdStan (Stan probabilistic programming)\n\n\nfit-sne\nInstall FIt-SNE for dimensionality reduction\n\n\ngithub-tokens\nManage GitHub authentication tokens\n\n\nmermaid\nInstall Mermaid CLI for diagram generation\n\n\nrenv-cache\nConfigure R with renv cache\n\n\nrepos\nManage multiple Git repositories"
+    "objectID": "features/apptainer.html#example-usage",
+    "href": "features/apptainer.html#example-usage",
+    "title": "apptainer",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1\": {\n      \"timezone\": \"UTC\"\n    }\n  }\n}",
+    "crumbs": [
+      "apptainer"
+    ]
   },
   {
-    "objectID": "index.html#quick-start",
-    "href": "index.html#quick-start",
-    "title": "DevContainer Features",
-    "section": "Quick Start",
-    "text": "Quick Start\nAdd a feature to your devcontainer.json:\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;:1\": {}\n  }\n}\nReplace &lt;feature-name&gt; with the feature you want to use and set the version tag accordingly."
+    "objectID": "features/apptainer.html#options",
+    "href": "features/apptainer.html#options",
+    "title": "apptainer",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ntimezone\nstring\n\"UTC\"\nTimezone to configure in the container (e.g., \"UTC\", \"Europe/London\", \"America/New_York\"). Required for proper Apptainer mount behavior.",
+    "crumbs": [
+      "apptainer"
+    ]
   },
   {
-    "objectID": "index.html#source",
-    "href": "index.html#source",
-    "title": "DevContainer Features",
+    "objectID": "features/apptainer.html#notes",
+    "href": "features/apptainer.html#notes",
+    "title": "apptainer",
+    "section": "Notes",
+    "text": "Notes\n\nAdds the ppa:apptainer/ppa repository and installs Apptainer from it.\nConfigures tzdata because Apptainer containers often inherit the host’s /etc/localtime.",
+    "crumbs": [
+      "apptainer"
+    ]
+  },
+  {
+    "objectID": "features/apptainer.html#source",
+    "href": "features/apptainer.html#source",
+    "title": "apptainer",
     "section": "Source",
-    "text": "Source\nSource code and issue tracker: https://github.com/MiguelRodo/DevContainerFeatures"
+    "text": "Source\nsrc/apptainer",
+    "crumbs": [
+      "apptainer"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html",
+    "href": "features/renv-cache.html",
+    "title": "renv-cache",
+    "section": "",
+    "text": "Configure R for development in VS Code, including library paths, GitHub token management, and package restoration via renv cache. Packages are installed once during the image build and reused on every container start, dramatically speeding up rebuilds.",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html#example-usage",
+    "href": "features/renv-cache.html#example-usage",
+    "title": "renv-cache",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"ghcr.io/rocker-org/devcontainer/r-ver:4.4\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {}\n  }\n}\nWith a custom renv directory and selective package exclusion:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {\n      \"renvDir\": \"${containerWorkspaceFolder}/.devcontainer/renv\",\n      \"pkgExclude\": \"package1,package2\"\n    }\n  }\n}",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html#options",
+    "href": "features/renv-cache.html#options",
+    "title": "renv-cache",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nsetRLibPaths\nboolean\ntrue\nSet default paths for R libraries (including for renv) to avoid reinstalling upon rebuild.\n\n\noverrideTokensAtInstall\nboolean\ntrue\nTemporarily override GITHUB_TOKEN / set GITHUB_PAT from the best available token during the renv install phase, then reset afterwards.\n\n\nrestore\nboolean\ntrue\nRun package restoration using renvvv::renvvv_restore().\n\n\nupdate\nboolean\nfalse\nRun package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used.\n\n\nrenvDir\nstring\n\"/usr/local/share/renv-cache/lockfiles\"\nPath to directory containing subdirectories with renv.lock files.\n\n\npkgExclude\nstring\n\"\"\nComma-separated list of packages to exclude from renv snapshot restore.\n\n\nusePak\nboolean\nfalse\nUse pak for package installation.\n\n\ndebug\nboolean\nfalse\nPrint debug information during package restore.\n\n\ndebugRenv\nboolean\nfalse\nPrint debug information during renv restore.",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html#how-it-works",
+    "href": "features/renv-cache.html#how-it-works",
+    "title": "renv-cache",
+    "section": "How It Works",
+    "text": "How It Works\n\nR Configuration Files Modified\nThe feature modifies the site-wide Renviron.site file ($R_HOME/lib/R/etc/Renviron.site). Two different configurations are applied at different stages:\nDuring Image Build (scripts/r-lib.sh):\nRENV_PATHS_ROOT=/renv/local\nRENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library\nRENV_PATHS_CACHE=/renv/cache\nR_LIBS=/workspaces/.local/lib/R\nAfter Container Creation (scripts/r-lib-update.sh):\nRENV_PATHS_ROOT=/workspaces/.local/renv\nRENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library\nRENV_PATHS_CACHE=/workspaces/.cache/renv:/renv/cache\nR_LIBS=/workspaces/.local/lib/R\n\n\nImage Build Phase\n\nRenviron.site is configured with initial paths.\nRequired directories are created (/renv/local, /renv/cache, /workspaces/.local/lib/R/library).\nPackages are installed from renv.lock files located in subdirectories of renvDir.\nInstalled packages are automatically cached in /renv/cache.\n\n\n\nContainer Runtime Phase\nWhen the container starts, RENV_PATHS_CACHE is updated to /workspaces/.cache/renv:/renv/cache, creating a two-level cache:\n\nWorkspace-specific cache (/workspaces/.cache/renv) is checked first.\nThe build-time cache (/renv/cache) is used as a fallback.\n\nPackages already in the cache are linked instead of reinstalled, making subsequent starts very fast.",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html#basic-setup",
+    "href": "features/renv-cache.html#basic-setup",
+    "title": "renv-cache",
+    "section": "Basic Setup",
+    "text": "Basic Setup\n\nCreate an renv directory structure in your repository:\n\n.devcontainer/\n└── renv/\n    ├── project1/\n    │   └── renv.lock\n    └── shared/\n        └── renv.lock\n\nConfigure the feature in devcontainer.json:\n\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {\n      \"renvDir\": \"${containerWorkspaceFolder}/.devcontainer/renv\"\n    }\n  }\n}\n\nMount the renv directory so it is available during the build:\n\n{\n  \"mounts\": [\n    \"source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/lockfiles,type=bind\"\n  ]\n}",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html#package-restoration",
+    "href": "features/renv-cache.html#package-restoration",
+    "title": "renv-cache",
+    "section": "Package Restoration",
+    "text": "Package Restoration\nThis feature uses renvvv::renvvv_restore() instead of the default renv::restore(). This provides more robust restoration logic that:\n\nContinues past individual package failures\nRetries failed packages individually\nReports packages that could not be installed\nHandles GitHub, CRAN, and Bioconductor packages\nSupports skipping specific packages via pkgExclude",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html#github-token-management",
+    "href": "features/renv-cache.html#github-token-management",
+    "title": "renv-cache",
+    "section": "GitHub Token Management",
+    "text": "GitHub Token Management\n\nBuild-Time Token Override (overrideTokensAtInstall)\nDuring the build phase, renv-cache temporarily overrides GitHub authentication tokens so that renv package installation can authenticate with GitHub:\n\nSaves the current values of GITHUB_TOKEN and GITHUB_PAT.\nSets GITHUB_PAT from the best available token (priority: GITHUB_PAT &gt; GH_TOKEN &gt; GITHUB_TOKEN).\nOverrides GITHUB_TOKEN with the most permissive token available.\nRuns the renv restore.\nResets both variables to their original values.\n\nTo opt out:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {\n      \"overrideTokensAtInstall\": false\n    }\n  }\n}\n\n\nSession-Time Token Management\nFor GitHub token elevation on every shell startup (e.g., for interactive R sessions), use the companion github-tokens feature:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "crumbs": [
+      "renv-cache"
+    ]
+  },
+  {
+    "objectID": "features/renv-cache.html#source",
+    "href": "features/renv-cache.html#source",
+    "title": "renv-cache",
+    "section": "Source",
+    "text": "Source\nsrc/renv-cache",
+    "crumbs": [
+      "renv-cache"
+    ]
   },
   {
     "objectID": "features/repos.html",
@@ -105,6 +207,134 @@
     "text": "Source\nsrc/repos",
     "crumbs": [
       "repos"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html",
+    "href": "features/github-tokens.html",
+    "title": "github-tokens",
+    "section": "",
+    "text": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup so that R tools (such as renv) that prioritize GITHUB_TOKEN always have access to the most permissive token available.",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#example-usage",
+    "href": "features/github-tokens.html#example-usage",
+    "title": "github-tokens",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#options",
+    "href": "features/github-tokens.html#options",
+    "title": "github-tokens",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nelevateGitHubToken\nboolean\ntrue\nIf true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. Helps R tools like renv that prioritize GITHUB_TOKEN.\n\n\noverrideGitHubToken\nboolean\nfalse\nIf true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of its existing value. Use only if you always want to override GITHUB_TOKEN.",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#notes",
+    "href": "features/github-tokens.html#notes",
+    "title": "github-tokens",
+    "section": "Notes",
+    "text": "Notes\n\nToken priority\nWhen elevateGitHubToken is true, the token used to override GITHUB_TOKEN is chosen in this order:\n\nGITHUB_PAT\nGH_TOKEN\n(no override if neither is available)\n\n\n\nBuild-time vs. session-time token management\nThis feature manages tokens on every shell startup (session-time). For build-time token management during renv package installation, see the renv-cache feature’s overrideTokensAtInstall option.\n\n\nRelated feature\nUse github-tokens together with renv-cache for comprehensive token management:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#source",
+    "href": "features/github-tokens.html#source",
+    "title": "github-tokens",
+    "section": "Source",
+    "text": "Source\nsrc/github-tokens",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "DevContainer Features",
+    "section": "",
+    "text": "A collection of reusable DevContainer Features for various development tools and workflows, published to the GitHub Container Registry."
+  },
+  {
+    "objectID": "index.html#features",
+    "href": "index.html#features",
+    "title": "DevContainer Features",
+    "section": "Features",
+    "text": "Features\nEach feature can be added to your devcontainer.json file by referencing it from ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;.\n\n\n\nFeature\nDescription\n\n\n\n\napptainer\nInstall Apptainer for HPC containerization\n\n\ncmdstan\nInstall CmdStan (Stan probabilistic programming)\n\n\nfit-sne\nInstall FIt-SNE for dimensionality reduction\n\n\ngithub-tokens\nManage GitHub authentication tokens\n\n\nmermaid\nInstall Mermaid CLI for diagram generation\n\n\nrenv-cache\nConfigure R with renv cache\n\n\nrepos\nManage multiple Git repositories"
+  },
+  {
+    "objectID": "index.html#quick-start",
+    "href": "index.html#quick-start",
+    "title": "DevContainer Features",
+    "section": "Quick Start",
+    "text": "Quick Start\nAdd a feature to your devcontainer.json:\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;:1\": {}\n  }\n}\nReplace &lt;feature-name&gt; with the feature you want to use and set the version tag accordingly."
+  },
+  {
+    "objectID": "index.html#source",
+    "href": "index.html#source",
+    "title": "DevContainer Features",
+    "section": "Source",
+    "text": "Source\nSource code and issue tracker: https://github.com/MiguelRodo/DevContainerFeatures"
+  },
+  {
+    "objectID": "features/cmdstan.html",
+    "href": "features/cmdstan.html",
+    "title": "cmdstan",
+    "section": "",
+    "text": "Install CmdStan, the command-line interface to Stan — a state-of-the-art platform for Bayesian probabilistic programming and statistical inference.\nThe feature downloads the official CmdStan release tarball, pre-compiles the Stan C++ toolchain during the image build, and configures the CMDSTAN environment variable system-wide so that the installation survives container rebuilds without requiring any per-session setup.",
+    "crumbs": [
+      "cmdstan"
+    ]
+  },
+  {
+    "objectID": "features/cmdstan.html#example-usage",
+    "href": "features/cmdstan.html#example-usage",
+    "title": "cmdstan",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {}\n  }\n}\nWith a specific version and R integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"version\": \"2.36.0\",\n      \"installRPackage\": false\n    }\n  }\n}\nWith Python integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"installPythonPackage\": false\n    }\n  }\n}",
+    "crumbs": [
+      "cmdstan"
+    ]
+  },
+  {
+    "objectID": "features/cmdstan.html#options",
+    "href": "features/cmdstan.html#options",
+    "title": "cmdstan",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"2.36.0\"\nCmdStan version to install (e.g. \"2.36.0\"). Use \"latest\" to always pull the newest release.\n\n\ninstallDir\nstring\n\"/opt/cmdstan\"\nBase directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0).\n\n\ninstallRPackage\nboolean\ntrue\nWhen true and R is present in the image, install the cmdstanr R package and configure it to use the system CmdStan installation.\n\n\ninstallPythonPackage\nboolean\ntrue\nWhen true and Python/pip is present in the image, install the cmdstanpy Python package and configure it to use the system CmdStan installation.",
+    "crumbs": [
+      "cmdstan"
+    ]
+  },
+  {
+    "objectID": "features/cmdstan.html#notes",
+    "href": "features/cmdstan.html#notes",
+    "title": "cmdstan",
+    "section": "Notes",
+    "text": "Notes\n\nHow the installation survives image builds\nStandard Stan/R workflows (e.g. cmdstanr::install_cmdstan()) download CmdStan into the user’s home directory (~/.cmdstan/), which is often not included in the container image or is overwritten on rebuild. This feature instead:\n\nInstalls CmdStan to &lt;installDir&gt;/cmdstan-&lt;version&gt;/ — a system-wide, persistent location.\nCreates a stable symlink at &lt;installDir&gt;/current for tooling that needs a version-independent path.\nExports CMDSTAN and updates PATH via /etc/profile.d/cmdstan.sh and /etc/environment, so every shell session automatically sees the correct path.\nIf R is available, writes CMDSTAN=&lt;path&gt; to R’s Renviron.site so that cmdstanr picks up the system installation without any runtime configuration.\n\n\n\nCompilation time\nmake build compiles the Stan Math library and several C++ utilities. Expect this step to take 3–10 minutes depending on the number of CPU cores available during the build.\n\n\nUsing CmdStan with R (cmdstanr)\nWhen installRPackage is true and R is present, the feature installs cmdstanr from the Stan universe and persists the path via Renviron.site. No additional R-side configuration is needed:\nlibrary(cmdstanr)\ncmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan with Python (cmdstanpy)\nWhen installPythonPackage is true and Python/pip is present, the feature installs cmdstanpy via pip. Because the CMDSTAN environment variable is set system-wide, cmdstanpy automatically picks up the system installation:\nimport cmdstanpy\ncmdstanpy.cmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan directly\nAfter the container starts, the stanc compiler and stansummary utility are on PATH:\nstanc --version\nstansummary --help",
+    "crumbs": [
+      "cmdstan"
+    ]
+  },
+  {
+    "objectID": "features/cmdstan.html#source",
+    "href": "features/cmdstan.html#source",
+    "title": "cmdstan",
+    "section": "Source",
+    "text": "Source\nsrc/cmdstan",
+    "crumbs": [
+      "cmdstan"
     ]
   },
   {
@@ -205,236 +435,6 @@
     "text": "Source\nsrc/fit-sne",
     "crumbs": [
       "fit-sne"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html",
-    "href": "features/github-tokens.html",
-    "title": "github-tokens",
-    "section": "",
-    "text": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup so that R tools (such as renv) that prioritize GITHUB_TOKEN always have access to the most permissive token available.",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#example-usage",
-    "href": "features/github-tokens.html#example-usage",
-    "title": "github-tokens",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#options",
-    "href": "features/github-tokens.html#options",
-    "title": "github-tokens",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nelevateGitHubToken\nboolean\ntrue\nIf true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. Helps R tools like renv that prioritize GITHUB_TOKEN.\n\n\noverrideGitHubToken\nboolean\nfalse\nIf true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of its existing value. Use only if you always want to override GITHUB_TOKEN.",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#notes",
-    "href": "features/github-tokens.html#notes",
-    "title": "github-tokens",
-    "section": "Notes",
-    "text": "Notes\n\nToken priority\nWhen elevateGitHubToken is true, the token used to override GITHUB_TOKEN is chosen in this order:\n\nGITHUB_PAT\nGH_TOKEN\n(no override if neither is available)\n\n\n\nBuild-time vs. session-time token management\nThis feature manages tokens on every shell startup (session-time). For build-time token management during renv package installation, see the renv-cache feature’s overrideTokensAtInstall option.\n\n\nRelated feature\nUse github-tokens together with renv-cache for comprehensive token management:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/github-tokens.html#source",
-    "href": "features/github-tokens.html#source",
-    "title": "github-tokens",
-    "section": "Source",
-    "text": "Source\nsrc/github-tokens",
-    "crumbs": [
-      "github-tokens"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html",
-    "href": "features/renv-cache.html",
-    "title": "renv-cache",
-    "section": "",
-    "text": "Configure R for development in VS Code, including library paths, GitHub token management, and package restoration via renv cache. Packages are installed once during the image build and reused on every container start, dramatically speeding up rebuilds.",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html#example-usage",
-    "href": "features/renv-cache.html#example-usage",
-    "title": "renv-cache",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"ghcr.io/rocker-org/devcontainer/r-ver:4.4\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {}\n  }\n}\nWith a custom renv directory and selective package exclusion:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {\n      \"renvDir\": \"${containerWorkspaceFolder}/.devcontainer/renv\",\n      \"pkgExclude\": \"package1,package2\"\n    }\n  }\n}",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html#options",
-    "href": "features/renv-cache.html#options",
-    "title": "renv-cache",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nsetRLibPaths\nboolean\ntrue\nSet default paths for R libraries (including for renv) to avoid reinstalling upon rebuild.\n\n\noverrideTokensAtInstall\nboolean\ntrue\nTemporarily override GITHUB_TOKEN / set GITHUB_PAT from the best available token during the renv install phase, then reset afterwards.\n\n\nrestore\nboolean\ntrue\nRun package restoration using renvvv::renvvv_restore().\n\n\nupdate\nboolean\nfalse\nRun package update using renvvv::renvvv_update(). If both restore and update are true, renvvv::renvvv_restore_and_update() is used.\n\n\nrenvDir\nstring\n\"/usr/local/share/renv-cache/renv\"\nPath to directory containing subdirectories with renv.lock files.\n\n\npkgExclude\nstring\n\"\"\nComma-separated list of packages to exclude from renv snapshot restore.\n\n\nusePak\nboolean\nfalse\nUse pak for package installation.\n\n\ndebug\nboolean\nfalse\nPrint debug information during package restore.\n\n\ndebugRenv\nboolean\nfalse\nPrint debug information during renv restore.",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html#how-it-works",
-    "href": "features/renv-cache.html#how-it-works",
-    "title": "renv-cache",
-    "section": "How It Works",
-    "text": "How It Works\n\nR Configuration Files Modified\nThe feature modifies the site-wide Renviron.site file ($R_HOME/lib/R/etc/Renviron.site). Two different configurations are applied at different stages:\nDuring Image Build (scripts/r-lib.sh):\nRENV_PATHS_ROOT=/renv/local\nRENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library\nRENV_PATHS_CACHE=/renv/cache\nR_LIBS=/workspaces/.local/lib/R\nAfter Container Creation (scripts/r-lib-update.sh):\nRENV_PATHS_ROOT=/workspaces/.local/renv\nRENV_PATHS_LIBRARY_ROOT=/workspaces/.local/lib/R/library\nRENV_PATHS_CACHE=/workspaces/.cache/renv:/renv/cache\nR_LIBS=/workspaces/.local/lib/R\n\n\nImage Build Phase\n\nRenviron.site is configured with initial paths.\nRequired directories are created (/renv/local, /renv/cache, /workspaces/.local/lib/R/library).\nPackages are installed from renv.lock files located in subdirectories of renvDir.\nInstalled packages are automatically cached in /renv/cache.\n\n\n\nContainer Runtime Phase\nWhen the container starts, RENV_PATHS_CACHE is updated to /workspaces/.cache/renv:/renv/cache, creating a two-level cache:\n\nWorkspace-specific cache (/workspaces/.cache/renv) is checked first.\nThe build-time cache (/renv/cache) is used as a fallback.\n\nPackages already in the cache are linked instead of reinstalled, making subsequent starts very fast.",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html#basic-setup",
-    "href": "features/renv-cache.html#basic-setup",
-    "title": "renv-cache",
-    "section": "Basic Setup",
-    "text": "Basic Setup\n\nCreate an renv directory structure in your repository:\n\n.devcontainer/\n└── renv/\n    ├── project1/\n    │   └── renv.lock\n    └── shared/\n        └── renv.lock\n\nConfigure the feature in devcontainer.json:\n\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {\n      \"renvDir\": \"${containerWorkspaceFolder}/.devcontainer/renv\"\n    }\n  }\n}\n\nMount the renv directory so it is available during the build:\n\n{\n  \"mounts\": [\n    \"source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/renv,type=bind\"\n  ]\n}",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html#package-restoration",
-    "href": "features/renv-cache.html#package-restoration",
-    "title": "renv-cache",
-    "section": "Package Restoration",
-    "text": "Package Restoration\nThis feature uses renvvv::renvvv_restore() instead of the default renv::restore(). This provides more robust restoration logic that:\n\nContinues past individual package failures\nRetries failed packages individually\nReports packages that could not be installed\nHandles GitHub, CRAN, and Bioconductor packages\nSupports skipping specific packages via pkgExclude",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html#github-token-management",
-    "href": "features/renv-cache.html#github-token-management",
-    "title": "renv-cache",
-    "section": "GitHub Token Management",
-    "text": "GitHub Token Management\n\nBuild-Time Token Override (overrideTokensAtInstall)\nDuring the build phase, renv-cache temporarily overrides GitHub authentication tokens so that renv package installation can authenticate with GitHub:\n\nSaves the current values of GITHUB_TOKEN and GITHUB_PAT.\nSets GITHUB_PAT from the best available token (priority: GITHUB_PAT &gt; GH_TOKEN &gt; GITHUB_TOKEN).\nOverrides GITHUB_TOKEN with the most permissive token available.\nRuns the renv restore.\nResets both variables to their original values.\n\nTo opt out:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {\n      \"overrideTokensAtInstall\": false\n    }\n  }\n}\n\n\nSession-Time Token Management\nFor GitHub token elevation on every shell startup (e.g., for interactive R sessions), use the companion github-tokens feature:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/renv-cache.html#source",
-    "href": "features/renv-cache.html#source",
-    "title": "renv-cache",
-    "section": "Source",
-    "text": "Source\nsrc/renv-cache",
-    "crumbs": [
-      "renv-cache"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html",
-    "href": "features/apptainer.html",
-    "title": "apptainer",
-    "section": "",
-    "text": "Install Apptainer, a container system widely used in High Performance Computing (HPC) environments.",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#example-usage",
-    "href": "features/apptainer.html#example-usage",
-    "title": "apptainer",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1\": {\n      \"timezone\": \"UTC\"\n    }\n  }\n}",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#options",
-    "href": "features/apptainer.html#options",
-    "title": "apptainer",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ntimezone\nstring\n\"UTC\"\nTimezone to configure in the container (e.g., \"UTC\", \"Europe/London\", \"America/New_York\"). Required for proper Apptainer mount behavior.",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#notes",
-    "href": "features/apptainer.html#notes",
-    "title": "apptainer",
-    "section": "Notes",
-    "text": "Notes\n\nAdds the ppa:apptainer/ppa repository and installs Apptainer from it.\nConfigures tzdata because Apptainer containers often inherit the host’s /etc/localtime.",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#source",
-    "href": "features/apptainer.html#source",
-    "title": "apptainer",
-    "section": "Source",
-    "text": "Source\nsrc/apptainer",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html",
-    "href": "features/cmdstan.html",
-    "title": "cmdstan",
-    "section": "",
-    "text": "Install CmdStan, the command-line interface to Stan — a state-of-the-art platform for Bayesian probabilistic programming and statistical inference.\nThe feature downloads the official CmdStan release tarball, pre-compiles the Stan C++ toolchain during the image build, and configures the CMDSTAN environment variable system-wide so that the installation survives container rebuilds without requiring any per-session setup.",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#example-usage",
-    "href": "features/cmdstan.html#example-usage",
-    "title": "cmdstan",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {}\n  }\n}\nWith a specific version and R integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"version\": \"2.36.0\",\n      \"installRPackage\": false\n    }\n  }\n}\nWith Python integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"installPythonPackage\": false\n    }\n  }\n}",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#options",
-    "href": "features/cmdstan.html#options",
-    "title": "cmdstan",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"2.36.0\"\nCmdStan version to install (e.g. \"2.36.0\"). Use \"latest\" to always pull the newest release.\n\n\ninstallDir\nstring\n\"/opt/cmdstan\"\nBase directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0).\n\n\ninstallRPackage\nboolean\ntrue\nWhen true and R is present in the image, install the cmdstanr R package and configure it to use the system CmdStan installation.\n\n\ninstallPythonPackage\nboolean\ntrue\nWhen true and Python/pip is present in the image, install the cmdstanpy Python package and configure it to use the system CmdStan installation.",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#notes",
-    "href": "features/cmdstan.html#notes",
-    "title": "cmdstan",
-    "section": "Notes",
-    "text": "Notes\n\nHow the installation survives image builds\nStandard Stan/R workflows (e.g. cmdstanr::install_cmdstan()) download CmdStan into the user’s home directory (~/.cmdstan/), which is often not included in the container image or is overwritten on rebuild. This feature instead:\n\nInstalls CmdStan to &lt;installDir&gt;/cmdstan-&lt;version&gt;/ — a system-wide, persistent location.\nCreates a stable symlink at &lt;installDir&gt;/current for tooling that needs a version-independent path.\nExports CMDSTAN and updates PATH via /etc/profile.d/cmdstan.sh and /etc/environment, so every shell session automatically sees the correct path.\nIf R is available, writes CMDSTAN=&lt;path&gt; to R’s Renviron.site so that cmdstanr picks up the system installation without any runtime configuration.\n\n\n\nCompilation time\nmake build compiles the Stan Math library and several C++ utilities. Expect this step to take 3–10 minutes depending on the number of CPU cores available during the build.\n\n\nUsing CmdStan with R (cmdstanr)\nWhen installRPackage is true and R is present, the feature installs cmdstanr from the Stan universe and persists the path via Renviron.site. No additional R-side configuration is needed:\nlibrary(cmdstanr)\ncmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan with Python (cmdstanpy)\nWhen installPythonPackage is true and Python/pip is present, the feature installs cmdstanpy via pip. Because the CMDSTAN environment variable is set system-wide, cmdstanpy automatically picks up the system installation:\nimport cmdstanpy\ncmdstanpy.cmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan directly\nAfter the container starts, the stanc compiler and stansummary utility are on PATH:\nstanc --version\nstansummary --help",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#source",
-    "href": "features/cmdstan.html#source",
-    "title": "cmdstan",
-    "section": "Source",
-    "text": "Source\nsrc/cmdstan",
-    "crumbs": [
-      "cmdstan"
     ]
   }
 ]
