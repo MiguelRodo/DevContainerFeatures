@@ -261,13 +261,13 @@ process_lockfile_dir() {
     \""
     
     # Install renvvv into project library
-    su "${USERNAME}" -c "Rscript -e \"
+    su "${USERNAME}" -c "GITHUB_PAT=\"${GITHUB_PAT}\" Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
-        if (!requireNamespace('gitcreds', quietly = TRUE)) {
-            message('[INFO] Installing gitcreds for authentication...')
+        if (!requireNamespace('renvvv', quietly = TRUE)) {
+            message('[INFO] Installing renvvv...')
             tryCatch(
                 renv::install('MiguelRodo/renvvv@*release'),
-                error = function(e) message('[WARN] Failed to install gitcreds: ', e\\\$message)
+                error = function(e) message('[WARN] Failed to install renvvv: ', e\\\$message)
             )
         }
     \""
@@ -678,9 +678,9 @@ if [ -n "$PKG" ]; then
     \""
     
     # Install renvvv into project library
-    su "${USERNAME}" -c "Rscript -e \"
+    su "${USERNAME}" -c "GITHUB_PAT=\"${GITHUB_PAT}\" Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
-        if (!requireNamespace('renvvvv', quietly = TRUE)) {
+        if (!requireNamespace('renvvv', quietly = TRUE)) {
             message('[INFO] Installing renvvv...')
             tryCatch(
                 renv::install('MiguelRodo/renvvv@*release'),
@@ -709,7 +709,7 @@ if [ -n "$PKG" ]; then
         done
         
         # Add the correct environment variable to .Renviron so renv natively uses pak
-        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> "${TARGET_DIR}/.Renviron"
+        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> ".Renviron"
 
         # Force pak usage
         for i in 1 2; do
@@ -768,7 +768,7 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
     \""
     
     # Install renvvv into project library
-    su "${USERNAME}" -c "Rscript -e \"
+    su "${USERNAME}" -c "GITHUB_PAT=\"${GITHUB_PAT}\" Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
         if (!requireNamespace('renvvv', quietly = TRUE)) {
             message('[INFO] Installing renvvv...')
@@ -799,7 +799,7 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
         done
         
         # Add the correct environment variable to .Renviron so renv natively uses pak
-        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> "${TARGET_DIR}/.Renviron"
+        echo "RENV_CONFIG_PAK_ENABLED=TRUE" >> ".Renviron"
 
         # Force pak usage
         for i in 1 2; do
