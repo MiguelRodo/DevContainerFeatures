@@ -490,6 +490,7 @@ set_tokens_for_install
 # Install the user-facing commands
 copy_and_set_execute_bit copy-lockfile
 copy_and_set_execute_bit restore
+copy_and_set_execute_bit init
 
 # 1. Fetch Dynamic Repositories (Downloads renv.lock directly via GitHub API)
 if [ -n "$REPOSITORIES" ]; then

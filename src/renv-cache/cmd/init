@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+
+# Exit immediately if an error occurs
+set -e
+
+# Function to display usage information
+usage() {
+    echo "  Usage: $(basename "$0") [OPTIONS]"
+    echo ""
+    echo "Description:"
+    echo "  Initializes a new renv project end-to-end by scanning for dependencies"
+    echo "  and preferentially installing versions already present in the global cache."
+    echo "Options:"
+    echo "  -d, --directory DIRECTORY        Project directory. Default is current directory."
+    echo "  -h, --help                       Display this help message."
+    exit "${1:-0}"
+}
+
+PROJECT_DIR="."
+
+# Parse command-line arguments
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -d|--directory)
+            if [ -n "${2:-}" ] && case "$2" in -*) false;; *) true;; esac; then
+                PROJECT_DIR="$2"
+                shift 2
+            else
+                echo "[ERROR] --directory requires a directory path argument."
+                usage 1
+            fi
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "[ERROR] Unknown parameter passed: $1"
+            usage 1
+            ;;
+    esac
+done
+
+ORIG_DIR=$(pwd)
+PROJECT_NAME=$(basename "$PROJECT_DIR")
+echo "[INFO] Processing initialization for project: $PROJECT_NAME"
+
+trap 'cd "$ORIG_DIR"' EXIT
+cd "$PROJECT_DIR"
+
+# Ensure the project uses the proper lib paths before starting
+if [ -f "/usr/local/bin/renv-cache-post-create" ]; then
+    bash /usr/local/bin/renv-cache-post-create >/dev/null 2>&1 || true
+fi
+
+# ==========================================
+# PHASE 1: Scaffolding
+# ==========================================
+echo "[INFO] Phase 1: Initializing renv scaffolding..."
+Rscript -e "
+    if (!requireNamespace('renv', quietly = TRUE)) {
+        message('[INFO] Installing renv package...')
+        install.packages('renv', repos = 'https://cloud.r-project.org')
+    }
+    if (!file.exists('renv.lock')) {
+        renv::init(bare = TRUE, restart = FALSE)
+    } else {
+        message('[INFO] renv.lock already exists. Proceeding with existing environment.')
+    }
+"
+
+# ==========================================
+# PHASE 2: Discovery & Cache Matching
+# ==========================================
+echo "[INFO] Phase 2: Scanning dependencies and matching against cache..."
+Rscript -e "
+    if (file.exists('renv/activate.R')) source('renv/activate.R')
+
+    deps <- tryCatch(renv::dependencies(quiet = TRUE), error = function(e) data.frame(Package = character()))
+    
+    if (nrow(deps) == 0) {
+        writeLines(character(0), '.renv_init_targets')
+        quit(status = 0)
+    }
+
+    pkgs <- unique(deps\$Package)
+    base_pkgs <- rownames(installed.packages(priority = 'base'))
+    pkgs <- setdiff(pkgs, c('renv', base_pkgs))
+
+    cache_path <- renv::paths\$cache()
+    cached_pkgs <- if (dir.exists(cache_path)) list.files(cache_path) else character()
+
+    install_list <- character()
+
+    for (pkg in pkgs) {
+        if (pkg %in% cached_pkgs) {
+            pkg_dir <- file.path(cache_path, pkg)
+            versions <- list.files(pkg_dir)
+            valid_vers <- versions[grepl('^[0-9]+(?:\\\\.[0-9]+)*\$', versions)]
+
+            if (length(valid_vers) > 0) {
+                parsed_vers <- tryCatch(package_version(valid_vers), error = function(e) NULL)
+                if (!is.null(parsed_vers)) {
+                    latest_ver <- as.character(max(parsed_vers))
+                    
+                    # Target the specific cached version
+                    install_list <- c(install_list, paste0(pkg, '@', latest_ver))
+                    message('  - Match found:  ', pkg, ' (v', latest_ver, ')')
+                    next
+                }
+            }
+        }
+        # Fallback to standard installation
+        install_list <- c(install_list, pkg)
+        message('  - Uncached:     ', pkg, ' (Fetching remote)')
+    }
+    
+    # Save the execution plan to a file
+    writeLines(install_list, '.renv_init_targets')
+"
+
+# If the targets file is missing or empty, skip installation
+if [ ! -s .renv_init_targets ]; then
+    echo "[INFO] No additional dependencies required."
+else
+    # ==========================================
+    # PHASE 3: Ensure renvvv
+    # ==========================================
+    echo "[INFO] Phase 3: Ensuring renvvv is available in the local project..."
+    Rscript -e "
+        if (file.exists('renv/activate.R')) source('renv/activate.R')
+        
+        if (!requireNamespace('renvvv', quietly = TRUE)) {
+            message('Installing renvvv from GitHub...')
+            tryCatch(
+                renv::install('MiguelRodo/renvvv@*release', prompt = FALSE),
+                error = function(e) {
+                    message('[WARN] Could not install renvvv via renv. Falling back to remotes...')
+                    if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = 'https://cloud.r-project.org')
+                    remotes::install_github('MiguelRodo/renvvv@*release', upgrade = 'never')
+                }
+            )
+        }
+    "
+
+    # ==========================================
+    # PHASE 4: Installation
+    # ==========================================
+    echo "[INFO] Phase 4: Installing required dependencies..."
+    # Read the targets and pass them to R securely via environment variables
+    export PKG_TARGETS=$(paste -sd "," .renv_init_targets)
+    
+    Rscript -e "
+        if (file.exists('renv/activate.R')) source('renv/activate.R')
+        targets <- unlist(strsplit(Sys.getenv('PKG_TARGETS'), ','))
+        
+        if (requireNamespace('renvvv', quietly = TRUE)) {
+            tryCatch({
+                renvvv::renvvv_install(targets)
+            }, error = function(e) {
+                message('[WARN] renvvv::renvvv_install encountered an issue: ', e\$message)
+                message('[INFO] Attempting fallback with standard renv::install()...')
+                renv::install(targets, prompt = FALSE)
+            })
+        } else {
+            message('[WARN] renvvv unavailable. Falling back to standard renv::install()...')
+            renv::install(targets, prompt = FALSE)
+        }
+    "
+fi
+
+# ==========================================
+# PHASE 5: Snapshot
+# ==========================================
+echo "[INFO] Phase 5: Snapshotting environment to renv.lock..."
+Rscript -e "
+    if (file.exists('renv/activate.R')) source('renv/activate.R')
+    renv::snapshot(prompt = FALSE)
+"
+
+# Cleanup
+rm -f .renv_init_targets
+echo "---------------------------------------------"
+echo "[OK] renv project successfully initialized and locked!"
