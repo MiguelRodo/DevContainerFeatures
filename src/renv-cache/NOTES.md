@@ -165,7 +165,7 @@ You can use a standard image and pass the repository targets directly to the fea
 
 By default, the feature assumes there is a standard `renv.lock` file located at the root of the cloned repository.
 
-#### Targeting Branches and Profiles
+##### Targeting Branches and Profiles
 
 You can target specific branches or `renv` profiles within your remote repositories using the syntax `user/repo@branch:profile`.
 If you append `@branch` (e.g., `MiguelRodo/projr@v2`), the feature will clone that specific branch instead of the default branch.
@@ -233,9 +233,7 @@ To minimize the size of your final Docker image, you can enable post-unification
 > * `"keep-both"`: Safely retains both the original and updated versions of the packages in the cache. 
 > * `"none"`: Disables purging entirely. The default.
 
-## Acknowledgments
 
-This project incorporates code from [AwesomeProject](https://github.com/rocker-org/devcontainer-features), which is licensed under the MIT License.
 
 ## GitHub Token Management
 
@@ -278,7 +276,6 @@ If you also want GitHub token elevation on every shell startup (e.g., for intera
 }
 ```
 
-### Architectural Note
+## Acknowledgments
 
-`renv-cache` only manages tokens **during the image build phase** (feature install). It does not modify `~/.bashrc`, `~/.bashrc.d/`, or any other shell startup files.
-
+This project incorporates code from [AwesomeProject](https://github.com/rocker-org/devcontainer-features), which is licensed under the MIT License.
