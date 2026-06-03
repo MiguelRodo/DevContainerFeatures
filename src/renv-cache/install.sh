@@ -60,7 +60,7 @@ if [ -n "$LOCKFILE_DIR" ]; then
 
     # 3. Prevent Shell Injection (Look for shell meta-characters)
     # This regex checks for characters that could break a shell command
-    if [[ "$LOCKFILE_DIR" =~ [[:space:];\|\&><\$\(\)\`] ]]; then
+    if [[ "$LOCKFILE_DIR" =~ [[:space:]\;\|\\\&><\$\(\)\`] ]]; then
         echo "[ERROR] LOCKFILE_DIR contains unsafe characters: '$LOCKFILE_DIR'"
         exit 1
     fi
