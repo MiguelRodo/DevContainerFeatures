@@ -39,7 +39,7 @@ With a custom renv directory and selective package exclusion:
 | `overrideTokensAtInstall` | boolean | `true` | Temporarily override `GITHUB_TOKEN` / set `GITHUB_PAT` from the best available token during the renv install phase, then reset afterwards. |
 | `restore` | boolean | `true` | Run package restoration using `renvvv::renvvv_restore()`. |
 | `update` | boolean | `false` | Run package update using `renvvv::renvvv_update()`. If both `restore` and `update` are `true`, `renvvv::renvvv_restore_and_update()` is used. |
-| `renvDir` | string | `"/usr/local/share/renv-cache/renv"` | Path to directory containing subdirectories with `renv.lock` files. |
+| `renvDir` | string | `"/usr/local/share/renv-cache/lockfiles"` | Path to directory containing subdirectories with `renv.lock` files. |
 | `pkgExclude` | string | `""` | Comma-separated list of packages to exclude from renv snapshot restore. |
 | `usePak` | boolean | `false` | Use `pak` for package installation. |
 | `debug` | boolean | `false` | Print debug information during package restore. |
@@ -115,7 +115,7 @@ Packages already in the cache are linked instead of reinstalled, making subseque
 ```json
 {
   "mounts": [
-    "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/renv,type=bind"
+    "source=${localWorkspaceFolder}/.devcontainer/renv,target=/usr/local/share/renv-cache/lockfiles,type=bind"
   ]
 }
 ```

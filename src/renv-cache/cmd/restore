@@ -25,7 +25,7 @@ RESTORE=false
 UPDATE=false
 PKG_EXCLUDE="${PKGEXCLUDE:-""}"
 USE_PAK=false
-ENABLE_RENV_VERBOSE=false
+DEBUG_RENV=false
 
 # Parse command-line arguments
 while [ "$#" -gt 0 ]; do
@@ -60,7 +60,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         --debug-renv)
-            ENABLE_RENV_VERBOSE=true
+            DEBUG_RENV=true
             shift
             ;;
         -h|--help)
@@ -74,19 +74,11 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Enable strict verbosity for renv if requested
-if [ "$ENABLE_RENV_VERBOSE" = "true" ]; then
+if [ "$DEBUG_RENV" = "true" ]; then
     echo "[INFO] Enabling renv verbose debugging..."
     export RENV_VERBOSE=TRUE
     export RENV_CONFIG_INSTALL_VERBOSE=TRUE
 fi
-
-echo "[INFO] Running restore configuration"
-echo "[INFO] PROJECT_DIR: $PROJECT_DIR"
-echo "[INFO] RESTORE: $RESTORE"
-echo "[INFO] UPDATE: $UPDATE"
-echo "[INFO] PKG_EXCLUDE: $PKG_EXCLUDE"
-echo "[INFO] USE_PAK: $USE_PAK"
-echo "[INFO] ENABLE_RENV_VERBOSE: $ENABLE_RENV_VERBOSE"
 
 extract_renv_version_from_lock() {
     # Attempts to extract the renv version from renv.lock using multiple strategies,

@@ -32,7 +32,7 @@ OVERRIDE_TOKENS_AT_INSTALL="${OVERRIDETOKENSATINSTALL:-true}"
 RESTORE="${RESTORE:-true}"
 UPDATE="${UPDATE:-false}"
 USE_PAK="${USEPAK:-false}"
-RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/renv"}"
+RENV_DIR="${RENVDIR:-"/usr/local/share/renv-cache/lockfiles"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 CREATE_UNIFIED_LOCKFILE="${CREATEUNIFIEDLOCKFILE:-auto}"
 PURGE_POST_UNIFICATION="${PURGEPOSTUNIFICATION:-false}"
@@ -403,8 +403,7 @@ set_tokens_for_install
 
 # Install the user-facing commands
 copy_and_set_execute_bit copy-lockfile
-copy_and_set_execute_bit renv-restore
-copy_and_set_execute_bit renv-restore-build
+copy_and_set_execute_bit restore
 
 # 1. Process Local Lockfile (Backward Compatibility)
 N_RENV_DIR=0
@@ -575,9 +574,10 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
 
         # 4d. Take snapshot of unified original restores
         echo "[INFO] Taking unified RESTORE snapshot..."
-        mkdir -p "/usr/local/share/renv-cache/lockfiles/_unified/restore"
-        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_unified/restore/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
-        chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_unified/restore"
+        DIR_UNIFIED_LOCKFILE_RESTORE="/usr/local/share/renv-cache/unified-lockfiles/restore"
+        mkdir -p "$DIR_UNIFIED_LOCKFILE_RESTORE"
+        su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_RESTORE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
+        chown -R "${USERNAME}:${USERNAME}" "$DIR_UNIFIED_LOCKFILE_RESTORE"
 
         # 4e. Apply updates and take updated snapshot
         if [ "$UPDATE" = "true" ]; then
@@ -585,9 +585,10 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
             su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renvvv::renvvv_update()\""
             
             echo "[INFO] Taking unified UPDATE snapshot..."
-            mkdir -p "/usr/local/share/renv-cache/lockfiles/_unified/update"
-            su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '/usr/local/share/renv-cache/lockfiles/_unified/update/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
-            chown -R "${USERNAME}:${USERNAME}" "/usr/local/share/renv-cache/lockfiles/_unified/update"
+            DIR_UNIFIED_LOCKFILE_UPDATE="/usr/local/share/renv-cache/unified-lockfiles/update"
+            mkdir -p "$DIR_UNIFIED_LOCKFILE_UPDATE"
+            su "${USERNAME}" -c "Rscript -e \"options(repos = c(CRAN = '${CRAN_MIRROR}')); renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_UPDATE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)\""
+            chown -R "${USERNAME}:${USERNAME}" "${DIR_UNIFIED_LOCKFILE_UPDATE}"
         fi
 
         # 4f. Purge orphaned packages and old versions from the global cache
@@ -611,11 +612,11 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
                         }
                     }
                     
-                    add_to_keep('/usr/local/share/renv-cache/lockfiles/_unified/restore/renv.lock')
-                    add_to_keep('/usr/local/share/renv-cache/lockfiles/_unified/update/renv.lock')
+                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
+                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/update/renv.lock')
                     
                     # Always preserve core tools (all versions just to be safe)
-                    core_tools <- c('renv', 'renvvv', 'remotes', 'cli')
+                    core_tools <- c('renv', 'renvvv', 'remotes', 'cli', 'jsonlite', 'yaml')
                     
                     # 2. Scan the cache for all installed packages
                     desc_files <- list.files(cache_path, pattern = '^DESCRIPTION$', recursive = TRUE, full.names = TRUE)

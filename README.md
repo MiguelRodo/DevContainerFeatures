@@ -146,7 +146,7 @@ Configures R for development in VS Code, including library paths, GitHub tokens,
 | `ensureGitHubPatSet` | boolean | `true` | If GITHUB_PAT is not set, attempt to set it from GH_TOKEN or GITHUB_TOKEN |
 | `restore` | boolean | `true` | Whether to run package restoration using `renvvv::renvvv_restore()` |
 | `update` | boolean | `false` | Whether to run package update using `renvvv::renvvv_update()`. If both restore and update are true, `renvvv::renvvv_restore_and_update()` is used |
-| `renvDir` | string | `"/usr/local/share/renv-cache/renv"` | Path to directory containing subdirectories with `renv.lock` files |
+| `renvDir` | string | `"/usr/local/share/renv-cache/lockfiles"` | Path to directory containing subdirectories with `renv.lock` files |
 | `pkgExclude` | string | `""` | Comma-separated list of packages to exclude from renv snapshot restore |
 | `usePak` | boolean | `false` | Whether to use `pak` for package installation |
 | `debug` | boolean | `false` | Print debug information during package restore |

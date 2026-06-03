@@ -23,7 +23,7 @@ Configure R with renv cache
 | createUnifiedLockfile | Whether to create a single unified `renv.lock` file combining dependencies from all provided lockfiles. Defaults to true. | boolean | true |
 | setRLibPaths | Whether to set default paths for R libraries (including for `renv`) to avoid needing to reinstall upon codespace rebuild. | boolean | true |
 | overrideTokensAtInstall | If true, temporarily override GITHUB_TOKEN and set GITHUB_PAT from the best available token (priority: GITHUB_PAT > GH_TOKEN > GITHUB_TOKEN) during the renv package install phase. Tokens are reset to their original values after install completes. Disable if you want to manage tokens manually. | boolean | true |
-| renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set. | string | /usr/local/share/renv-cache/renv |
+| renvDir | Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/lockfiles` if the environment variable is not set. | string | /usr/local/share/renv-cache/lockfiles |
 | usePak | Whether to use `pak` for package installation. For some reason, restoring from the `renv` cache has not worked when using `pak` to build the image, so this is not recommended. | boolean | false |
 | debug | Whether to print debug information during package restore. | boolean | false |
 | debugRenv | Whether to print debug information during renv restore. | boolean | false |
@@ -68,7 +68,7 @@ When the container image is built:
 1. `Renviron.site` is configured with initial paths by `scripts/r-lib.sh`.
 2. Directories are created for the renv project root during build (`/renv/local`), the global package cache (`/renv/cache`), the library root (`/workspaces/.local/lib/R/library`), and the pak cache directory (`/workspaces/.cache/R/pkgcache/pkg`).
 3. Packages are installed from multiple potential sources.
-   These sources include `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/renv`), remote GitHub repositories specified via the `repositories` option, and explicit package strings specified via the `pkg` option.
+   These sources include `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/lockfiles`), remote GitHub repositories specified via the `repositories` option, and explicit package strings specified via the `pkg` option.
    For each source, packages are restored using `renvvv::renvvv_restore()` (or `renvvv_update()` / `renvvv_restore_and_update()` based on options).
    Installed packages are automatically cached in `/renv/cache` due to the `RENV_PATHS_CACHE` setting.
 4. A Unified Lockfile is Generated.
@@ -126,7 +126,7 @@ Next, create a `Dockerfile` in your `.devcontainer` folder that copies this dire
 FROM bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2
 
 # Copy lockfiles so the feature can process them during the build
-COPY .devcontainer/renv /usr/local/share/renv-cache/renv
+COPY .devcontainer/renv /usr/local/share/renv-cache/lockfiles
 ```
 
 Finally, reference this Dockerfile and the feature in your `devcontainer.json`:
@@ -176,13 +176,6 @@ To activate them in your current workspace, run the copy command to extract the 
 renv-cache-copy-lockfile
 Rscript -e "renv::restore()"
 ```
-
-#### Advanced: Custom Scripts
-
-You can place custom scripts in your local renv subdirectories.
-`renv-cache-renv.R` executes an R script after restore.
-`renv-cache-renv.sh` executes a Bash script after restore.
-These scripts receive the `pkgExclude` parameter and run in the project directory context during the build.
 
 ## Package Restoration
 

@@ -36,7 +36,7 @@ When the container image is built:
 1. `Renviron.site` is configured with initial paths by `scripts/r-lib.sh`.
 2. Directories are created for the renv project root during build (`/renv/local`), the global package cache (`/renv/cache`), the library root (`/workspaces/.local/lib/R/library`), and the pak cache directory (`/workspaces/.cache/R/pkgcache/pkg`).
 3. Packages are installed from multiple potential sources.
-   These sources include `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/renv`), remote GitHub repositories specified via the `repositories` option, and explicit package strings specified via the `pkg` option.
+   These sources include `renv.lock` files located in subdirectories of the `renvDir` (default: `/usr/local/share/renv-cache/lockfiles`), remote GitHub repositories specified via the `repositories` option, and explicit package strings specified via the `pkg` option.
    For each source, packages are restored using `renvvv::renvvv_restore()` (or `renvvv_update()` / `renvvv_restore_and_update()` based on options).
    Installed packages are automatically cached in `/renv/cache` due to the `RENV_PATHS_CACHE` setting.
 4. A Unified Lockfile is Generated (Optional/Auto).
@@ -96,7 +96,7 @@ Next, create a `Dockerfile` in your `.devcontainer` folder that copies this dire
 FROM bioconductor/bioconductor_docker:RELEASE_3_21-r-4.5.2
 
 # Copy lockfiles so the feature can process them during the build
-COPY .devcontainer/renv /usr/local/share/renv-cache/renv
+COPY .devcontainer/renv /usr/local/share/renv-cache/lockfiles
 ```
 
 Finally, reference this Dockerfile and the feature in your `devcontainer.json`:
@@ -146,13 +146,6 @@ To activate them in your current workspace, run the copy command to extract the 
 renv-cache-copy-lockfile
 Rscript -e "renv::restore()"
 ```
-
-#### Advanced: Custom Scripts
-
-You can place custom scripts in your local renv subdirectories.
-`renv-cache-renv.R` executes an R script after restore.
-`renv-cache-renv.sh` executes a Bash script after restore.
-These scripts receive the `pkgExclude` parameter and run in the project directory context during the build.
 
 ## Package Restoration
 

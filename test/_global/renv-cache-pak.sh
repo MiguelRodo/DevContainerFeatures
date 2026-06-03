@@ -92,7 +92,7 @@ RENV_CONFIG_PAK_ENABLED=TRUE Rscript -e "
 # Check that jsonlite was installed
 check "jsonlite installed after pak restore" Rscript -e "if (!requireNamespace('jsonlite', quietly = TRUE)) quit(status = 1)"
 
-# Rehash the renv cache (mirrors what renv-restore does with --pak)
+# Rehash the renv cache (mirrors what `restore` does with --pak)
 echo "🔄 Rehashing renv cache..."
 Rscript -e "
     tryCatch(

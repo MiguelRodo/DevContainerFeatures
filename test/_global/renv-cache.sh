@@ -43,10 +43,7 @@ check "remotes is installed" Rscript -e "if (!requireNamespace('remotes', quietl
 check "renv is installed" Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) quit(status = 1)"
 
 # Test that renv-restore help works
-check "renv-restore help works" bash -c "/usr/local/bin/renv-cache-restore --help"
-
-# Test that renv-restore-build help works
-check "renv-restore-build help works" bash -c "/usr/local/bin/renv-cache-restore-build --help"
+check "restore help works" bash -c "/usr/local/bin/renv-cache-restore --help"
 
 # Report result
 # If any of the checks above exited with a non-zero exit code, the test will fail.

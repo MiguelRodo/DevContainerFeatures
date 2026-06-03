@@ -55,10 +55,10 @@
             "type": "boolean",
             "default": true
         },
-        "renvDir": {
+        "lockfileDir": {
             "type": "string",
-            "description": "Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/renv` if the environment variable is not set.",
-            "default": "/usr/local/share/renv-cache/renv"
+            "description": "Path to the directory containing subdirectories with `renv.lock` files. Defaults to `/usr/local/share/renv-cache/lockfiles`.",
+            "default": "/usr/local/share/renv-cache/lockfiles"
         },
         "usePak": {
             "type": "boolean",
