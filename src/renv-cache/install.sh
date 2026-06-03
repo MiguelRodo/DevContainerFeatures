@@ -451,8 +451,10 @@ install_renvvv() {
     su "${USERNAME}" -c "Rscript -e \"if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = '${CRAN_MIRROR}')\""
     
     # Install the latest stable release of renvvv
-    su "${USERNAME}" -c "Rscript -e \"remotes::install_github('MiguelRodo/renvvv@*release')\""
+    # Inject GITHUB_PAT explicitly so remotes doesn't burn the unauthenticated rate limit
+    su "${USERNAME}" -c "GITHUB_PAT=\"${GITHUB_PAT}\" Rscript -e \"remotes::install_github('MiguelRodo/renvvv@*release')\""
 }
+
 
 
 update_renv_cache() {
@@ -734,6 +736,9 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
         renv::init(bare = TRUE, restart = FALSE)
     \""
+    
+
+
 
     # Explicitly install the latest release of renvvv directly into the newly created local project sandbox
     su "${USERNAME}" -c "Rscript -e \"
