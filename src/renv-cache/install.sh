@@ -59,12 +59,13 @@ if [ -n "$LOCKFILE_DIR" ]; then
     fi
 
     # 3. Prevent Shell Injection (Look for shell meta-characters)
-    # This regex checks for characters that could break a shell command
-    if [[ "$LOCKFILE_DIR" =~ [[:space:]\;\|\\\&><\$\(\)\`] ]]; then
+    # Define the regex in a variable to bypass Bash's inline syntax parser
+    UNSAFE_REGEX='[[:space:];|&><$()`]'
+    
+    if [[ "$LOCKFILE_DIR" =~ $UNSAFE_REGEX ]]; then
         echo "[ERROR] LOCKFILE_DIR contains unsafe characters: '$LOCKFILE_DIR'"
         exit 1
     fi
-
     # 4. Final check: ensure it isn't the root directory
     if [[ "$LOCKFILE_DIR" == "/" ]]; then
         echo "[ERROR] LOCKFILE_DIR cannot be the root directory."
