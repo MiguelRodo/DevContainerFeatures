@@ -35,7 +35,21 @@ USE_PAK="${USEPAK:-false}"
 LOCKFILE_DIR="${LOCKFILEDIR:-"/usr/local/share/renv-cache/lockfiles"}"
 DEBUG_RENV="${DEBUGRENV:-false}"
 CREATE_UNIFIED_LOCKFILE="${CREATEUNIFIEDLOCKFILE:-auto}"
-PURGE_POST_UNIFICATION="${PURGEPOSTUNIFICATION:-false}"
+PURGE_POST_UNIFICATION="${PURGEPOSTUNIFICATION:-none}"
+
+# --- EARLY VALIDATION CHECKS ---
+if [ "$PURGE_POST_UNIFICATION" != "none" ] && [ "$PURGE_POST_UNIFICATION" != "false" ]; then
+    if [ "$PURGE_POST_UNIFICATION" = "keep-update" ] && [ "$UPDATE" != "true" ]; then
+        echo "[ERROR] purgePostUnification is set to 'keep-update', but update is false. Cannot keep updated packages if no update is performed."
+        exit 1
+    fi
+
+    if [ "$CREATE_UNIFIED_LOCKFILE" = "false" ]; then
+        echo "[ERROR] purgePostUnification requires a unified lockfile to act as a safe-list, but createUnifiedLockfile is explicitly set to false."
+        exit 1
+    fi
+fi
+# -------------------------------
 
 REPOSITORIES="${REPOSITORIES:-""}"
 PKG="${PKG:-""}"
@@ -49,6 +63,8 @@ if [ -n "$PKG" ] || [ -n "$REPOSITORIES" ] || { [ -n "$LOCKFILE_DIR" ] && [ -d "
         exit 1
     fi
 fi
+
+
 
 # Resolve target user
 USERNAME=${USERNAME:-${_REMOTE_USER:-"automatic"}}
@@ -88,18 +104,10 @@ elif [ -n "$GITHUB_TOKEN" ]; then
 fi
 
 # CORE FUNCTION: Process a directory containing an renv lockfile
-
 process_lockfile_dir() {
     local TARGET_DIR=$1
-    local PROFILE=$2
 
-    if [ -n "$PROFILE" ]; then
-        export RENV_PROFILE="$PROFILE"
-        local LOCK_PATH="renv/profiles/$PROFILE/renv.lock"
-    else
-        unset RENV_PROFILE
-        local LOCK_PATH="renv.lock"
-    fi
+    local LOCK_PATH="renv.lock"
 
     if [ ! -f "$TARGET_DIR/$LOCK_PATH" ]; then
         echo "No lockfile found at $TARGET_DIR/$LOCK_PATH. Skipping."
@@ -165,7 +173,7 @@ process_lockfile_dir() {
         \""
     fi
 
-    echo "Warming cache from $TARGET_DIR (Profile: ${PROFILE:-default})..."
+    echo "Warming cache from $TARGET_DIR..."
 
     # Construct the robust renvvv command based on feature options
     if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
@@ -466,19 +474,38 @@ if [ -n "$REPOSITORIES" ]; then
     done
 fi
 
-# 2. Process All Cached Lockfiles (Local + Remote)
-N_LOCKFILE_DIR=0
+# check how many lockfiles we have to process,
+# so we can validate the specification of the purge settings
+dir_array=()
 if [ -n "$LOCKFILE_DIR" ] && [ -d "$LOCKFILE_DIR" ]; then
-    for dir in $(find "$LOCKFILE_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null); do
-        N_LOCKFILE_DIR=$((N_LOCKFILE_DIR + 1))
-        # Pass empty profile because the lockfile is now standardly located at the root of the sandbox
-        process_lockfile_dir "$dir" ""
+    # Populate the array
+    mapfile -t dir_array < <(find "$LOCKFILE_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -u)
+    N_LOCKFILE=${#dir_array[@]} 
+    echo "Found ${#dir_array[@]} directories."
+else
+    N_LOCKFILE=0
+    echo "[INFO] No valid local lockfile directory specified or found at $LOCKFILE_DIR. Skipping local lockfile processing."
+fi
+
+# check whether we create a unified lockfile or not
+if [ "$CREATE_UNIFIED_LOCKFILE" = "auto" ]; then
+    if [ "$N_LOCKFILE" -gt 1 ] || [ -n "$PKG" ]; then
+        CREATE_UNIFIED_LOCKFILE=true
+    else
+        CREATE_UNIFIED_LOCKFILE=false
+    fi
+fi
+
+
+# 2. Process All Cached Lockfiles (Local + Remote)
+if [ "${#dir_array[@]}" -gt 0 ]; then
+    for dir in "${dir_array[@]}"; do
+        process_lockfile_dir "$dir"
     done
 fi
 
 # 3. Process Explicit Packages (No Lockfile)
 if [ -n "$PKG" ]; then
-    ANY_PKG=true
     TMP_PKG_DIR=$(mktemp -d)
     chown "${USERNAME}:${USERNAME}" "$
     PKG_DIR"
@@ -505,21 +532,10 @@ if [ -n "$PKG" ]; then
 
     popd > /dev/null
     rm -rf "$TMP_PKG_DIR"
-else 
-    ANY_PKG=false
-fi
+else
 
 # 4. Generate Single Unified Lockfile
 if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
-
-    if [ "$CREATE_UNIFIED_LOCKFILE" = "auto" ]; then
-        N_LOCKFILE=$N_LOCKFILE_DIR
-        if [ "$N_LOCKFILE" -gt 1 ] || [ "$ANY_PKG" = true ]; then
-            CREATE_UNIFIED_LOCKFILE=true
-        else
-            CREATE_UNIFIED_LOCKFILE=false
-        fi
-    fi
     
     # Only build the unified project if the option is true
     if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
@@ -614,8 +630,8 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
         fi
 
         # 4f. Purge orphaned packages and old versions from the global cache
-        if [ "$PURGE_POST_UNIFICATION" = "true" ]; then
-            echo "[INFO] Purging orphaned packages and unused versions from global cache..."
+        if [ "$PURGE_POST_UNIFICATION" != "none" ]; then
+            echo "[INFO] Purging global cache using strategy: ${PURGE_POST_UNIFICATION}..."
             su "${USERNAME}" -c "Rscript -e \"
                 cache_path <- renv::paths\\\$cache()
                 if (dir.exists(cache_path)) {
@@ -634,8 +650,28 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
                         }
                     }
                     
-                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
-                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/update/renv.lock')
+                    purge_strategy <- '${PURGE_POST_UNIFICATION}'
+                    update <- '${UPDATE}'
+
+                    if (purge_strategy == 'keep-both') {
+                      if (update == 'true') {
+                        message('[INFO] Purging, keeping both the restore- and update-based unified lockfile packages.')
+                        add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
+                        add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/update/renv.lock')
+                      } else {
+                        message('[INFO] Purging, keeping the restore-based unified lockfile packages only (update is false, so no update lockfile was generated).')
+                        add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
+                        }
+                    }
+                    if (purge_strategy == 'keep-one') {
+                        if (update == 'true') {
+                            message('[INFO] Purging, keeping the update-based unified lockfile packages only.')
+                            add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/update/renv.lock')
+                        } else {
+                            message('[INFO] Purging, keeping the restore-based unified lockfile packages only (update is false, so no update lockfile was generated).')
+                            add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
+                        }
+                    }
                     
                     # Always preserve core tools (all versions just to be safe)
                     core_tools <- c('renv', 'renvvv', 'remotes', 'cli', 'jsonlite', 'yaml')
@@ -647,44 +683,62 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
                     already_purged <- character()
                     
                     for (desc in desc_files) {
-                        tryCatch({
-                            dcf <- read.dcf(desc)
-                            pkg_name <- as.character(dcf[1, 'Package'])
-                            pkg_version <- as.character(dcf[1, 'Version'])
-                            pkg_id <- paste0(pkg_name, '@', pkg_version)
+                        result_purge <- tryCatch({
+                            dcf <- try(read.dcf(desc))
+                            pkg_name <- try(as.character(dcf[1, 'Package']))
+                            pkg_version <- try(as.character(dcf[1, 'Version']))
                             
-                            if (pkg_id %in% already_purged) next
+                            # Defensive check: ensure variables are non-empty scalar characters
+                            is_valid_pkg     <- tryCatch({!is.null(pkg_name)    && length(pkg_name) == 1L    && nzchar(pkg_name)    && !is.na(pkg_name)}, function(e) FALSE)
+                            is_valid_version <- tryCatch({!is.null(pkg_version) && length(pkg_version) == 1L && nzchar(pkg_version) && !is.na(pkg_version)}, function(e) FALSE)
+
+                            if (!is_valid_pkg || !is_valid_version) {
+                                message(' - Skipping invalid cache entry with DESCRIPTION at ', desc)
+                                stop()
+                            }
+
+                            pkg_id <- paste0(pkg_name, '@', pkg_version)
+
+                            if (pkg_id %in% already_purged) stop()
                             
                             keep <- FALSE
 
-                            # Defensive check: ensure variables are non-empty scalar characters
-                            is_valid_pkg     <- !is.null(pkg_name)    && length(pkg_name) == 1L    && nzchar(pkg_name)    && !is.na(pkg_name)
-                            is_valid_version <- !is.null(pkg_version) && length(pkg_version) == 1L && nzchar(pkg_version) && !is.na(pkg_version)
-
-                            if (is_valid_pkg) {
-                                if (pkg_name %in% core_tools) {
-                                    keep <- TRUE
-                                } else if (pkg_name %in% names(keep_pkgs) && is_valid_version) {
-                                    # Extract safely and handle potential NULL or empty list structures cleanly
-                                    target_versions <- keep_pkgs[[pkg_name]]
-                                    if (!is.null(target_versions) && length(target_versions) > 0L) {
-                                        if (pkg_version %in% target_versions) {
-                                            keep <- TRUE
-                                        }
+                            if (pkg_name %in% core_tools) {
+                                keep <- TRUE
+                            } else if (pkg_name %in% names(keep_pkgs)) {
+                                # Extract safely and handle potential NULL or empty list structures cleanly
+                                target_versions <- keep_pkgs[[pkg_name]]
+                                if (!is.null(target_versions) && length(target_versions) > 0L) {
+                                    if (pkg_version %in% target_versions) {
+                                        keep <- TRUE
                                     }
                                 }
                             }
+
+                            if (keep) stop
                                                         
-                            if (!keep) {
+                            purged <- tryCatch(
+                                {
                                 renv::purge(pkg_name, version = pkg_version, prompt = FALSE)
-                                message(' - Purged: ', pkg_name, ' (v', pkg_version, ')')
-                                already_purged <- c(already_purged, pkg_id)
-                                purged_count <- purged_count + 1
-                            }
+                                TRUE
+                                },
+                            function(e) {
+                                message(' - Failed to purge: ', pkg_id, ' (', e$message, ')')
+                                FALSE
+                            })
+                            if (!purged) stop
+                            
+                            message(' - Purged: ', pkg_name, ' (v', pkg_version, ')')
+                            pkg_id
                         }, error = function(e) NULL)
+
+                        if (!is.null(result_purge) && length(result_purge) == 1L && is.character(result_purge) && nzchar(result_purge)) {
+                            already_purged <- c(already_purged, result_purge)
+                            purged_count <- purged_count + 1
+                        }
                     }
                     
-                    message('[INFO] Purged ', purged_count, ' unused package versions from the global cache.')
+                    message('[INFO] Purged ', purged_count, ' package versions from the global cache of ', length(desc_files), ' total cached packages.')
                 }
             \""
         fi
