@@ -464,4 +464,401 @@ reset_tokens_after_install() {
     if [ "$OVERRIDE_TOKENS_AT_INSTALL" != "true" ]; then
         return
     fi
-    if [ -n "$_ORIG_
+    if [ -n "$_ORIG_GITHUB_TOKEN" ]; then
+        export GITHUB_TOKEN="$_ORIG_GITHUB_TOKEN"
+    else
+        unset GITHUB_TOKEN
+    fi
+    if [ -n "$_ORIG_GITHUB_PAT" ]; then
+        export GITHUB_PAT="$_ORIG_GITHUB_PAT"
+    else
+        unset GITHUB_PAT
+    fi
+}
+
+clean_up() {
+    rm_dirs /tmp/Rtmp* /tmp/rig
+    if command -v apt-get >/dev/null 2>&1; then
+        empty_dir /var/lib/apt/lists
+    fi
+}
+
+# ==============================================================================
+# EXECUTION WORKFLOW
+# ==============================================================================
+
+install_renvvv_global
+create_path_post_create_command
+set_r_libs
+set_tokens_for_install
+
+copy_and_set_execute_bit copy-lockfile
+copy_and_set_execute_bit restore
+copy_and_set_execute_bit init
+
+# 1. Fetch Dynamic Repositories (Downloads renv.lock directly via GitHub API)
+if [ -n "$REPOSITORIES" ]; then
+    echo "[INFO] Fetching remote lockfiles..."
+    mkdir -p "$LOCKFILE_DIR"
+    IFS=',' read -ra REPO_ARRAY <<< "$REPOSITORIES"
+
+    for REPO_SPEC in "${REPO_ARRAY[@]}"; do
+        REPO_SPEC="${REPO_SPEC#"${REPO_SPEC%%[![:space:]]*}"}"
+        REPO_SPEC="${REPO_SPEC%"${REPO_SPEC##*[![:space:]]}"}"
+        if [[ "$REPO_SPEC" == *":"* ]]; then
+            PROFILE="${REPO_SPEC##*:}"
+            REPO_SPEC="${REPO_SPEC%:*}"
+        else
+            PROFILE=""
+        fi
+        if [[ "$REPO_SPEC" == *"@"* ]]; then
+            REPO_PATH="${REPO_SPEC%%@*}"
+            BRANCH="${REPO_SPEC##*@}"
+        else
+            REPO_PATH="$REPO_SPEC"
+            BRANCH=""
+        fi
+
+        if [ -n "$PROFILE" ]; then
+            FILE_PATH="renv/profiles/$PROFILE/renv.lock"
+        else
+            FILE_PATH="renv.lock"
+        fi
+
+        API_URL="https://api.github.com/repos/${REPO_PATH}/contents/${FILE_PATH}"
+        if [ -n "$BRANCH" ]; then
+            API_URL="${API_URL}?ref=${BRANCH}"
+        fi
+
+        echo "[INFO] Downloading ${FILE_PATH} from ${REPO_PATH}..."
+        
+        SAFE_NAME=$(echo "${REPO_PATH}_${BRANCH}_${PROFILE}" | sed 's/[^a-zA-Z0-9]/_/g')
+        DEST_DIR="${LOCKFILE_DIR}/remote_${SAFE_NAME}"
+        mkdir -p "$DEST_DIR"
+
+        CURL_OPTS=(-s -L -w "%{http_code}" -H "Accept: application/vnd.github.v3.raw" -o "$DEST_DIR/renv.lock")
+        if [ -n "$GITHUB_PAT" ]; then
+            CURL_OPTS+=(-H "Authorization: Bearer $GITHUB_PAT")
+        fi
+
+        if HTTP_CODE=$(curl "${CURL_OPTS[@]}" "$API_URL"); then
+            if [ "$HTTP_CODE" = "200" ]; then
+                echo "[INFO] Successfully downloaded remote lockfile into $DEST_DIR"
+            else
+                echo "[WARN] Failed to download lockfile for ${REPO_PATH} (HTTP $HTTP_CODE). Skipping."
+                rm -rf "$DEST_DIR"
+            fi
+        else
+            echo "[WARN] curl failed while downloading lockfile for ${REPO_PATH}. Skipping."
+            rm -rf "$DEST_DIR"
+        fi
+    done
+fi
+
+dir_array=()
+if [ -n "$LOCKFILE_DIR" ] && [ -d "$LOCKFILE_DIR" ]; then
+    mapfile -t dir_array < <(find "$LOCKFILE_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -u)
+    N_LOCKFILE=${#dir_array[@]} 
+    echo "Found ${#dir_array[@]} directories."
+else
+    N_LOCKFILE=0
+    echo "[INFO] No valid local lockfile directory specified or found at $LOCKFILE_DIR. Skipping local lockfile processing."
+fi
+
+if [ "$CREATE_UNIFIED_LOCKFILE" = "auto" ]; then
+    if [ "$N_LOCKFILE" -gt 1 ] || [ -n "$PKG" ]; then
+        CREATE_UNIFIED_LOCKFILE=true
+    else
+        CREATE_UNIFIED_LOCKFILE=false
+    fi
+fi
+
+# 2. Process All Cached Lockfiles (Local + Remote)
+if [ "${#dir_array[@]}" -gt 0 ]; then
+    for dir in "${dir_array[@]}"; do
+        process_lockfile_dir "$dir"
+    done
+fi
+
+# 3. Process Explicit Packages (No Lockfile)
+if [ -n "$PKG" ]; then
+    TMP_PKG_DIR=$(mktemp -d)
+    chown "${USERNAME}:${USERNAME}" "$TMP_PKG_DIR"
+    pushd "$TMP_PKG_DIR" > /dev/null
+
+    echo "Warming cache with explicit packages: ${PKG}..."
+    init_bare_renv
+    install_gitcreds
+    install_renvvv_local
+    setup_pak
+
+    run_rscript "
+        pkgs <- trimws(unlist(strsplit('${PKG}', ',')))
+        try(renvvv::renvvv_install(pkgs))
+    "
+
+    popd > /dev/null
+    rm -rf "$TMP_PKG_DIR"
+fi
+
+# 4. Generate Single Unified Lockfile
+if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
+    echo "=========================================================="
+    echo "[INFO] Building unified renv.lock file..."
+    UNIFIED_DIR="/usr/local/share/renv-cache/unified_project"
+    mkdir -p "$UNIFIED_DIR"
+    chown -R "${USERNAME}:${USERNAME}" "$UNIFIED_DIR"
+    pushd "$UNIFIED_DIR" > /dev/null
+    
+    init_bare_renv
+    install_gitcreds
+    install_renvvv_local
+    setup_pak
+
+    # 4a. Extract all dependency packages (from both lockfiles and explicit PKG) and generate _dependencies.R
+    run_rscript "
+        lockfiles <- if (file.exists('/tmp/renv_lockfiles_to_combine.txt')) readLines('/tmp/renv_lockfiles_to_combine.txt') else character()
+        all_pkgs <- character()
+        
+        for (lf in lockfiles) {
+            tryCatch({
+                json_data <- renv:::renv_json_read(lf)
+                if (!is.null(json_data\\\$Packages)) {
+                    all_pkgs <- c(all_pkgs, names(json_data\\\$Packages))
+                }
+            }, error = function(e) message('[WARN] Could not read package names from ', lf))
+        }
+        
+        pkg_env <- '${PKG}'
+        if (nchar(pkg_env) > 0) {
+            explicit_pkgs <- trimws(unlist(strsplit(pkg_env, ',')))
+            all_pkgs <- c(all_pkgs, explicit_pkgs)
+        }
+
+        all_pkgs <- unique(all_pkgs)
+        if (length(all_pkgs) > 0) {
+            writeLines(paste0('library(', all_pkgs, ')'), '_dependencies.R')
+        }
+    "
+
+    # 4b. Iteratively copy lockfiles and safely accumulate their packages (clean = FALSE)
+    if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
+        while IFS= read -r lf; do
+            if [ -f "$lf" ]; then
+                echo "[INFO] Accumulating dependencies from $lf..."
+                cp "$lf" renv.lock
+                chown "${USERNAME}:${USERNAME}" renv.lock
+                run_rscript "renvvv::renvvv_restore(args_restore = list(clean = FALSE))"
+            fi
+        done < /tmp/renv_lockfiles_to_combine.txt
+    fi
+
+    # 4c. Install explicit packages into the unified project
+    if [ -n "$PKG" ]; then
+        echo "[INFO] Accumulating explicit packages ($PKG) into unified project..."
+        run_rscript "
+            pkgs <- trimws(unlist(strsplit('${PKG}', ',')))
+            try(renvvv::renvvv_install(pkgs))
+        "
+    fi
+
+    # 4d. Take snapshot of unified original restores
+    echo "[INFO] Taking unified RESTORE snapshot..."
+    DIR_UNIFIED_LOCKFILE_RESTORE="/usr/local/share/renv-cache/unified-lockfiles/restore"
+    mkdir -p "$DIR_UNIFIED_LOCKFILE_RESTORE"
+    run_rscript "renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_RESTORE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)"
+    chown -R "${USERNAME}:${USERNAME}" "$DIR_UNIFIED_LOCKFILE_RESTORE"
+
+    # 4e. Apply updates and take updated snapshot
+    if [ "$UPDATE" = "true" ]; then
+        echo "[INFO] Updating unified project..."
+        run_rscript "renvvv::renvvv_update()"
+        
+        echo "[INFO] Taking unified UPDATE snapshot..."
+        DIR_UNIFIED_LOCKFILE_UPDATE="/usr/local/share/renv-cache/unified-lockfiles/update"
+        mkdir -p "$DIR_UNIFIED_LOCKFILE_UPDATE"
+        run_rscript "renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_UPDATE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)"
+        chown -R "${USERNAME}:${USERNAME}" "${DIR_UNIFIED_LOCKFILE_UPDATE}"
+    fi
+
+    # 4f. Purge orphaned packages and old versions from the global cache
+    if [ "$PURGE_POST_UNIFICATION" != "none" ]; then
+        echo "[INFO] Purging global cache using strategy: ${PURGE_POST_UNIFICATION}..."
+        run_rscript "
+            cache_path <- renv::paths\\\$cache()
+            if (!dir.exists(cache_path)) {
+                message('[INFO] No renv cache found at ', cache_path, '; skipping purge.')
+                quit(status = 0)
+            }
+
+            keep_pkgs <- list()
+            add_to_keep <- function(lf) {
+                if (file.exists(lf)) {
+                    lf_data <- tryCatch(renv:::renv_json_read(lf), error = function(e) NULL)
+                    if (!is.null(lf_data\\\$Packages)) {
+                        for (pkg in names(lf_data\\\$Packages)) {
+                            ver <- lf_data\\\$Packages[[pkg]]\\\$Version
+                            keep_pkgs[[pkg]] <<- unique(c(keep_pkgs[[pkg]], ver))
+                        }
+                    }
+                }
+            }
+
+            purge_strategy <- '${PURGE_POST_UNIFICATION}'
+            update <- '${UPDATE}'
+
+            if (purge_strategy == 'keep-both') {
+                if (update == 'true') {
+                    message('[INFO] Purging, keeping both the restore- and update-based unified lockfile packages.')
+                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
+                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/update/renv.lock')
+                } else {
+                    message('[INFO] Purging, keeping the restore-based unified lockfile packages only (update is false).')
+                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
+                }
+            }
+            if (purge_strategy == 'keep-one') {
+                if (update == 'true') {
+                    message('[INFO] Purging, keeping the update-based unified lockfile packages only.')
+                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/update/renv.lock')
+                } else {
+                    message('[INFO] Purging, keeping the restore-based unified lockfile packages only (update is false).')
+                    add_to_keep('/usr/local/share/renv-cache/unified-lockfiles/restore/renv.lock')
+                }
+            }
+
+            core_tools <- c('renv', 'renvvv', 'remotes', 'cli', 'jsonlite', 'yaml', 'pak')
+            desc_files <- list.files(cache_path, pattern = '^DESCRIPTION$', recursive = TRUE, full.names = TRUE)
+
+            pkg_id_purged  <- character()
+            pkg_id_kept_core     <- character()
+            pkg_id_kept_lockfile <- character()
+            pkg_id_failed  <- character()
+            pkg_id_invalid <- list()
+
+            for (desc in desc_files) {
+                result_purge <- tryCatch({
+                    dcf        <- try(read.dcf(desc))
+                    pkg_name   <- try(as.character(dcf[1, 'Package']))
+                    pkg_version <- try(as.character(dcf[1, 'Version']))
+
+                    is_valid_pkg     <- tryCatch(!is.null(pkg_name)    && length(pkg_name) == 1L    && nzchar(pkg_name)    && !is.na(pkg_name),    error = function(e) FALSE)
+                    is_valid_version <- tryCatch(!is.null(pkg_version) && length(pkg_version) == 1L && nzchar(pkg_version) && !is.na(pkg_version), error = function(e) FALSE)
+
+                    if (!is_valid_pkg || !is_valid_version) {
+                        pkg_id_invalid <<- append(pkg_id_invalid, list(list(
+                            desc_path   = desc,
+                            pkg_name    = if (is_valid_pkg)      pkg_name    else NA_character_,
+                            pkg_version = if (is_valid_version) pkg_version else NA_character_
+                        )))
+                        return(NULL)
+                    }
+
+                    pkg_id <- paste0(pkg_name, '@', pkg_version)
+
+                    if (pkg_id %in% pkg_id_purged) {
+                        return(NULL)
+                    } 
+
+                    if (pkg_name %in% core_tools) {
+                        pkg_id_kept_core <<- c(pkg_id_kept_core, pkg_id)
+                        return(NULL)
+                    } else if (pkg_name %in% names(keep_pkgs)) {
+                        target_versions <- keep_pkgs[[pkg_name]]
+                        if (!is.null(target_versions) && length(target_versions) > 0L && pkg_version %in% target_versions) {
+                            pkg_id_kept_lockfile <<- c(pkg_id_kept_lockfile, pkg_id)
+                            return(NULL)
+                        }
+                    }
+
+                    err_msg <- NULL
+                    purged <- tryCatch(
+                        { renv::purge(pkg_name, version = pkg_version, prompt = FALSE); TRUE },
+                        error = function(e) { err_msg <<- e\\\$message; FALSE }
+                    )
+
+                    if (!purged) {
+                        pkg_id_failed <<- c(pkg_id_failed, paste0(pkg_id, if (!is.null(err_msg)) paste0(' (', err_msg, ')') else ''))
+                        return(NULL)
+                    }
+
+                    pkg_id
+                }, error = function(e) NULL)
+
+                if (!is.null(result_purge) && length(result_purge) == 1L && is.character(result_purge) && nzchar(result_purge)) {
+                    pkg_id_purged <- c(pkg_id_purged, result_purge)
+                }
+            }
+
+            message('==========================================================')
+            message('PURGE SUMMARY (strategy: ', purge_strategy, ')')
+            message('==========================================================')
+            message('Total DESCRIPTION files scanned : ', length(desc_files))
+            message('Kept (core tools)               : ', length(pkg_id_kept_core))
+            message('Kept (in unified lockfile)      : ', length(pkg_id_kept_lockfile))
+            message('Purged                          : ', length(pkg_id_purged))
+            message('Failed to purge                 : ', length(pkg_id_failed))
+            message('Invalid / skipped               : ', length(pkg_id_invalid))
+
+            if (length(pkg_id_purged) > 0) {
+                message('')
+                message('--- Purged packages ---')
+                for (p in sort(pkg_id_purged)) message('  - ', p)
+            }
+
+            pkg_id_kept <- c(pkg_id_kept_core, pkg_id_kept_lockfile)
+            if (length(pkg_id_kept) > 0) {
+                message('')
+                message('--- Kept packages ---')
+                for (p in sort(pkg_id_kept)) message('  + ', p)
+            }
+
+            if (length(pkg_id_failed) > 0) {
+                message('')
+                message('--- Failed to purge ---')
+                for (p in pkg_id_failed) message('  ! ', p)
+            }
+
+            if (length(pkg_id_invalid) > 0) {
+                message('')
+                message('--- Invalid cache entries ---')
+                for (entry in pkg_id_invalid) {
+                    message('  ? ', entry\\\$desc_path,
+                            ' (name: ', if (is.na(entry\\\$pkg_name)) '<missing>' else entry\\\$pkg_name,
+                            ', version: ', if (is.na(entry\\\$pkg_version)) '<missing>' else entry\\\$pkg_version, ')')
+                }
+            }
+            message('==========================================================')
+        "
+    fi
+
+    popd > /dev/null
+    rm -rf "$UNIFIED_DIR"
+    echo "=========================================================="
+else
+    echo "[INFO] createUnifiedLockfile is false; skipping unified lockfile generation."
+fi
+
+# 5. Final Purge of Excluded Packages
+if [ -n "$PKG_EXCLUDE" ]; then
+    echo "[INFO] Performing final sweep to purge excluded packages from the global cache..."
+    run_rscript "
+        skip_list <- trimws(unlist(strsplit('${PKG_EXCLUDE}', ',')))
+        for (pkg in skip_list) {
+            if (nzchar(pkg)) {
+                tryCatch({
+                    renv::purge(pkg, prompt = FALSE)
+                    message('  - Purged ', pkg, ' from global cache.')
+                }, error = function(e) NULL)
+            }
+        }
+    "
+fi
+
+if [ -f /tmp/renv_lockfiles_to_combine.txt ]; then
+    rm -f /tmp/renv_lockfiles_to_combine.txt
+fi
+
+echo "renv-cache installation complete!"
+reset_tokens_after_install
+clean_up
