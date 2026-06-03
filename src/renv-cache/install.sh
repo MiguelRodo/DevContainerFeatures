@@ -314,8 +314,8 @@ install_renvvv() {
     # Ensure remotes is installed
     su "${USERNAME}" -c "Rscript -e \"if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', repos = '${CRAN_MIRROR}')\""
     
-    # Install renvvv
-    su "${USERNAME}" -c "Rscript -e \"remotes::install_github('MiguelRodo/renvvv')\""
+    # Install the latest stable release of renvvv
+    su "${USERNAME}" -c "Rscript -e \"remotes::install_github('MiguelRodo/renvvv@*release')\""
 }
 
 update_renv_cache() {
@@ -471,10 +471,10 @@ if [ -n "$PKG" ]; then
         renv::init(bare = TRUE, restart = FALSE)
     \""
 
-    # Explicitly install renvvv directly into the newly created local project sandbox
+    # Explicitly install the latest release of renvvv directly into the newly created local project sandbox
     su "${USERNAME}" -c "Rscript -e \"
         options(repos = c(CRAN = '${CRAN_MIRROR}'))
-        renv::install('MiguelRodo/renvvv', prompt = FALSE)
+        renv::install('MiguelRodo/renvvv@*release', prompt = FALSE)
     \""
 
     su "${USERNAME}" -c "Rscript -e \"
@@ -516,10 +516,10 @@ if [ -f /tmp/renv_lockfiles_to_combine.txt ] || [ -n "$PKG" ]; then
             renv::init(bare = TRUE, restart = FALSE)
         \""
 
-        # Explicitly install renvvv directly into the newly created local project sandbox
+        # Explicitly install the latest release of renvvv directly into the newly created local project sandbox
         su "${USERNAME}" -c "Rscript -e \"
             options(repos = c(CRAN = '${CRAN_MIRROR}'))
-            renv::install('MiguelRodo/renvvv', prompt = FALSE)
+            renv::install('MiguelRodo/renvvv@*release', prompt = FALSE)
         \""
 
         # Extract all dependency packages (from both lockfiles and explicit PKG) and generate _dependencies.R
