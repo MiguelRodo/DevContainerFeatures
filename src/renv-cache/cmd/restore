@@ -15,7 +15,7 @@ usage() {
     echo "  -u, --update                     Run update. Default is false."
     echo "  -e, --exclude PKG1,PKG2          Comma-separated list of packages to exclude from restore/update."
     echo "  -p, --pak                        Use pak (passed to underlying functions if supported)."
-    echo "  -c, --force-cache-version        Preferentially install the highest available cached version for non-GitHub packages."
+    echo "  -c, --force-cache-version        For non-GitHub packages, if the specific version of a required package is not available in the cache, then it preferentially installs the highest available cached version."
     echo "  --debug-renv                     Enable verbose mode for renv."
     echo "  -h, --help                       Display this help message."
     exit "${1:-0}"
@@ -389,19 +389,21 @@ restore() {
                                 versions <- list.files(pkg_dir)
                                 
                                 if (length(versions) > 0) {
-                                    # Filter for valid semantic versions and find the highest one
-                                    valid_vers <- versions[grepl('^[0-9]+(?:\\\\.[0-9]+)*\$', versions)]
-                                    if (length(valid_vers) > 0) {
-                                        parsed_vers <- tryCatch(package_version(valid_vers), error = function(e) NULL)
-                                        if (!is.null(parsed_vers)) {
-                                            latest_ver <- as.character(max(parsed_vers))
-                                            
-                                            # If the cached version differs from the lockfile, hot-swap it
-                                            if (pkg_info\$Version != latest_ver) {
+                                    req_ver <- pkg_info\$Version
+                                    
+                                    # ONLY retarget if the explicitly requested version is MISSING from the cache
+                                    if (!(req_ver %in% versions)) {
+                                        # Filter for valid semantic versions and find the highest one
+                                        valid_vers <- versions[grepl('^[0-9]+(?:\\\\.[0-9]+)*\\$', versions)]
+                                        if (length(valid_vers) > 0) {
+                                            parsed_vers <- tryCatch(package_version(valid_vers), error = function(e) NULL)
+                                            if (!is.null(parsed_vers)) {
+                                                latest_ver <- as.character(max(parsed_vers))
+                                                
                                                 hashes <- list.files(file.path(pkg_dir, latest_ver))
                                                 if (length(hashes) > 0) {
                                                     target_hash <- hashes[1] # Grab the specific hash from the cache
-                                                    message('  - Retargeting ', pkg, ' from v', pkg_info\$Version, ' to cached v', latest_ver)
+                                                    message('  - Exact v', req_ver, ' missing. Retargeting ', pkg, ' to cached v', latest_ver)
                                                     lf_data\$Packages[[pkg]]\$Version <- latest_ver
                                                     lf_data\$Packages[[pkg]]\$Hash <- target_hash
                                                     changed <- TRUE
@@ -414,7 +416,7 @@ restore() {
                         }
                         
                         if (changed) {
-                            message('[INFO] Hot-swapping renv.lock to force cache hits...')
+                            message('[INFO] Hot-swapping renv.lock to force cache hits for missing packages...')
                             file.copy('renv.lock', 'renv.lock.forcecache.bak', overwrite = TRUE)
                             renv:::renv_json_write(lf_data, file = 'renv.lock')
                             
@@ -427,7 +429,7 @@ restore() {
                                 }
                             }, add = TRUE)
                         } else {
-                            message('[INFO] No cached overrides available or needed.')
+                            message('[INFO] No cached overrides needed (all requested versions are cached or no alternative cache hits available).')
                         }
                     }
                 }

@@ -84,9 +84,9 @@ renv-cache-restore -c
 renv-cache-restore --force-cache-version
 ```
 
-**How it works:** When this flag is passed, the script temporarily hot-swaps your `renv.lock` file in memory before the restoration begins. It scans the container's global package cache for standard CRAN and Bioconductor packages. If a valid version of a required package already exists in the cache, it forcibly injects that exact version and cache hash into the lockfile.
+**How it works:** When this flag is passed, the script temporarily hot-swaps your `renv.lock` file in memory before the restoration begins. It scans the container's global package cache for standard CRAN and Bioconductor packages. If your lockfile specifies a version of a package not available in the cache but the cache contains other version(s) of that package, then it forcibly injects the highest-available version and cache hash into the lockfile.
 
-This guarantees a 100% cache hit and prevents `renv` from attempting to download missing versions from the internet. The original `renv.lock` file is automatically rolled back to its unmodified state immediately after the restoration process finishes.
+This improves usage of the cache. The original `renv.lock` file is automatically rolled back to its unmodified state immediately after the restoration process finishes. Run `renv::snapshot()` if you are happy with the updated versions afterwards.
 
 *(Note: This forced cache override ignores GitHub, Git, and Local package sources).*
 
