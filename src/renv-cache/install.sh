@@ -248,6 +248,18 @@ process_lockfile_dir() {
 
     echo "Warming cache from $TARGET_DIR..."
 
+    # Install gitcreds so that `renv` finds Git authentication more easily
+    su "${USERNAME}" -c "Rscript -e \"
+        options(repos = c(CRAN = '${CRAN_MIRROR}'))
+        if (!requireNamespace('gitcreds', quietly = TRUE)) {
+            message('[INFO] Installing gitcreds for authentication...')
+            tryCatch(
+                renvvv::renvvv_install('gitcreds'),
+                error = function(e) message('[WARN] Failed to install gitcreds: ', e\\\$message)
+            )
+        }
+    \""
+
     # Construct the robust renvvv command based on feature options
     if [ "$RESTORE" = "true" ] && [ "$UPDATE" = "true" ]; then
         R_CMD="renvvv::renvvv_restore_and_update()"
