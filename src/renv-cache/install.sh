@@ -181,7 +181,7 @@ install_renvvv_local() {
         if (!requireNamespace('renvvv', quietly = TRUE)) {
             message('[INFO] Installing renvvv...')
             tryCatch(
-                renv::install('MiguelRodo/renvvv@*release'),
+                renv::install('renvvv', repos = c(miguelrodo = "https://miguelrodo.r-universe.dev", CRAN = "https://cloud.r-project.org")),
                 error = function(e) message('[WARN] Failed to install renvvv: ', e\\\$message)
             )
         }
