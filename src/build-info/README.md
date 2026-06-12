@@ -18,6 +18,9 @@ Bakes build-time release version and date metadata from GHA directly into a syst
 | version | The automated version number injected from the runner host environment. | string | development |
 | buildDate | The build timestamp injected from the runner host environment. | string | unknown |
 
+## Deprecated
+
+Deprecated in favour of the `zzz-build-info` feature, which works better and is integrated with the `MiguelRodo/actions` `prebuild-devcontainer` action.
 
 
 ---
