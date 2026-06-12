@@ -1,18 +1,51 @@
 {
     "name": "Container Metadata Injector",
     "id": "build-info",
-    "version": "1.3.1",
-    "description": "Bakes build-time release version and date metadata from GHA directly into a system-wide command.",
+    "version": "1.4.0",
+    "description": "Bakes build-time release version and date metadata directly into a system-wide command.",
     "options": {
-        "version": {
+        "imageVersion": {
             "type": "string",
-            "default": "development",
-            "description": "The automated version number injected from the runner host environment."
+            "default": "",
+            "description": "The automated version number injected from the runner host environment. Valid formats include 1, v1.2, 1.2.3.4, v2.0-12."
         },
         "buildDate": {
             "type": "string",
-            "default": "unknown",
-            "description": "The build timestamp injected from the runner host environment."
+            "default": "",
+            "description": "If left empty, automatically sets to the current date and time formatted as an ISO 8601 UTC timestamp."
         }
-    }
+    },
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils",
+        "ghcr.io/devcontainers/features/git",
+        "ghcr.io/devcontainers/features/git-lfs",
+        "ghcr.io/devcontainers/features/github-cli",
+        "ghcr.io/devcontainers/features/docker-in-docker",
+        "ghcr.io/devcontainers/features/docker-outside-of-docker",
+        "ghcr.io/devcontainers/features/node",
+        "ghcr.io/devcontainers/features/python",
+        "ghcr.io/devcontainers/features/go",
+        "ghcr.io/devcontainers/features/rust",
+        "ghcr.io/devcontainers/features/java",
+        "ghcr.io/devcontainers/features/conda",
+        "ghcr.io/devcontainers/features/nix",
+        "ghcr.io/rocker-org/devcontainer-features/r-apt",
+        "ghcr.io/rocker-org/devcontainer-features/r-rig",
+        "ghcr.io/rocker-org/devcontainer-features/miniforge",
+        "ghcr.io/rocker-org/devcontainer-features/apt-packages",
+        "ghcr.io/rocker-org/devcontainer-features/r-packages",
+        "ghcr.io/rocker-org/devcontainer-features/r-dependent-packages",
+        "ghcr.io/rocker-org/devcontainer-features/renv-cache",
+        "ghcr.io/rocker-org/devcontainer-features/quarto-cli",
+        "ghcr.io/rocker-org/devcontainer-features/pandoc",
+        "ghcr.io/rocker-org/devcontainer-features/r-history",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/utils",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/apptainer",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/mermaid",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache",
+        "ghcr.io/MiguelRodo/DevContainerFeatures/repos"
+    ]
 }
