@@ -1,7 +1,7 @@
 {
     "name": "Container Metadata Injector",
     "id": "build-info",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Bakes build-time release version and date metadata from GHA directly into a system-wide command.",
     "options": {
         "version": {
@@ -16,6 +16,6 @@
         }
     },
     "installsAfter": [
-        "ghcr.io/devcontainers/features/common-utils"
+        "*"
     ]
 }
