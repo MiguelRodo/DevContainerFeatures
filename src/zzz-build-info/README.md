@@ -1,7 +1,7 @@
 
 # Container Metadata Injector (zzz-build-info)
 
-Bakes build-time release version and date metadata from GHA directly into a system-wide command.
+Bakes build-time release version and date metadata directly into a system-wide command.
 
 ## Example Usage
 
@@ -15,9 +15,23 @@ Bakes build-time release version and date metadata from GHA directly into a syst
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| version | The automated version number injected from the runner host environment. | string | development |
-| buildDate | The build timestamp injected from the runner host environment. | string | unknown |
+| imageVersion | The automated version number injected from the runner host environment. Valid formats include 1, v1.2, 1.2.3.4, v2.0-12. | string | - |
+| buildDate | If left empty, automatically sets to the current date and time formatted as an ISO 8601 UTC timestamp. | string | - |
 
+## Providing build info within the container image
+
+This provides the command `/usr/local/bin/container-info` inside the container, which outputs the build details in this format:
+
+```text
+--------------------------------------------------
+🚀 DevContainer Release Information
+--------------------------------------------------
+Version: v1.2.3
+Built On: 2026-06-12T14:36:22Z
+--------------------------------------------------
+```
+
+The version and build date are those specified by the feature options.
 
 
 ---
