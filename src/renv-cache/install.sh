@@ -666,8 +666,13 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
     echo "[INFO] Taking unified RESTORE snapshot..."
     DIR_UNIFIED_LOCKFILE_RESTORE="/usr/local/share/renv-cache/unified-lockfiles/restore"
     mkdir -p "$DIR_UNIFIED_LOCKFILE_RESTORE"
-    run_rscript "renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_RESTORE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)"
     chown -R "${USERNAME}:${USERNAME}" "$DIR_UNIFIED_LOCKFILE_RESTORE"
+    run_rscript "renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_RESTORE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)"
+    
+    # Revert ownership to root and set file to read-only for non-root users
+    chown -R root:root "$DIR_UNIFIED_LOCKFILE_RESTORE"
+    chmod 755 "$DIR_UNIFIED_LOCKFILE_RESTORE"
+    chmod 644 "$DIR_UNIFIED_LOCKFILE_RESTORE/renv.lock"
 
     # 4e. Apply updates and take updated snapshot
     if [ "$UPDATE" = "true" ]; then
@@ -677,8 +682,13 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
         echo "[INFO] Taking unified UPDATE snapshot..."
         DIR_UNIFIED_LOCKFILE_UPDATE="/usr/local/share/renv-cache/unified-lockfiles/update"
         mkdir -p "$DIR_UNIFIED_LOCKFILE_UPDATE"
-        run_rscript "renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_UPDATE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)"
         chown -R "${USERNAME}:${USERNAME}" "${DIR_UNIFIED_LOCKFILE_UPDATE}"
+        run_rscript "renv::snapshot(lockfile = '${DIR_UNIFIED_LOCKFILE_UPDATE}/renv.lock', type = 'all', force = TRUE, prompt = FALSE)"
+        
+        # Revert ownership to root and set file to read-only for non-root users
+        chown -R root:root "$DIR_UNIFIED_LOCKFILE_UPDATE"
+        chmod 755 "$DIR_UNIFIED_LOCKFILE_UPDATE"
+        chmod 644 "$DIR_UNIFIED_LOCKFILE_UPDATE/renv.lock"
     fi
 
     # 4f. Purge orphaned packages and old versions from the global cache
