@@ -9,7 +9,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: "Validate devcontainer-feature.json files"
         uses: devcontainers/action@v1
