@@ -18,12 +18,12 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Publish Quarto Site
-        uses: MiguelRodo/actions/publish-quarto-site@v2.43
+        uses: MiguelRodo/actions/publish-quarto-site@ea8f8df62048a1ae56a1e99a58580a0ac05b8e41 # v2.43.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           path: docs
