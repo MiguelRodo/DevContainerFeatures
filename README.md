@@ -1,272 +1,53 @@
 # Dev Container Features
 
-A collection of reusable DevContainer Features for various development tools and workflows.
+A collection of reusable Dev Container Features for development tools and workflows.
 
 ## Features
 
-This repository contains the following DevContainer Features:
+The catalogue below is generated from `src/<feature>/devcontainer-feature.json`, which is the source of truth for feature names, descriptions, options and lifecycle metadata.
 
-- **[apptainer](#apptainer)** - Install Apptainer for HPC containerization
-- **[cmdstan](#cmdstan)** - Install CmdStan (Stan probabilistic programming system)
-- **[build-info](#build-info)** - Bakes build-time release version and date metadata directly into a system-wide command
-- **[renv-cache](#renv-cache)** - Configure R with renv cache
-- **[fit-sne](#fit-sne)** - Install FIt-SNE for dimensionality reduction
-- **[mermaid](#mermaid)** - Install Mermaid CLI for diagram generation
-- **[repos](#repos)** - Manage multiple Git repositories
+<!-- BEGIN GENERATED FEATURE CATALOGUE -->
+| Feature | Status | Description |
+|---------|--------|-------------|
+| [`apptainer`](docs/features/apptainer.qmd) | Current | Install Apptainer, a container system for HPC |
+| [`build-info`](docs/features/build-info.qmd) | Current | Bakes build-time release version and date metadata directly into a system-wide command. |
+| [`cmdstan`](docs/features/cmdstan.qmd) | Current | Installs CmdStan (the Stan probabilistic programming system command-line interface) from the official GitHub release, compiles it during image build, and configures the CMDSTAN environment variable system-wide so the installation survives container rebuilds. |
+| [`fit-sne`](docs/features/fit-sne.qmd) | Current | Installs FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source. |
+| [`github-tokens`](docs/features/github-tokens.qmd) | Current | Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup |
+| [`mermaid`](docs/features/mermaid.qmd) | Current | Installs Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration. |
+| [`renv-cache`](docs/features/renv-cache.qmd) | Current | Configure R with renv cache |
+| [`repos`](docs/features/repos.qmd) | Deprecated | (DEPRECATED: Use the 'utils' feature instead) Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos clone' when the container starts to clone repositories defined in repos.list. |
+| [`utils`](docs/features/utils.qmd) | Current | Installs Miguel Rodo's utilities like 'repos' and 'setupmjr'. |
+<!-- END GENERATED FEATURE CATALOGUE -->
+
+`repos` is retained for backwards compatibility. New configurations should use [`utils`](docs/features/utils.qmd).
 
 ## Usage
 
-Each feature can be added to your `devcontainer.json` file. See the sections below for specific usage examples and options.
-
----
-
-## apptainer
-
-Installs [Apptainer](https://apptainer.org/), a container system widely used in High Performance Computing (HPC) environments.
-
-### Example
+Add a feature to your `devcontainer.json` using its GHCR identifier:
 
 ```json
 {
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1": {
-            "timezone": "UTC"
-        }
-    }
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/<feature-name>:1": {}
+  }
 }
 ```
 
-### Options
+See the linked feature page for usage notes and options. The canonical option names and defaults live in each feature's `src/<feature>/devcontainer-feature.json`.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `timezone` | string | `"UTC"` | Timezone to configure in the container (e.g., "UTC", "Europe/London"). Required for proper Apptainer mounting behavior. |
+## Keeping documentation in sync
 
-### Notes
-
-- Adds the `ppa:apptainer/ppa` repository
-- Configures `tzdata` because Apptainer containers often inherit the host's `/etc/localtime`
-
----
-
-## cmdstan
-
-Installs [CmdStan](https://mc-stan.org/users/interfaces/cmdstan), the command-line interface to [Stan](https://mc-stan.org/) – a state-of-the-art platform for Bayesian probabilistic programming and statistical inference.
-
-The feature downloads the official CmdStan release tarball, pre-compiles the Stan C++ toolchain during the image build, and configures the `CMDSTAN` environment variable system-wide so that the installation **survives container rebuilds**.
-
-### Example
-
-```json
-{
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1": {
-            "version": "2.36.0"
-        }
-    }
-}
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `version` | string | `"2.36.0"` | CmdStan version to install (e.g. `"2.36.0"`). Use `"latest"` to always pull the newest release. |
-| `installDir` | string | `"/opt/cmdstan"` | Base directory under which the versioned CmdStan folder is created. |
-| `installRPackage` | boolean | `true` | When `true` and R is present, install the `cmdstanr` R package and configure it to use the system CmdStan installation. |
-
-### Notes
-
-- Installs CmdStan to a system-wide path (not a user home directory) so the installation survives rebuilds
-- Pre-compiles the Stan C++ toolchain during the image build (`make build`)
-- Sets `CMDSTAN` and updates `PATH` via `/etc/profile.d/cmdstan.sh` and `/etc/environment`
-- Compilation may take 3–10 minutes depending on available CPU cores
-
----
-
-## build-info
-
-Bakes build-time release version and date metadata directly into a system-wide command `container-info`.
-
-### Example
-
-To pass host environment variables (like `IMAGE_VERSION` and `IMAGE_BUILD_DATE` exported in a GitHub Action step) to the container at build time, you can map them in your project's `devcontainer.json` using the `${localEnv:VAR_NAME}` syntax:
-
-```json
-{
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/build-info:1": {
-            "version": "${localEnv:IMAGE_VERSION}",
-            "buildDate": "${localEnv:IMAGE_BUILD_DATE}"
-        }
-    }
-}
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `version` | string | `"development"` | The automated version number injected from the runner host environment. |
-| `buildDate` | string | `"unknown"` | The build timestamp injected from the runner host environment. |
-
-### Notes
-
-- Creates a secure static metadata file at `/usr/local/etc/container_metadata/build_info.txt`.
-- Generates a globally executable command `/usr/local/bin/container-info`.
-
----
-
-## renv-cache
-
-Configures R for development in VS Code, including library paths, GitHub tokens, and package restoration with renv cache.
-
-### Example
-
-```json
-{
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:2": {
-            "setRLibPaths": true,
-            "restore": true
-        }
-    }
-}
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `setRLibPaths` | boolean | `true` | Set default paths for R libraries (including for `renv`) to avoid reinstalling upon rebuild |
-| `ensureGitHubPatSet` | boolean | `true` | If GITHUB_PAT is not set, attempt to set it from GH_TOKEN or GITHUB_TOKEN |
-| `restore` | boolean | `true` | Whether to run package restoration using `renvvv::renvvv_restore()` |
-| `update` | boolean | `false` | Whether to run package update using `renvvv::renvvv_update()`. If both restore and update are true, `renvvv::renvvv_restore_and_update()` is used |
-| `renvDir` | string | `"/usr/local/share/renv-cache/lockfiles"` | Path to directory containing subdirectories with `renv.lock` files |
-| `pkgExclude` | string | `""` | Comma-separated list of packages to exclude from renv snapshot restore |
-| `usePak` | boolean | `false` | Whether to use `pak` for package installation |
-| `debug` | boolean | `false` | Print debug information during package restore |
-| `debugRenv` | boolean | `false` | Print debug information during renv restore |
-
-### Notes
-
-- Runs automatically via `postCreateCommand`
-- Sets up GitHub tokens for API access
-- Configures R library paths and renv settings
-
----
-
-## fit-sne
-
-Installs [FIt-SNE](https://github.com/KlugerLab/FIt-SNE) (Fast Interpolation-based t-SNE) by compiling it from source along with the required FFTW 3.3.10 library.
-
-### Example
-
-```json
-{
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/fit-sne:1": {
-            "version": "1.2.1"
-        }
-    }
-}
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `version` | string | `"latest"` | FIt-SNE version tag or commit SHA to install. Use "latest" for the default branch. |
-
-### Notes
-
-- Compiles from source, so installation may take a few minutes
-- Installs required dependencies: `build-essential`, `wget`, `git`
-
----
-
-## mermaid
-
-Installs [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli) to generate diagrams from `.mmd` files. Sets up a non-root user and Puppeteer configuration for headless rendering.
-
-### Example
-
-```json
-{
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1": {
-            "userName": "mermaiduser",
-            "nodeVersion": "lts"
-        }
-    }
-}
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `userName` | string | `"mermaiduser"` | Username under which Mermaid CLI will run |
-| `puppeteerConfigDir` | string | `"/usr/local/share/mermaid-config"` | Directory to store Puppeteer configuration files |
-| `nodeVersion` | string | `"lts"` | Node.js version to install if not present (e.g., "lts", "20", "18") |
-
-### Notes
-
-- Requires Node.js (will install if missing)
-- Installs system dependencies required for Puppeteer
-
----
-
-## repos
-
-Installs the `repos` CLI tool to manage multiple Git repositories. Automatically clones repositories defined in `repos.list` when the container starts.
-
-### Example
-
-```json
-{
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-    "features": {
-        "ghcr.io/MiguelRodo/DevContainerFeatures/repos:2": {
-            "runOnStart": true
-        }
-    }
-}
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `runOnStart` | boolean | `true` | Automatically run 'repos' when the container starts |
-
-### Usage
-
-When `runOnStart` is `true`, the `repos` tool automatically executes on container start. Create a `repos.list` file in your project to define which repositories to clone.
-
-To run manually:
+Regenerate the catalogue after feature metadata changes:
 
 ```bash
-repos
+python3 scripts/docs_catalogue.py
 ```
 
-### Notes
-
-- Installs from the `apt-miguelrodo` APT repository
-- Creates a post-start script at `/usr/local/bin/repos-post-start`
-- For detailed usage, refer to the repos tool documentation
-
----
+CI runs the same script with `--check` and also verifies that Quarto navigation and feature option tables match metadata.
 
 ## Development
-
-### Testing
 
 Run tests for all features:
 
@@ -274,14 +55,14 @@ Run tests for all features:
 devcontainer features test --global-scenarios-only .
 ```
 
-### Publishing
+## Publishing
 
-Features are automatically published to GitHub Container Registry (GHCR) via GitHub Actions on release. They are available at:
+Publishing is manual through `.github/workflows/release.yaml` from `main`. Features are published to:
 
-```
+```text
 ghcr.io/MiguelRodo/DevContainerFeatures/<feature-name>
 ```
 
 ## License
 
-See [LICENSE](LICENSE) file for details.
+See [LICENSE](LICENSE) for details.

@@ -7,6 +7,47 @@ on:
   workflow_dispatch:
 
 jobs:
+  static:
+    name: "Static checks"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: "Install ShellCheck"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: "Check shell syntax"
+        run: >-
+          find . -type f \( -name '*.sh' -o -path './src/*/cmd/*' \)
+          -not -path './.git/*' -print0 | xargs -0 -r bash -n
+
+      - name: "Run ShellCheck"
+        run: |
+          find . -type f \( -name '*.sh' -o -path './src/*/cmd/*' \) \
+            -not -path './.git/*' \
+            -not -path './test/github-tokens/cmd/github-pat.test.sh' \
+            -not -path './src/repos/install.sh' \
+            -not -path './src/utils/install.sh' \
+            -not -path './src/renv-cache/cmd/init' \
+            -not -path './src/renv-cache/cmd/restore' \
+            -print0 | xargs -0 -r shellcheck --shell=bash --severity=warning
+          shellcheck --shell=bash --severity=warning --exclude=SC1090 test/github-tokens/cmd/github-pat.test.sh
+          shellcheck --shell=bash --severity=warning --exclude=SC2174 src/repos/install.sh src/utils/install.sh
+          shellcheck --shell=bash --severity=warning --exclude=SC2155 src/renv-cache/cmd/init
+          shellcheck --shell=bash --severity=warning --exclude=SC2155,SC2188 src/renv-cache/cmd/restore
+
+      - name: "Run actionlint"
+        # The official image bundles ShellCheck; use the same severity policy for inline run blocks.
+        run: >-
+          docker run --rm
+          -e SHELLCHECK_OPTS=--severity=warning
+          -v "$PWD:/repo" -w /repo
+          rhysd/actionlint:1.7.12
+
   test-global:
     runs-on: ubuntu-latest
     env:
