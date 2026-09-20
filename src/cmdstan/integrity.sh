@@ -41,3 +41,7 @@ verify_cmdstan_tarball() {
         return 1
     fi
 }
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    verify_cmdstan_tarball "$@"
+fi
