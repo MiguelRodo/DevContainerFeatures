@@ -24,7 +24,7 @@ while IFS= read -r feature; do
     fi
 done < <(
     git diff --name-only "${base}" "${head}" -- src/ |
-        awk -F/ '$1 == "src" && NF >= 3 && $3 !~ /\.md$/ { print $2 }' |
+        awk -F/ '$1 == "src" && NF >= 3 && $0 !~ /\.md$/ { print $2 }' |
         sort -u
 )
 
