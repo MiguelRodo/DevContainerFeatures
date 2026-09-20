@@ -14,6 +14,9 @@
 
 set -e
 
+# shellcheck source=src/cmdstan/integrity.sh
+source "$(dirname "${BASH_SOURCE[0]}")/integrity.sh"
+
 CMDSTAN_VERSION="${VERSION:-"2.36.0"}"
 INSTALL_DIR="${INSTALLDIR:-"/opt/cmdstan"}"
 INSTALL_R_PACKAGE="${INSTALLRPACKAGE:-"true"}"
@@ -143,6 +146,9 @@ echo "Downloading ${DOWNLOAD_URL}..."
 wget -q --show-progress -O "${TARBALL_PATH}" "${DOWNLOAD_URL}" 2>&1 || \
     wget -O "${TARBALL_PATH}" "${DOWNLOAD_URL}"
 
+echo "Verifying ${TARBALL}..."
+verify_cmdstan_tarball "${CMDSTAN_VERSION}" "${TARBALL_PATH}"
+
 # The release tarball extracts to cmdstan-X.Y.Z/ so the versioned dir is
 # automatically created inside INSTALL_DIR.
 mkdir -p "${INSTALL_DIR}"
@@ -214,12 +220,12 @@ if [ "${INSTALL_R_PACKAGE}" = "true" ] && command -v Rscript >/dev/null 2>&1; th
         RENVIRON_SITE="${R_HOME_DIR}/etc/Renviron.site"
         # Remove any existing CMDSTAN or CMDSTAN_PATH entries to avoid duplicates
         if [ -f "${RENVIRON_SITE}" ]; then
-            grep -v '^CMDSTAN' "${RENVIRON_SITE}" > "${WORK_DIR}/Renviron.tmp" || true
-            mv "${WORK_DIR}/Renviron.tmp" "${RENVIRON_SITE}"
+            grep -v '^CMDSTAN' "${RENENVIRON_SITE}" > "${WORK_DIR}/Renviron.tmp" || true
+            mv "${WORK_DIR}/Renviron.tmp" "${RENENVIRON_SITE}"
         fi
-        echo "# CmdStan path for cmdstanr – set by the cmdstan DevContainer feature" >> "${RENVIRON_SITE}"
-        echo "CMDSTAN=${VERSIONED_DIR}" >> "${RENVIRON_SITE}"
-        echo "[cmdstanr] Wrote CMDSTAN=${VERSIONED_DIR} to ${RENVIRON_SITE}"
+        echo "# CmdStan path for cmdstanr – set by the cmdstan DevContainer feature" >> "${RENENVIRON_SITE}"
+        echo "CMDSTAN=${VERSIONED_DIR}" >> "${RENENVIRON_SITE}"
+        echo "[cmdstanr] Wrote CMDSTAN=${VERSIONED_DIR} to ${RENENVIRON_SITE}"
     fi
 fi
 
