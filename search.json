@@ -562,7 +562,7 @@
     "href": "features/fit-sne.html#options",
     "title": "fit-sne",
     "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"latest\"\nFIt-SNE version tag or commit SHA to install. Use \"latest\" for the default branch.",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"1.2.1\"\nFIt-SNE version tag or commit SHA to install. Use \"latest\" to opt into the current default branch.",
     "crumbs": [
       "fit-sne"
     ]
@@ -572,7 +572,7 @@
     "href": "features/fit-sne.html#notes",
     "title": "fit-sne",
     "section": "Notes",
-    "text": "Notes\n\nCompiles FIt-SNE and its FFTW dependency from source, so installation may take a few minutes.\nInstalled build dependencies: build-essential, wget, git.",
+    "text": "Notes\n\nCompiles FIt-SNE and its FFTW dependency from source, so installation may take a few minutes.\nFFTW 3.3.10 is verified with its pinned SHA-256 checksum before extraction.\nInstalled build dependencies: build-essential, wget, git.",
     "crumbs": [
       "fit-sne"
     ]

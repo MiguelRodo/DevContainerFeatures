@@ -337,8 +337,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>version</code></td>
 <td>string</td>
-<td><code>"latest"</code></td>
-<td>FIt-SNE version tag or commit SHA to install. Use <code>"latest"</code> for the default branch.</td>
+<td><code>"1.2.1"</code></td>
+<td>FIt-SNE version tag or commit SHA to install. Use <code>"latest"</code> to opt into the current default branch.</td>
 </tr>
 </tbody>
 </table>
@@ -347,6 +347,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
 <ul>
 <li>Compiles FIt-SNE and its FFTW dependency from source, so installation may take a few minutes.</li>
+<li>FFTW 3.3.10 is verified with its pinned SHA-256 checksum before extraction.</li>
 <li>Installed build dependencies: <code>build-essential</code>, <code>wget</code>, <code>git</code>.</li>
 </ul>
 </section>
