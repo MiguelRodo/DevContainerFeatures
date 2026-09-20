@@ -2,21 +2,24 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Manage multiple Git repositories automatically">
+<meta name="description" content="Deprecated: use the utils feature for multi-repository tooling">
 
 <title>repos – DevContainer Features</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -75,10 +78,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-de63f62b328812d8e578a4d74e282472.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-6328bbec51eb20b15cb077af023b6ced.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-3513e0d32eee5036900be535322458ec.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -141,6 +144,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="dropdown-text">apptainer</span></a>
   </li>  
         <li>
+    <a class="dropdown-item" href="../features/build-info.html">
+ <span class="dropdown-text">build-info</span></a>
+  </li>  
+        <li>
     <a class="dropdown-item" href="../features/cmdstan.html">
  <span class="dropdown-text">cmdstan</span></a>
   </li>  
@@ -162,7 +169,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>  
         <li>
     <a class="dropdown-item" href="../features/repos.html">
- <span class="dropdown-text">repos</span></a>
+ <span class="dropdown-text">repos (deprecated)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../features/utils.html">
+ <span class="dropdown-text">utils</span></a>
   </li>  
     </ul>
   </li>
@@ -193,6 +204,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../features/apptainer.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">apptainer</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../features/build-info.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">build-info</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -231,6 +248,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">repos</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../features/utils.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">utils</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -241,28 +264,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#example-usage" id="toc-example-usage" class="nav-link active" data-scroll-target="#example-usage">Example Usage</a></li>
+  <li><a href="#existing-usage" id="toc-existing-usage" class="nav-link active" data-scroll-target="#existing-usage">Existing Usage</a></li>
   <li><a href="#options" id="toc-options" class="nav-link" data-scroll-target="#options">Options</a></li>
-  <li><a href="#key-features" id="toc-key-features" class="nav-link" data-scroll-target="#key-features">Key Features</a>
-  <ul class="collapse">
-  <li><a href="#automatic-repository-cloning" id="toc-automatic-repository-cloning" class="nav-link" data-scroll-target="#automatic-repository-cloning">Automatic Repository Cloning</a></li>
-  <li><a href="#git-authentication" id="toc-git-authentication" class="nav-link" data-scroll-target="#git-authentication">Git Authentication</a></li>
-  <li><a href="#flexible-repository-formats" id="toc-flexible-repository-formats" class="nav-link" data-scroll-target="#flexible-repository-formats">Flexible Repository Formats</a></li>
-  </ul></li>
-  <li><a href="#installation-and-usage" id="toc-installation-and-usage" class="nav-link" data-scroll-target="#installation-and-usage">Installation and Usage</a>
-  <ul class="collapse">
-  <li><a href="#create-a-repository-list-file" id="toc-create-a-repository-list-file" class="nav-link" data-scroll-target="#create-a-repository-list-file">Create a Repository List File</a></li>
-  <li><a href="#set-up-authentication-tokens" id="toc-set-up-authentication-tokens" class="nav-link" data-scroll-target="#set-up-authentication-tokens">Set Up Authentication Tokens</a></li>
-  <li><a href="#rebuild-your-devcontainer" id="toc-rebuild-your-devcontainer" class="nav-link" data-scroll-target="#rebuild-your-devcontainer">Rebuild Your DevContainer</a></li>
-  </ul></li>
-  <li><a href="#commands-provided" id="toc-commands-provided" class="nav-link" data-scroll-target="#commands-provided">Commands Provided</a>
-  <ul class="collapse">
-  <li><a href="#repos-git-clone" id="toc-repos-git-clone" class="nav-link" data-scroll-target="#repos-git-clone"><code>repos-git-clone</code></a></li>
-  <li><a href="#repos-workspace-add" id="toc-repos-workspace-add" class="nav-link" data-scroll-target="#repos-workspace-add"><code>repos-workspace-add</code></a></li>
-  <li><a href="#repos-git-auth-gitconfig" id="toc-repos-git-auth-gitconfig" class="nav-link" data-scroll-target="#repos-git-auth-gitconfig"><code>repos-git-auth-gitconfig</code></a></li>
-  <li><a href="#repos-hf-install" id="toc-repos-hf-install" class="nav-link" data-scroll-target="#repos-hf-install"><code>repos-hf-install</code></a></li>
-  </ul></li>
-  <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
+  <li><a href="#migration-to-utils" id="toc-migration-to-utils" class="nav-link" data-scroll-target="#migration-to-utils">Migration to <code>utils</code></a></li>
   <li><a href="#source" id="toc-source" class="nav-link" data-scroll-target="#source">Source</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/MiguelRodo/DevContainerFeatures/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
@@ -277,7 +281,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Manage multiple Git repositories automatically
+    Deprecated: use the utils feature for multi-repository tooling
   </div>
 </div>
 
@@ -294,23 +298,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Install the <code>repos</code> CLI tool to manage multiple Git repositories. Optionally runs <code>repos setup</code> when the container starts to clone repositories defined in <code>repos.list</code>.</p>
-<section id="example-usage" class="level2">
-<h2 class="anchored" data-anchor-id="example-usage">Example Usage</h2>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Deprecated
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>repos</code> feature is retained for backwards compatibility. Use <a href="../features/utils.html"><code>utils</code></a> for new configurations; it installs the same <code>repos</code> CLI and can also install <code>setupmjr</code>.</p>
+</div>
+</div>
+<section id="existing-usage" class="level2">
+<h2 class="anchored" data-anchor-id="existing-usage">Existing Usage</h2>
+<p>Existing configurations can continue to use the feature:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"image"</span><span class="fu">:</span> <span class="st">"mcr.microsoft.com/devcontainers/base:ubuntu"</span><span class="fu">,</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/repos:2"</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>With automatic setup on container start:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/repos:2"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"runOnStart"</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/repos:3"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"runOnStart"</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="options" class="level2">
 <h2 class="anchored" data-anchor-id="options">Options</h2>
@@ -334,130 +344,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><code>runOnStart</code></td>
 <td>boolean</td>
 <td><code>false</code></td>
-<td>Automatically run <code>repos setup</code> when the container starts.</td>
+<td>Automatically run <code>repos clone</code> when the container starts.</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="key-features" class="level2">
-<h2 class="anchored" data-anchor-id="key-features">Key Features</h2>
-<section id="automatic-repository-cloning" class="level3">
-<h3 class="anchored" data-anchor-id="automatic-repository-cloning">Automatic Repository Cloning</h3>
-<ul>
-<li>Clones all repositories specified in the <code>repos.list</code> file on container creation or start.</li>
-<li>Supports custom target clone directories per repository.</li>
-<li>Adds repositories to the VS Code workspace automatically.</li>
-</ul>
-</section>
-<section id="git-authentication" class="level3">
-<h3 class="anchored" data-anchor-id="git-authentication">Git Authentication</h3>
-<p>Sets up Git credential helpers for GitHub and Hugging Face by modifying the system <code>gitconfig</code>. Authentication tokens are sourced from environment variables:</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Service</th>
-<th>Environment Variable</th>
-<th>Fallback</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>GitHub</td>
-<td><code>GH_TOKEN</code></td>
-<td><code>GITHUB_TOKEN</code></td>
-</tr>
-<tr class="even">
-<td>Hugging Face</td>
-<td><code>HF_TOKEN</code></td>
-<td><code>HUGGINGFACE_TOKEN</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="flexible-repository-formats" class="level3">
-<h3 class="anchored" data-anchor-id="flexible-repository-formats">Flexible Repository Formats</h3>
-<p>The <code>repos.list</code> file supports multiple formats:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GitHub repositories</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">owner/repo</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">owner/repo@branch</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Hugging Face datasets</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">datasets/owner/repo</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="ex">datasets/owner/repo@branch</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Full URLs</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">https://host/owner/repo</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="ex">https://host/owner/repo@branch</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># With an explicit target directory</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="ex">owner2/repo2@develop</span> ./Projects/Repo2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-</section>
-<section id="installation-and-usage" class="level2">
-<h2 class="anchored" data-anchor-id="installation-and-usage">Installation and Usage</h2>
-<section id="create-a-repository-list-file" class="level3">
-<h3 class="anchored" data-anchor-id="create-a-repository-list-file">Create a Repository List File</h3>
-<p>Create a <code>repos.list</code> file in your devcontainer:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example repositories</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">owner1/repo1</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">owner2/repo2@develop</span> ./Projects/Repo2</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="ex">datasets/owner3/dataset1</span> ../Datasets</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ex">https://gitlab.com/owner4/repo4@feature-branch</span> ./GitLabRepos</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Lines starting with <code>#</code> are treated as comments. Empty lines are ignored. Each line can optionally include a target directory where the repository will be cloned.</p>
-</section>
-<section id="set-up-authentication-tokens" class="level3">
-<h3 class="anchored" data-anchor-id="set-up-authentication-tokens">Set Up Authentication Tokens</h3>
-<p>Set the following environment variables before building or starting the container:</p>
-<ul>
-<li><strong>GitHub</strong>: <code>GH_TOKEN</code> or <code>GITHUB_TOKEN</code></li>
-<li><strong>Hugging Face</strong>: <code>HF_TOKEN</code> or <code>HUGGINGFACE_TOKEN</code></li>
-</ul>
-<p>For GitHub Codespaces, add these as repository secrets under <strong>Settings → Codespaces → Secrets</strong>.</p>
-</section>
-<section id="rebuild-your-devcontainer" class="level3">
-<h3 class="anchored" data-anchor-id="rebuild-your-devcontainer">Rebuild Your DevContainer</h3>
-<p>After updating <code>devcontainer.json</code>, rebuild the container via the VS Code Command Palette → <strong>Dev Containers: Rebuild Container</strong>.</p>
-</section>
-</section>
-<section id="commands-provided" class="level2">
-<h2 class="anchored" data-anchor-id="commands-provided">Commands Provided</h2>
-<section id="repos-git-clone" class="level3">
-<h3 class="anchored" data-anchor-id="repos-git-clone"><code>repos-git-clone</code></h3>
-<p>Clones repositories listed in a specified file.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">repos-git-clone</span> [-f<span class="kw">|</span><span class="ex">--file</span> <span class="op">&lt;</span>file<span class="op">&gt;</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li><code>-f, --file &lt;file&gt;</code>: Repository list file. Defaults to <code>repos.list</code>.</li>
-</ul>
-</section>
-<section id="repos-workspace-add" class="level3">
-<h3 class="anchored" data-anchor-id="repos-workspace-add"><code>repos-workspace-add</code></h3>
-<p>Adds cloned repositories to the VS Code workspace file.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">repos-workspace-add</span> [-f<span class="kw">|</span><span class="ex">--file</span> <span class="op">&lt;</span>file<span class="op">&gt;</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li><code>-f, --file &lt;file&gt;</code>: Repository list file. Defaults to <code>repos.list</code>.</li>
-</ul>
-</section>
-<section id="repos-git-auth-gitconfig" class="level3">
-<h3 class="anchored" data-anchor-id="repos-git-auth-gitconfig"><code>repos-git-auth-gitconfig</code></h3>
-<p>Sets up Git credential helpers for GitHub and Hugging Face.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">repos-git-auth-gitconfig</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="repos-hf-install" class="level3">
-<h3 class="anchored" data-anchor-id="repos-hf-install"><code>repos-hf-install</code></h3>
-<p>Installs Hugging Face CLI and Git LFS.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">repos-hf-install</span> [--hf-scope <span class="op">&lt;</span>system<span class="kw">|</span><span class="ex">user</span><span class="op">&gt;</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li><code>--hf-scope</code>: Install scope for the Hugging Face CLI (<code>system</code> or <code>user</code>). Default is <code>system</code>.</li>
-</ul>
-</section>
-</section>
-<section id="notes" class="level2">
-<h2 class="anchored" data-anchor-id="notes">Notes</h2>
-<ul>
-<li>Installed via the <code>apt-miguelrodo</code> APT repository on Debian/Ubuntu; compiled from source on Alpine.</li>
-<li>The <code>repos.list</code> file supports comments (lines starting with <code>#</code>) and ignores empty lines.</li>
-<li>Particularly useful in GitHub Codespaces or similar cloud development environments.</li>
-</ul>
+<section id="migration-to-utils" class="level2">
+<h2 class="anchored" data-anchor-id="migration-to-utils">Migration to <code>utils</code></h2>
+<p>Replace the feature identifier and keep <code>runOnStart</code> if you use it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"features"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"ghcr.io/MiguelRodo/DevContainerFeatures/utils:1"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"installRepos"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"runOnStart"</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>utils</code> enables <code>installRepos</code> and <code>installSetupmjr</code> by default.</p>
 </section>
 <section id="source" class="level2">
 <h2 class="anchored" data-anchor-id="source">Source</h2>
