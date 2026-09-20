@@ -34,11 +34,12 @@ With a specific version:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `version` | string | `"latest"` | FIt-SNE version tag or commit SHA to install. Use `"latest"` for the default branch. |
+| `version` | string | `"1.2.1"` | FIt-SNE version tag or commit SHA to install. Use `"latest"` to opt into the current default branch. |
 
 ## Notes
 
 - Compiles FIt-SNE and its FFTW dependency from source, so installation may take a few minutes.
+- FFTW 3.3.10 is verified with its pinned SHA-256 checksum before extraction.
 - Installed build dependencies: `build-essential`, `wget`, `git`.
 
 ## Source

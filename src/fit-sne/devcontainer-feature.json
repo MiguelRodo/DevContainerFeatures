@@ -1,17 +1,17 @@
 {
     "name": "Install FIt-SNE",
     "id": "fit-sne",
-    "version": "1.1.3",
+    "version": "1.1.4",
     "description": "Installs FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source.",
     "options": {
         "version": {
             "type": "string",
             "proposals": [
-                "latest",
-                "1.2.1"
+                "1.2.1",
+                "latest"
             ],
-            "default": "latest",
-            "description": "FIt-SNE version or commit SHA to install."
+            "default": "1.2.1",
+            "description": "FIt-SNE version or commit SHA to install. Use latest to opt into the current default branch."
         }
     },
     "installsAfter": [

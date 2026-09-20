@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-FITSNE_VERSION="${VERSION:-"latest"}"
+FITSNE_VERSION="${VERSION:-"1.2.1"}"
 FFTW_VERSION="3.3.10"
+FFTW_SHA256="56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467"
 
 # Ensure we are running as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -63,7 +64,7 @@ case "$OS_ID" in
         ;;
     *)
         echo "Warning: Unknown OS '$OS_ID'. Checking for required build tools..."
-        for cmd in gcc g++ make wget git; do
+        for cmd in gcc g++ make wget git sha256sum; do
             if ! command -v "$cmd" >/dev/null 2>&1; then
                 echo "Error: Required command '$cmd' not found. Please install build tools for your OS."
                 exit 1
@@ -78,6 +79,7 @@ cd /tmp
 # Install FFTW
 echo "Downloading and compiling FFTW ${FFTW_VERSION}..."
 wget "https://www.fftw.org/fftw-${FFTW_VERSION}.tar.gz"
+printf '%s  %s\n' "$FFTW_SHA256" "fftw-${FFTW_VERSION}.tar.gz" | sha256sum -c -
 tar -xzf "fftw-${FFTW_VERSION}.tar.gz"
 cd "fftw-${FFTW_VERSION}"
 ./configure --prefix=/usr/local --enable-shared
@@ -93,22 +95,31 @@ fi
 cd /tmp
 
 # Install FIt-SNE
-echo "Cloning FIt-SNE..."
-git clone https://github.com/KlugerLab/FIt-SNE.git
-cd FIt-SNE
-
-if [ "${FITSNE_VERSION}" != "latest" ] && [ "${FITSNE_VERSION}" != "" ]; then
-    # 🛡️ Sentinel: Prevent git checkout option injection
+if [ "${FITSNE_VERSION}" = "latest" ]; then
+    echo "Cloning latest FIt-SNE..."
+    git clone --depth 1 https://github.com/KlugerLab/FIt-SNE.git
+else
+    # Prevent git ref/option injection.
     if ! echo "${FITSNE_VERSION}" | grep -Eq '^[a-zA-Z0-9_][a-zA-Z0-9_.-]*$'; then
         echo "Error: Invalid FITSNE_VERSION. Must consist of alphanumeric characters, dots, dashes, and underscores, and cannot start with a dash."
         exit 1
     fi
-    echo "Checking out version ${FITSNE_VERSION}..."
-    # Try with 'v' prefix first, then without
-    if ! git checkout "v${FITSNE_VERSION}" 2>/dev/null; then
-        git checkout "${FITSNE_VERSION}"
+
+    echo "Fetching FIt-SNE ${FITSNE_VERSION}..."
+    git init -q FIt-SNE
+    git -C FIt-SNE remote add origin https://github.com/KlugerLab/FIt-SNE.git
+    if git -C FIt-SNE fetch --depth 1 origin "refs/tags/v${FITSNE_VERSION}" 2>/dev/null \
+        || git -C FIt-SNE fetch --depth 1 origin "refs/tags/${FITSNE_VERSION}" 2>/dev/null \
+        || git -C FIt-SNE fetch --depth 1 origin "${FITSNE_VERSION}" 2>/dev/null; then
+        git -C FIt-SNE checkout -q --detach FETCH_HEAD
+    else
+        # Preserve support for abbreviated commit SHAs that cannot be fetched directly.
+        git -C FIt-SNE fetch -q origin
+        git -C FIt-SNE checkout -q --detach "${FITSNE_VERSION}"
     fi
 fi
+
+cd FIt-SNE
 
 echo "Compiling FIt-SNE..."
 g++ -std=c++11 -O3 src/sptree.cpp src/tsne.cpp src/nbodyfft.cpp \
