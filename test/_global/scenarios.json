@@ -212,13 +212,17 @@
     "utils_alpine": {
         "image": "mcr.microsoft.com/devcontainers/base:alpine",
         "features": {
-            "utils": {}
+            "utils": {
+                "runOnStart": true
+            }
         }
     },
     "utils_debian": {
         "image": "mcr.microsoft.com/devcontainers/base:debian",
         "features": {
-            "utils": {}
+            "utils": {
+                "runOnStart": true
+            }
         }
     }
 }
