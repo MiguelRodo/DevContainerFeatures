@@ -48,7 +48,7 @@ renv_cache_force_cached_versions <- function(lock_data, cache_path) {
       next
     }
 
-    valid_vers <- versions[grepl("^[0-9]+(?:\\.[0-9]+)*$", versions)]
+    valid_vers <- versions[grepl("^[0-9]+(\\.[0-9]+)*$", versions)]
     if (length(valid_vers) == 0) {
       next
     }
