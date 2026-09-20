@@ -14,6 +14,9 @@
 
 set -e
 
+# shellcheck source=src/cmdstan/integrity.sh
+source "$(dirname "${BASH_SOURCE[0]}")/integrity.sh"
+
 CMDSTAN_VERSION="${VERSION:-"2.36.0"}"
 INSTALL_DIR="${INSTALLDIR:-"/opt/cmdstan"}"
 INSTALL_R_PACKAGE="${INSTALLRPACKAGE:-"true"}"
@@ -142,6 +145,9 @@ TARBALL_PATH="${WORK_DIR}/${TARBALL}"
 echo "Downloading ${DOWNLOAD_URL}..."
 wget -q --show-progress -O "${TARBALL_PATH}" "${DOWNLOAD_URL}" 2>&1 || \
     wget -O "${TARBALL_PATH}" "${DOWNLOAD_URL}"
+
+echo "Verifying ${TARBALL}..."
+verify_cmdstan_tarball "${CMDSTAN_VERSION}" "${TARBALL_PATH}"
 
 # The release tarball extracts to cmdstan-X.Y.Z/ so the versioned dir is
 # automatically created inside INSTALL_DIR.

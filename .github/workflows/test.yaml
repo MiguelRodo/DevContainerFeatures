@@ -40,6 +40,12 @@ jobs:
           shellcheck --shell=bash --severity=warning --exclude=SC2155 src/renv-cache/cmd/init
           shellcheck --shell=bash --severity=warning --exclude=SC2155,SC2188 src/renv-cache/cmd/restore
 
+      - name: "Test CmdStan checksum rejection"
+        run: |
+          file=$(mktemp)
+          printf 'tampered\n' > "$file"
+          ! bash src/cmdstan/integrity.sh 2.36.0 "$file"
+
       - name: "Run actionlint"
         # The official image bundles ShellCheck; use the same severity policy for inline run blocks.
         run: >-
