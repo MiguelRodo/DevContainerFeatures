@@ -29,7 +29,7 @@ case "$OS_ID" in
             gnupg \
             tzdata
         install -d -m 0755 /usr/share/keyrings
-        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x28A5611BB8AA8B19" \
+        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xAFE36534FC6218AE" \
             | gpg --dearmor --batch --yes -o /usr/share/keyrings/apptainer-archive-keyring.gpg
         UBUNTU_PPA_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}"
         if [ -z "$UBUNTU_PPA_CODENAME" ]; then
