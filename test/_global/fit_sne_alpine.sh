@@ -11,4 +11,17 @@ check "fast_tsne binary is installed" bash -c "command -v fast_tsne"
 check "fast_tsne is executable" bash -c "test -x /usr/local/bin/fast_tsne"
 check "FFTW library is installed" bash -c "test -f /usr/local/lib/libfftw3.so || ls /usr/local/lib/libfftw3*.a"
 
+check "fast_tsne processes a tiny dataset" bash -c '
+set -e
+tmp=$(mktemp -d)
+# FIt-SNE 1.2.1 fixture: 12 deterministic 2D points, perplexity 2, two iterations.
+printf "%s" "DAAAAAIAAAAAAAAAAADgPwAAAAAAAABAAgAAAAIAAAABAAAAAQAAAAAAAAAAAOA/mpmZmZmZ6T8AAAAAAABpQAAAAAAAABRA/////wAAAAAAAD7AAgAAAAIAAAAAAAAAAAAoQAAAAAABAAAABgAAAP////8AAAAAAADwvwMAAAAAAAAAAADwPwoAAAAAAAAAAAAAwAAAAAAAAADAAAAAAAAAAMAAAAAAAADwvwAAAAAAAPC/AAAAAAAAAMAAAAAAAADwvwAAAAAAAPC/AAAAAAAA8D8AAAAAAADwPwAAAAAAAPA/AAAAAAAAAEAAAAAAAAAAQAAAAAAAAPA/AAAAAAAAAEAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAEAAAAAAAADwvwAAAAAAAPA/AAAAAAAA8D8AAAAAAADwvwAAAAAAAABAAAAAAAAAAMAqAAAAAAAAAAAA8D8AAAAA" | base64 -d > "$tmp/data.dat"
+fast_tsne 1.2.1 "$tmp/data.dat" "$tmp/result.dat" 1
+test "$(wc -c < "$tmp/result.dat")" -eq 220
+set -- $(od -An -N8 -t u4 "$tmp/result.dat")
+test "$1" -eq 12
+test "$2" -eq 2
+rm -rf "$tmp"
+'
+
 reportResults
