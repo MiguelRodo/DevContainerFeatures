@@ -1,0 +1,46 @@
+---
+title: "utils"
+description: "Install Miguel Rodo utilities such as repos and setupmjr"
+toc: true
+toc-depth: 3
+---
+
+Install the `repos` and `setupmjr` utilities. This is the current feature to use for multi-repository tooling instead of the deprecated `repos` feature.
+
+## Example Usage
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/utils:1": {}
+  }
+}
+```
+
+To install only `repos`:
+
+```json
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/utils:1": {
+      "installSetupmjr": false
+    }
+  }
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `installRepos` | boolean | `true` | Install the `repos` utility. |
+| `installSetupmjr` | boolean | `true` | Install the `setupmjr` utility. |
+| `runOnStart` | boolean | `false` | Automatically run `repos clone` when the container starts. Only applies when `installRepos` is `true`. |
+
+## Migration from `repos`
+
+Existing `repos` feature configurations remain supported for backwards compatibility. For new configurations, use `utils` and leave `installRepos` enabled. The `runOnStart` option has the same default of `false`.
+
+## Source
+
+[`src/utils`](https://github.com/MiguelRodo/DevContainerFeatures/tree/main/src/utils)

@@ -4,25 +4,29 @@ toc: true
 toc-depth: 2
 ---
 
-A collection of reusable [DevContainer Features](https://containers.dev/implementors/features/) for various development tools and workflows, published to the GitHub Container Registry.
+A collection of reusable [Dev Container Features](https://containers.dev/implementors/features/) for development tools and workflows, published to the GitHub Container Registry.
 
 ## Features
 
-Each feature can be added to your `devcontainer.json` file by referencing it from `ghcr.io/MiguelRodo/DevContainerFeatures/<feature-name>`.
+Each feature can be added to `devcontainer.json` from `ghcr.io/MiguelRodo/DevContainerFeatures/<feature-name>`. This catalogue is generated from `src/<feature>/devcontainer-feature.json`.
 
-| Feature | Description |
-|---------|-------------|
-| [apptainer](features/apptainer.qmd) | Install Apptainer for HPC containerization |
-| [cmdstan](features/cmdstan.qmd) | Install CmdStan (Stan probabilistic programming) |
-| [fit-sne](features/fit-sne.qmd) | Install FIt-SNE for dimensionality reduction |
-| [github-tokens](features/github-tokens.qmd) | Manage GitHub authentication tokens |
-| [mermaid](features/mermaid.qmd) | Install Mermaid CLI for diagram generation |
-| [renv-cache](features/renv-cache.qmd) | Configure R with renv cache |
-| [repos](features/repos.qmd) | Manage multiple Git repositories |
+<!-- BEGIN GENERATED FEATURE CATALOGUE -->
+| Feature | Status | Description |
+|---------|--------|-------------|
+| [`apptainer`](features/apptainer.qmd) | Current | Install Apptainer, a container system for HPC |
+| [`build-info`](features/build-info.qmd) | Current | Bakes build-time release version and date metadata directly into a system-wide command. |
+| [`cmdstan`](features/cmdstan.qmd) | Current | Installs CmdStan (the Stan probabilistic programming system command-line interface) from the official GitHub release, compiles it during image build, and configures the CMDSTAN environment variable system-wide so the installation survives container rebuilds. |
+| [`fit-sne`](features/fit-sne.qmd) | Current | Installs FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source. |
+| [`github-tokens`](features/github-tokens.qmd) | Current | Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup |
+| [`mermaid`](features/mermaid.qmd) | Current | Installs Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration. |
+| [`renv-cache`](features/renv-cache.qmd) | Current | Configure R with renv cache |
+| [`repos`](features/repos.qmd) | Deprecated | (DEPRECATED: Use the 'utils' feature instead) Installs the 'repos' CLI tool to manage multiple Git repositories. Optionally runs 'repos clone' when the container starts to clone repositories defined in repos.list. |
+| [`utils`](features/utils.qmd) | Current | Installs Miguel Rodo's utilities like 'repos' and 'setupmjr'. |
+<!-- END GENERATED FEATURE CATALOGUE -->
+
+The deprecated `repos` feature remains available for existing configurations. Use [`utils`](features/utils.qmd) for new work.
 
 ## Quick Start
-
-Add a feature to your `devcontainer.json`:
 
 ```json
 {
@@ -33,7 +37,7 @@ Add a feature to your `devcontainer.json`:
 }
 ```
 
-Replace `<feature-name>` with the feature you want to use and set the version tag accordingly.
+Feature pages document the available options. Their option names and defaults are checked against the canonical feature metadata in CI.
 
 ## Source
 
