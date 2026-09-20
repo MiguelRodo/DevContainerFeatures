@@ -25,6 +25,12 @@ This repository publishes reusable Dev Container Features to GHCR. Feature metad
 
 Do not infer current options from the root README if it disagrees with feature metadata.
 
+## Ponytail
+
+For coding, fixing, refactoring, reviewing, dependency choices and implementation design, read and follow `.agents/skills/ponytail/SKILL.md` in **full** mode by default. Use **ultra** only when explicitly requested.
+
+Repository-specific requirements in this file take precedence over generic Ponytail guidance. In particular, do not simplify away security, input validation, backwards compatibility, supported-platform behaviour or the repository's behavioural testing standard.
+
 ## Validation
 
 Run the narrowest relevant scenario while iterating, then the full suite before finishing substantial feature changes:
