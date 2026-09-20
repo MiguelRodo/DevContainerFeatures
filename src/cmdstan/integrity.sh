@@ -12,21 +12,24 @@ cmdstan_expected_sha256() {
     local release_json
     release_json=$(curl -sSfL "https://api.github.com/repos/stan-dev/cmdstan/releases/tags/v${version}") || return 1
 
-    printf '%s\n' "$release_json" | sed 's/"name"/\
-"name"/g; s/"digest"/\
-"digest"/g' | awk -v name="$tarball" '
-        /^"name"/ {
+    printf '%s\n' "$release_json" | sed 's/"digest"/\
+"digest"/g; s/"browser_download_url"/\
+"browser_download_url"/g' | awk -v name="$tarball" '
+        /^"digest"/ {
             line = $0
             gsub(/[[:space:]]/, "", line)
-            asset = index(line, "\"name\":\"" name "\"") == 1
-        }
-        asset && /^"digest"/ {
-            line = $0
-            gsub(/[[:space:]]/, "", line)
+            digest = ""
             if (index(line, "\"digest\":\"sha256:") == 1) {
                 sub(/^"digest":"sha256:/, "", line)
                 sub(/".*$/, "", line)
-                print line
+                digest = line
+            }
+        }
+        /^"browser_download_url"/ {
+            line = $0
+            gsub(/[[:space:]]/, "", line)
+            if (digest != "" && index(line, "/" name "\"") != 0) {
+                print digest
                 exit
             }
         }
