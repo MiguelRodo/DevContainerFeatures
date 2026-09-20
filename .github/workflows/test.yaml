@@ -66,8 +66,8 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - name: "Install latest devcontainer CLI"
-        run: npm install -g @devcontainers/cli
+      - name: "Install pinned devcontainer CLI"
+        run: npm install -g @devcontainers/cli@0.89.0
 
       - name: "Testing global scenarios"
         run: devcontainer features test --global-scenarios-only .
