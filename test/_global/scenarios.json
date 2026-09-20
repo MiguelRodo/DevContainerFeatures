@@ -209,6 +209,16 @@
             }
         }
     },
+    "build_info_after_official_feature": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "build-info": {
+                "imageVersion": "1.2.3",
+                "buildDate": "2023-10-27T10:00:00Z"
+            },
+            "ghcr.io/devcontainers/features/hugo:1": {}
+        }
+    },
     "utils_alpine": {
         "image": "mcr.microsoft.com/devcontainers/base:alpine",
         "features": {
