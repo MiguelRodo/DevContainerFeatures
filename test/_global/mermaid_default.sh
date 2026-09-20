@@ -19,5 +19,15 @@ check "puppeteer config is readable" test -r /usr/local/share/mermaid-config/pup
 # Test mmdc command works
 check "mmdc version command works" mmdc --version
 
+# Test the installed wrapper can render a real diagram
+MERMAID_TEST_DIR=/tmp/mermaid-render-test
+rm -rf "$MERMAID_TEST_DIR"
+mkdir -p "$MERMAID_TEST_DIR"
+chown mermaiduser:mermaiduser "$MERMAID_TEST_DIR"
+printf 'flowchart TD\n    A --> B\n' > "$MERMAID_TEST_DIR/input.mmd"
+check "mermaid-mmdc renders SVG" mermaid-mmdc -- -i "$MERMAID_TEST_DIR/input.mmd" -o "$MERMAID_TEST_DIR/output.svg"
+check "rendered SVG is non-empty" test -s "$MERMAID_TEST_DIR/output.svg"
+check "rendered output contains an SVG element" grep -q '<svg' "$MERMAID_TEST_DIR/output.svg"
+
 # Report result
 reportResults
