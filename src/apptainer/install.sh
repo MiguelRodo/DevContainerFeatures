@@ -24,10 +24,20 @@ case "$OS_ID" in
     ubuntu)
         apt-get update
         apt-get install -y --no-install-recommends \
-            software-properties-common \
             ca-certificates \
+            curl \
+            gnupg \
             tzdata
-        add-apt-repository -y ppa:apptainer/ppa
+        install -d -m 0755 /usr/share/keyrings
+        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x28A5611BB8AA8B19" \
+            | gpg --dearmor --batch --yes -o /usr/share/keyrings/apptainer-archive-keyring.gpg
+        UBUNTU_PPA_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}"
+        if [ -z "$UBUNTU_PPA_CODENAME" ]; then
+            echo "Error: Could not determine Ubuntu codename from /etc/os-release."
+            exit 1
+        fi
+        echo "deb [signed-by=/usr/share/keyrings/apptainer-archive-keyring.gpg] https://ppa.launchpadcontent.net/apptainer/ppa/ubuntu ${UBUNTU_PPA_CODENAME} main" \
+            > /etc/apt/sources.list.d/apptainer.list
         apt-get update
         apt-get install -y apptainer
         rm -rf /var/lib/apt/lists/*
