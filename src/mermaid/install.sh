@@ -112,7 +112,7 @@ install_dependencies() {
                 fonts-liberation libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 sudo)
             ;;
         fedora)
-            deps=(curl ca-certificates gcc gcc-c++ make openssl-devel \
+            deps=(curl ca-certificates chromium gcc gcc-c++ make openssl-devel \
                 libX11-xcb libXcomposite libXcursor libXdamage libXext libXfixes \
                 libXi libXrandr libXrender libXScrnSaver libXtst nss mesa-libgbm \
                 liberation-fonts at-spi2-atk gtk3 alsa-lib sudo util-linux)
@@ -248,9 +248,9 @@ setup_mermaid() {
 
     command -v npm >/dev/null 2>&1 || { echo "[ERROR] npm not found; cannot install Mermaid CLI"; exit 1; }
 
-    # On Alpine, configure Puppeteer to use system Chromium
-    if [ "$OS_ID" = "alpine" ]; then
-        export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    # Use the packaged browser on Alpine and Fedora.
+    if [ "$OS_ID" = "alpine" ] || [ "$OS_ID" = "fedora" ]; then
+        export PUPPETEER_SKIP_DOWNLOAD=true
         export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
     fi
 
@@ -265,8 +265,8 @@ setup_mermaid() {
         fi
     fi
 
-    # Install Chrome for Puppeteer (skip on Alpine - uses system Chromium)
-    if [ "$OS_ID" != "alpine" ]; then
+    # Install Chrome for Puppeteer where no system browser is configured.
+    if [ "$OS_ID" != "alpine" ] && [ "$OS_ID" != "fedora" ]; then
         echo "[INFO] Installing Chrome Headless Shell for $USERNAME..."
         su -s /bin/bash - "$USERNAME" -c "npx -y puppeteer browsers install chrome-headless-shell"
     fi
@@ -274,7 +274,7 @@ setup_mermaid() {
 
 configure_puppeteer() {
     mkdir -p "$CONFIG_DIR"
-    if [ "$OS_ID" = "alpine" ]; then
+    if [ "$OS_ID" = "alpine" ] || [ "$OS_ID" = "fedora" ]; then
         cat > "$PUPPETEER_CONFIG" <<EOF
 {
   "args": ["--no-sandbox", "--disable-setuid-sandbox"],
