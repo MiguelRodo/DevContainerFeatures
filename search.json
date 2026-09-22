@@ -314,7 +314,7 @@
     "href": "features/utils.html",
     "title": "utils",
     "section": "",
-    "text": "Install the repos and setupmjr utilities. This is the current feature to use for multi-repository tooling instead of the deprecated repos feature.",
+    "text": "Install the repos and setupmjr utilities. This is the current feature to use for multi-repository tooling instead of the deprecated repos feature. Tool versions are pinned by default and can be selected explicitly for reproducible builds.",
     "crumbs": [
       "utils"
     ]
@@ -334,7 +334,7 @@
     "href": "features/utils.html#options",
     "title": "utils",
     "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ninstallRepos\nboolean\ntrue\nInstall the repos utility.\n\n\ninstallSetupmjr\nboolean\ntrue\nInstall the setupmjr utility.\n\n\nrunOnStart\nboolean\nfalse\nAutomatically run repos clone when the container starts. Only applies when installRepos is true.",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ninstallRepos\nboolean\ntrue\nInstall the repos utility.\n\n\nreposVersion\nstring\n2.7.1\nVersion of repos to install.\n\n\ninstallSetupmjr\nboolean\ntrue\nInstall the setupmjr utility.\n\n\nsetupmjrVersion\nstring\n0.7.5\nVersion of setupmjr to install.\n\n\nrunOnStart\nboolean\nfalse\nAutomatically run repos clone when the container starts. Only applies when installRepos is true.",
     "crumbs": [
       "utils"
     ]
