@@ -36,6 +36,13 @@ rm -rf "$tmp"
 # Apptainer tests
 check "apptainer binary is installed" bash -c "command -v apptainer"
 check "apptainer version command works" bash -c "apptainer --version"
+check "apptainer uses direct HTTPS PPA configuration" bash -c '
+. /etc/os-release
+codename="${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}"
+test -n "$codename"
+test -s /usr/share/keyrings/apptainer-archive-keyring.gpg
+grep -Fxq "deb [signed-by=/usr/share/keyrings/apptainer-archive-keyring.gpg] https://ppa.launchpadcontent.net/apptainer/ppa/ubuntu ${codename} main" /etc/apt/sources.list.d/apptainer.list
+'
 check "timezone is configured correctly" bash -c "readlink /etc/localtime | grep -q 'America/New_York'"
 check "tzdata package is installed" bash -c "dpkg -l | grep -q tzdata"
 
