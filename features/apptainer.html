@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-3513e0d32eee5036900be535322458ec.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2e3c3e6b6942b69ade587f612ecdfdd0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -329,6 +329,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
+<td><code>version</code></td>
+<td>string</td>
+<td><code>"1.5.3"</code></td>
+<td>Apptainer release version for the Debian GitHub-release fallback, or <code>"latest"</code>.</td>
+</tr>
+<tr class="even">
 <td><code>timezone</code></td>
 <td>string</td>
 <td><code>"UTC"</code></td>
@@ -340,7 +346,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
 <ul>
-<li>Adds the <code>ppa:apptainer/ppa</code> repository and installs Apptainer from it.</li>
+<li>Adds the <code>ppa:apptainer/ppa</code> repository and installs Apptainer from it on Ubuntu.</li>
+<li>Debian falls back to the selected GitHub release only when Apptainer is unavailable from the distribution repositories, and verifies the downloaded package before installation.</li>
 <li>Configures <code>tzdata</code> because Apptainer containers often inherit the host’s <code>/etc/localtime</code>.</li>
 </ul>
 </section>

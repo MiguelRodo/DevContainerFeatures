@@ -1,205 +1,5 @@
 [
   {
-    "objectID": "features/utils.html",
-    "href": "features/utils.html",
-    "title": "utils",
-    "section": "",
-    "text": "Install the repos and setupmjr utilities. This is the current feature to use for multi-repository tooling instead of the deprecated repos feature.",
-    "crumbs": [
-      "utils"
-    ]
-  },
-  {
-    "objectID": "features/utils.html#example-usage",
-    "href": "features/utils.html#example-usage",
-    "title": "utils",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/utils:1\": {}\n  }\n}\nTo install only repos:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/utils:1\": {\n      \"installSetupmjr\": false\n    }\n  }\n}",
-    "crumbs": [
-      "utils"
-    ]
-  },
-  {
-    "objectID": "features/utils.html#options",
-    "href": "features/utils.html#options",
-    "title": "utils",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ninstallRepos\nboolean\ntrue\nInstall the repos utility.\n\n\ninstallSetupmjr\nboolean\ntrue\nInstall the setupmjr utility.\n\n\nrunOnStart\nboolean\nfalse\nAutomatically run repos clone when the container starts. Only applies when installRepos is true.",
-    "crumbs": [
-      "utils"
-    ]
-  },
-  {
-    "objectID": "features/utils.html#migration-from-repos",
-    "href": "features/utils.html#migration-from-repos",
-    "title": "utils",
-    "section": "Migration from repos",
-    "text": "Migration from repos\nExisting repos feature configurations remain supported for backwards compatibility. For new configurations, use utils and leave installRepos enabled. The runOnStart option has the same default of false.",
-    "crumbs": [
-      "utils"
-    ]
-  },
-  {
-    "objectID": "features/utils.html#source",
-    "href": "features/utils.html#source",
-    "title": "utils",
-    "section": "Source",
-    "text": "Source\nsrc/utils",
-    "crumbs": [
-      "utils"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html",
-    "href": "features/cmdstan.html",
-    "title": "cmdstan",
-    "section": "",
-    "text": "Install CmdStan, the command-line interface to Stan — a state-of-the-art platform for Bayesian probabilistic programming and statistical inference.\nThe feature downloads the official CmdStan release tarball, pre-compiles the Stan C++ toolchain during the image build, and configures the CMDSTAN environment variable system-wide so that the installation survives container rebuilds without requiring any per-session setup.",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#example-usage",
-    "href": "features/cmdstan.html#example-usage",
-    "title": "cmdstan",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {}\n  }\n}\nWith a specific version and R integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"version\": \"2.36.0\",\n      \"installRPackage\": false\n    }\n  }\n}\nWith Python integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"installPythonPackage\": false\n    }\n  }\n}",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#options",
-    "href": "features/cmdstan.html#options",
-    "title": "cmdstan",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"2.36.0\"\nCmdStan version to install (e.g. \"2.36.0\"). Use \"latest\" to always pull the newest release.\n\n\ninstallDir\nstring\n\"/opt/cmdstan\"\nBase directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0).\n\n\ninstallRPackage\nboolean\ntrue\nWhen true and R is present in the image, install the cmdstanr R package and configure it to use the system CmdStan installation.\n\n\ninstallPythonPackage\nboolean\ntrue\nWhen true and Python/pip is present in the image, install the cmdstanpy Python package and configure it to use the system CmdStan installation.",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#notes",
-    "href": "features/cmdstan.html#notes",
-    "title": "cmdstan",
-    "section": "Notes",
-    "text": "Notes\n\nHow the installation survives image builds\nStandard Stan/R workflows (e.g. cmdstanr::install_cmdstan()) download CmdStan into the user’s home directory (~/.cmdstan/), which is often not included in the container image or is overwritten on rebuild. This feature instead:\n\nInstalls CmdStan to &lt;installDir&gt;/cmdstan-&lt;version&gt;/ — a system-wide, persistent location.\nCreates a stable symlink at &lt;installDir&gt;/current for tooling that needs a version-independent path.\nExports CMDSTAN and updates PATH via /etc/profile.d/cmdstan.sh and /etc/environment, so every shell session automatically sees the correct path.\nIf R is available, writes CMDSTAN=&lt;path&gt; to R’s Renviron.site so that cmdstanr picks up the system installation without any runtime configuration.\n\n\n\nCompilation time\nmake build compiles the Stan Math library and several C++ utilities. Expect this step to take 3–10 minutes depending on the number of CPU cores available during the build.\n\n\nUsing CmdStan with R (cmdstanr)\nWhen installRPackage is true and R is present, the feature installs cmdstanr from the Stan universe and persists the path via Renviron.site. No additional R-side configuration is needed:\nlibrary(cmdstanr)\ncmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan with Python (cmdstanpy)\nWhen installPythonPackage is true and Python/pip is present, the feature installs cmdstanpy via pip. Because the CMDSTAN environment variable is set system-wide, cmdstanpy automatically picks up the system installation:\nimport cmdstanpy\ncmdstanpy.cmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan directly\nAfter the container starts, the stanc compiler and stansummary utility are on PATH:\nstanc --version\nstansummary --help",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/cmdstan.html#source",
-    "href": "features/cmdstan.html#source",
-    "title": "cmdstan",
-    "section": "Source",
-    "text": "Source\nsrc/cmdstan",
-    "crumbs": [
-      "cmdstan"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html",
-    "href": "features/mermaid.html",
-    "title": "mermaid",
-    "section": "",
-    "text": "Install Mermaid CLI (mmdc) to generate diagrams from .mmd files. Sets up a non-root user and Puppeteer configuration for headless rendering.",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#example-usage",
-    "href": "features/mermaid.html#example-usage",
-    "title": "mermaid",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {}\n  }\n}\nWith a custom user and Node.js version:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {\n      \"userName\": \"mermaiduser\",\n      \"nodeVersion\": \"20\"\n    }\n  }\n}",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#options",
-    "href": "features/mermaid.html#options",
-    "title": "mermaid",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nuserName\nstring\n\"mermaiduser\"\nUsername under which Mermaid CLI will run.\n\n\npuppeteerConfigDir\nstring\n\"/usr/local/share/mermaid-config\"\nDirectory to store Puppeteer configuration files.\n\n\nnodeVersion\nstring\n\"lts\"\nNode.js version to install if not present (e.g., \"lts\", \"20\", \"18\").",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#notes",
-    "href": "features/mermaid.html#notes",
-    "title": "mermaid",
-    "section": "Notes",
-    "text": "Notes\n\nRequires Node.js — the feature will install it if not already present.\nInstalls system libraries required by Puppeteer (Chromium dependencies).\nThe non-root mermaiduser is used to run the headless browser safely inside the container.",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/mermaid.html#source",
-    "href": "features/mermaid.html#source",
-    "title": "mermaid",
-    "section": "Source",
-    "text": "Source\nsrc/mermaid",
-    "crumbs": [
-      "mermaid"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html",
-    "href": "features/apptainer.html",
-    "title": "apptainer",
-    "section": "",
-    "text": "Install Apptainer, a container system widely used in High Performance Computing (HPC) environments.",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#example-usage",
-    "href": "features/apptainer.html#example-usage",
-    "title": "apptainer",
-    "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1\": {\n      \"timezone\": \"UTC\"\n    }\n  }\n}",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#options",
-    "href": "features/apptainer.html#options",
-    "title": "apptainer",
-    "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ntimezone\nstring\n\"UTC\"\nTimezone to configure in the container (e.g., \"UTC\", \"Europe/London\", \"America/New_York\"). Required for proper Apptainer mount behavior.",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#notes",
-    "href": "features/apptainer.html#notes",
-    "title": "apptainer",
-    "section": "Notes",
-    "text": "Notes\n\nAdds the ppa:apptainer/ppa repository and installs Apptainer from it.\nConfigures tzdata because Apptainer containers often inherit the host’s /etc/localtime.",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
-    "objectID": "features/apptainer.html#source",
-    "href": "features/apptainer.html#source",
-    "title": "apptainer",
-    "section": "Source",
-    "text": "Source\nsrc/apptainer",
-    "crumbs": [
-      "apptainer"
-    ]
-  },
-  {
     "objectID": "features/build-info.html",
     "href": "features/build-info.html",
     "title": "build-info",
@@ -250,81 +50,53 @@
     ]
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "DevContainer Features",
+    "objectID": "features/cmdstan.html",
+    "href": "features/cmdstan.html",
+    "title": "cmdstan",
     "section": "",
-    "text": "A collection of reusable Dev Container Features for development tools and workflows, published to the GitHub Container Registry."
-  },
-  {
-    "objectID": "index.html#features",
-    "href": "index.html#features",
-    "title": "DevContainer Features",
-    "section": "Features",
-    "text": "Features\nEach feature can be added to devcontainer.json from ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;. This catalogue is generated from src/&lt;feature&gt;/devcontainer-feature.json.\n\n\n\n\nFeature\nStatus\nDescription\n\n\n\n\napptainer\nCurrent\nInstall Apptainer, a container system for HPC\n\n\nbuild-info\nCurrent\nBakes build-time release version and date metadata directly into a system-wide command.\n\n\ncmdstan\nCurrent\nInstalls CmdStan (the Stan probabilistic programming system command-line interface) from the official GitHub release, compiles it during image build, and configures the CMDSTAN environment variable system-wide so the installation survives container rebuilds.\n\n\nfit-sne\nCurrent\nInstalls FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source.\n\n\ngithub-tokens\nCurrent\nManage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup\n\n\nmermaid\nCurrent\nInstalls Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration.\n\n\nrenv-cache\nCurrent\nConfigure R with renv cache\n\n\nrepos\nDeprecated\n(DEPRECATED: Use the ‘utils’ feature instead) Installs the ‘repos’ CLI tool to manage multiple Git repositories. Optionally runs ‘repos clone’ when the container starts to clone repositories defined in repos.list.\n\n\nutils\nCurrent\nInstalls Miguel Rodo’s utilities like ‘repos’ and ‘setupmjr’.\n\n\n\n\nThe deprecated repos feature remains available for existing configurations. Use utils for new work."
-  },
-  {
-    "objectID": "index.html#quick-start",
-    "href": "index.html#quick-start",
-    "title": "DevContainer Features",
-    "section": "Quick Start",
-    "text": "Quick Start\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;:1\": {}\n  }\n}\nFeature pages document the available options. Their option names and defaults are checked against the canonical feature metadata in CI."
-  },
-  {
-    "objectID": "index.html#source",
-    "href": "index.html#source",
-    "title": "DevContainer Features",
-    "section": "Source",
-    "text": "Source\nSource code and issue tracker: https://github.com/MiguelRodo/DevContainerFeatures"
-  },
-  {
-    "objectID": "features/github-tokens.html",
-    "href": "features/github-tokens.html",
-    "title": "github-tokens",
-    "section": "",
-    "text": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup so that R tools (such as renv) that prioritize GITHUB_TOKEN always have access to the most permissive token available.",
+    "text": "Install CmdStan, the command-line interface to Stan — a state-of-the-art platform for Bayesian probabilistic programming and statistical inference.\nThe feature downloads the official CmdStan release tarball, pre-compiles the Stan C++ toolchain during the image build, and configures the CMDSTAN environment variable system-wide so that the installation survives container rebuilds without requiring any per-session setup.",
     "crumbs": [
-      "github-tokens"
+      "cmdstan"
     ]
   },
   {
-    "objectID": "features/github-tokens.html#example-usage",
-    "href": "features/github-tokens.html#example-usage",
-    "title": "github-tokens",
+    "objectID": "features/cmdstan.html#example-usage",
+    "href": "features/cmdstan.html#example-usage",
+    "title": "cmdstan",
     "section": "Example Usage",
-    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {}\n  }\n}\nWith a specific version and R integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"version\": \"2.36.0\",\n      \"installRPackage\": false\n    }\n  }\n}\nWith Python integration disabled:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/cmdstan:1\": {\n      \"installPythonPackage\": false\n    }\n  }\n}",
     "crumbs": [
-      "github-tokens"
+      "cmdstan"
     ]
   },
   {
-    "objectID": "features/github-tokens.html#options",
-    "href": "features/github-tokens.html#options",
-    "title": "github-tokens",
+    "objectID": "features/cmdstan.html#options",
+    "href": "features/cmdstan.html#options",
+    "title": "cmdstan",
     "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nelevateGitHubToken\nboolean\ntrue\nIf true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. Helps R tools like renv that prioritize GITHUB_TOKEN.\n\n\noverrideGitHubToken\nboolean\nfalse\nIf true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of its existing value. Use only if you always want to override GITHUB_TOKEN.",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"2.36.0\"\nCmdStan version to install (e.g. \"2.36.0\"). Use \"latest\" to always pull the newest release.\n\n\ninstallDir\nstring\n\"/opt/cmdstan\"\nBase directory under which the versioned CmdStan folder is created (e.g. /opt/cmdstan/cmdstan-2.36.0).\n\n\ninstallRPackage\nboolean\ntrue\nWhen true and R is present in the image, install the cmdstanr R package and configure it to use the system CmdStan installation.\n\n\ninstallPythonPackage\nboolean\ntrue\nWhen true and Python/pip is present in the image, install the cmdstanpy Python package and configure it to use the system CmdStan installation.",
     "crumbs": [
-      "github-tokens"
+      "cmdstan"
     ]
   },
   {
-    "objectID": "features/github-tokens.html#notes",
-    "href": "features/github-tokens.html#notes",
-    "title": "github-tokens",
+    "objectID": "features/cmdstan.html#notes",
+    "href": "features/cmdstan.html#notes",
+    "title": "cmdstan",
     "section": "Notes",
-    "text": "Notes\n\nToken priority\nWhen elevateGitHubToken is true, the token used to override GITHUB_TOKEN is chosen in this order:\n\nGITHUB_PAT\nGH_TOKEN\n(no override if neither is available)\n\n\n\nBuild-time vs. session-time token management\nThis feature manages tokens on every shell startup (session-time). For build-time token management during renv package installation, see the renv-cache feature’s overrideTokensAtInstall option.\n\n\nRelated feature\nUse github-tokens together with renv-cache for comprehensive token management:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "text": "Notes\n\nHow the installation survives image builds\nStandard Stan/R workflows (e.g. cmdstanr::install_cmdstan()) download CmdStan into the user’s home directory (~/.cmdstan/), which is often not included in the container image or is overwritten on rebuild. This feature instead:\n\nInstalls CmdStan to &lt;installDir&gt;/cmdstan-&lt;version&gt;/ — a system-wide, persistent location.\nCreates a stable symlink at &lt;installDir&gt;/current for tooling that needs a version-independent path.\nExports CMDSTAN and updates PATH via /etc/profile.d/cmdstan.sh and /etc/environment, so every shell session automatically sees the correct path.\nIf R is available, writes CMDSTAN=&lt;path&gt; to R’s Renviron.site so that cmdstanr picks up the system installation without any runtime configuration.\n\n\n\nCompilation time\nmake build compiles the Stan Math library and several C++ utilities. Expect this step to take 3–10 minutes depending on the number of CPU cores available during the build.\n\n\nUsing CmdStan with R (cmdstanr)\nWhen installRPackage is true and R is present, the feature installs cmdstanr from the Stan universe and persists the path via Renviron.site. No additional R-side configuration is needed:\nlibrary(cmdstanr)\ncmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan with Python (cmdstanpy)\nWhen installPythonPackage is true and Python/pip is present, the feature installs cmdstanpy via pip. Because the CMDSTAN environment variable is set system-wide, cmdstanpy automatically picks up the system installation:\nimport cmdstanpy\ncmdstanpy.cmdstan_path()   # returns /opt/cmdstan/cmdstan-&lt;version&gt;\n\n\nUsing CmdStan directly\nAfter the container starts, the stanc compiler and stansummary utility are on PATH:\nstanc --version\nstansummary --help",
     "crumbs": [
-      "github-tokens"
+      "cmdstan"
     ]
   },
   {
-    "objectID": "features/github-tokens.html#source",
-    "href": "features/github-tokens.html#source",
-    "title": "github-tokens",
+    "objectID": "features/cmdstan.html#source",
+    "href": "features/cmdstan.html#source",
+    "title": "cmdstan",
     "section": "Source",
-    "text": "Source\nsrc/github-tokens",
+    "text": "Source\nsrc/cmdstan",
     "crumbs": [
-      "github-tokens"
+      "cmdstan"
     ]
   },
   {
@@ -488,53 +260,181 @@
     ]
   },
   {
-    "objectID": "features/repos.html",
-    "href": "features/repos.html",
-    "title": "repos",
+    "objectID": "features/apptainer.html",
+    "href": "features/apptainer.html",
+    "title": "apptainer",
     "section": "",
-    "text": "WarningDeprecated\n\n\n\nThe repos feature is retained for backwards compatibility. Use utils for new configurations; it installs the same repos CLI and can also install setupmjr.",
+    "text": "Install Apptainer, a container system widely used in High Performance Computing (HPC) environments.",
     "crumbs": [
-      "repos"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/repos.html#existing-usage",
-    "href": "features/repos.html#existing-usage",
-    "title": "repos",
-    "section": "Existing Usage",
-    "text": "Existing Usage\nExisting configurations can continue to use the feature:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/repos:3\": {\n      \"runOnStart\": false\n    }\n  }\n}",
+    "objectID": "features/apptainer.html#example-usage",
+    "href": "features/apptainer.html#example-usage",
+    "title": "apptainer",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/apptainer:1\": {\n      \"timezone\": \"UTC\"\n    }\n  }\n}",
     "crumbs": [
-      "repos"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/repos.html#options",
-    "href": "features/repos.html#options",
-    "title": "repos",
+    "objectID": "features/apptainer.html#options",
+    "href": "features/apptainer.html#options",
+    "title": "apptainer",
     "section": "Options",
-    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nrunOnStart\nboolean\nfalse\nAutomatically run repos clone when the container starts.",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nversion\nstring\n\"1.5.3\"\nApptainer release version for the Debian GitHub-release fallback, or \"latest\".\n\n\ntimezone\nstring\n\"UTC\"\nTimezone to configure in the container (e.g., \"UTC\", \"Europe/London\", \"America/New_York\"). Required for proper Apptainer mount behavior.",
     "crumbs": [
-      "repos"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/repos.html#migration-to-utils",
-    "href": "features/repos.html#migration-to-utils",
-    "title": "repos",
-    "section": "Migration to utils",
-    "text": "Migration to utils\nReplace the feature identifier and keep runOnStart if you use it:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/utils:1\": {\n      \"installRepos\": true,\n      \"runOnStart\": false\n    }\n  }\n}\nutils enables installRepos and installSetupmjr by default.",
+    "objectID": "features/apptainer.html#notes",
+    "href": "features/apptainer.html#notes",
+    "title": "apptainer",
+    "section": "Notes",
+    "text": "Notes\n\nAdds the ppa:apptainer/ppa repository and installs Apptainer from it on Ubuntu.\nDebian falls back to the selected GitHub release only when Apptainer is unavailable from the distribution repositories, and verifies the downloaded package before installation.\nConfigures tzdata because Apptainer containers often inherit the host’s /etc/localtime.",
     "crumbs": [
-      "repos"
+      "apptainer"
     ]
   },
   {
-    "objectID": "features/repos.html#source",
-    "href": "features/repos.html#source",
-    "title": "repos",
+    "objectID": "features/apptainer.html#source",
+    "href": "features/apptainer.html#source",
+    "title": "apptainer",
     "section": "Source",
-    "text": "Source\nsrc/repos",
+    "text": "Source\nsrc/apptainer",
     "crumbs": [
-      "repos"
+      "apptainer"
+    ]
+  },
+  {
+    "objectID": "features/utils.html",
+    "href": "features/utils.html",
+    "title": "utils",
+    "section": "",
+    "text": "Install the repos and setupmjr utilities. This is the current feature to use for multi-repository tooling instead of the deprecated repos feature.",
+    "crumbs": [
+      "utils"
+    ]
+  },
+  {
+    "objectID": "features/utils.html#example-usage",
+    "href": "features/utils.html#example-usage",
+    "title": "utils",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/utils:1\": {}\n  }\n}\nTo install only repos:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/utils:1\": {\n      \"installSetupmjr\": false\n    }\n  }\n}",
+    "crumbs": [
+      "utils"
+    ]
+  },
+  {
+    "objectID": "features/utils.html#options",
+    "href": "features/utils.html#options",
+    "title": "utils",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\ninstallRepos\nboolean\ntrue\nInstall the repos utility.\n\n\ninstallSetupmjr\nboolean\ntrue\nInstall the setupmjr utility.\n\n\nrunOnStart\nboolean\nfalse\nAutomatically run repos clone when the container starts. Only applies when installRepos is true.",
+    "crumbs": [
+      "utils"
+    ]
+  },
+  {
+    "objectID": "features/utils.html#migration-from-repos",
+    "href": "features/utils.html#migration-from-repos",
+    "title": "utils",
+    "section": "Migration from repos",
+    "text": "Migration from repos\nExisting repos feature configurations remain supported for backwards compatibility. For new configurations, use utils and leave installRepos enabled. The runOnStart option has the same default of false.",
+    "crumbs": [
+      "utils"
+    ]
+  },
+  {
+    "objectID": "features/utils.html#source",
+    "href": "features/utils.html#source",
+    "title": "utils",
+    "section": "Source",
+    "text": "Source\nsrc/utils",
+    "crumbs": [
+      "utils"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "DevContainer Features",
+    "section": "",
+    "text": "A collection of reusable Dev Container Features for development tools and workflows, published to the GitHub Container Registry."
+  },
+  {
+    "objectID": "index.html#features",
+    "href": "index.html#features",
+    "title": "DevContainer Features",
+    "section": "Features",
+    "text": "Features\nEach feature can be added to devcontainer.json from ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;. This catalogue is generated from src/&lt;feature&gt;/devcontainer-feature.json.\n\n\n\n\nFeature\nStatus\nDescription\n\n\n\n\napptainer\nCurrent\nInstall Apptainer, a container system for HPC\n\n\nbuild-info\nCurrent\nBakes build-time release version and date metadata directly into a system-wide command.\n\n\ncmdstan\nCurrent\nInstalls CmdStan (the Stan probabilistic programming system command-line interface) from the official GitHub release, compiles it during image build, and configures the CMDSTAN environment variable system-wide so the installation survives container rebuilds.\n\n\nfit-sne\nCurrent\nInstalls FIt-SNE (Fast Interpolation-based t-SNE) by compiling from source.\n\n\ngithub-tokens\nCurrent\nManage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup\n\n\nmermaid\nCurrent\nInstalls Mermaid CLI to generate diagrams. Sets up a non-root user and Puppeteer configuration.\n\n\nrenv-cache\nCurrent\nConfigure R with renv cache\n\n\nrepos\nDeprecated\n(DEPRECATED: Use the ‘utils’ feature instead) Installs the ‘repos’ CLI tool to manage multiple Git repositories. Optionally runs ‘repos clone’ when the container starts to clone repositories defined in repos.list.\n\n\nutils\nCurrent\nInstalls Miguel Rodo’s utilities like ‘repos’ and ‘setupmjr’.\n\n\n\n\nThe deprecated repos feature remains available for existing configurations. Use utils for new work."
+  },
+  {
+    "objectID": "index.html#quick-start",
+    "href": "index.html#quick-start",
+    "title": "DevContainer Features",
+    "section": "Quick Start",
+    "text": "Quick Start\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/&lt;feature-name&gt;:1\": {}\n  }\n}\nFeature pages document the available options. Their option names and defaults are checked against the canonical feature metadata in CI."
+  },
+  {
+    "objectID": "index.html#source",
+    "href": "index.html#source",
+    "title": "DevContainer Features",
+    "section": "Source",
+    "text": "Source\nSource code and issue tracker: https://github.com/MiguelRodo/DevContainerFeatures"
+  },
+  {
+    "objectID": "features/mermaid.html",
+    "href": "features/mermaid.html",
+    "title": "mermaid",
+    "section": "",
+    "text": "Install Mermaid CLI (mmdc) to generate diagrams from .mmd files. Sets up a non-root user and Puppeteer configuration for headless rendering.",
+    "crumbs": [
+      "mermaid"
+    ]
+  },
+  {
+    "objectID": "features/mermaid.html#example-usage",
+    "href": "features/mermaid.html#example-usage",
+    "title": "mermaid",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {}\n  }\n}\nWith a custom user and Node.js version:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/mermaid:1\": {\n      \"userName\": \"mermaiduser\",\n      \"nodeVersion\": \"20\"\n    }\n  }\n}",
+    "crumbs": [
+      "mermaid"
+    ]
+  },
+  {
+    "objectID": "features/mermaid.html#options",
+    "href": "features/mermaid.html#options",
+    "title": "mermaid",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nuserName\nstring\n\"mermaiduser\"\nUsername under which Mermaid CLI will run.\n\n\npuppeteerConfigDir\nstring\n\"/usr/local/share/mermaid-config\"\nDirectory to store Puppeteer configuration files.\n\n\nnodeVersion\nstring\n\"lts\"\nNode.js version to install if not present (e.g., \"lts\", \"20\", \"18\").",
+    "crumbs": [
+      "mermaid"
+    ]
+  },
+  {
+    "objectID": "features/mermaid.html#notes",
+    "href": "features/mermaid.html#notes",
+    "title": "mermaid",
+    "section": "Notes",
+    "text": "Notes\n\nRequires Node.js — the feature will install it if not already present.\nInstalls system libraries required by Puppeteer (Chromium dependencies).\nThe non-root mermaiduser is used to run the headless browser safely inside the container.",
+    "crumbs": [
+      "mermaid"
+    ]
+  },
+  {
+    "objectID": "features/mermaid.html#source",
+    "href": "features/mermaid.html#source",
+    "title": "mermaid",
+    "section": "Source",
+    "text": "Source\nsrc/mermaid",
+    "crumbs": [
+      "mermaid"
     ]
   },
   {
@@ -585,6 +485,106 @@
     "text": "Source\nsrc/fit-sne",
     "crumbs": [
       "fit-sne"
+    ]
+  },
+  {
+    "objectID": "features/repos.html",
+    "href": "features/repos.html",
+    "title": "repos",
+    "section": "",
+    "text": "WarningDeprecated\n\n\n\nThe repos feature is retained for backwards compatibility. Use utils for new configurations; it installs the same repos CLI and can also install setupmjr.",
+    "crumbs": [
+      "repos"
+    ]
+  },
+  {
+    "objectID": "features/repos.html#existing-usage",
+    "href": "features/repos.html#existing-usage",
+    "title": "repos",
+    "section": "Existing Usage",
+    "text": "Existing Usage\nExisting configurations can continue to use the feature:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/repos:3\": {\n      \"runOnStart\": false\n    }\n  }\n}",
+    "crumbs": [
+      "repos"
+    ]
+  },
+  {
+    "objectID": "features/repos.html#options",
+    "href": "features/repos.html#options",
+    "title": "repos",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nrunOnStart\nboolean\nfalse\nAutomatically run repos clone when the container starts.",
+    "crumbs": [
+      "repos"
+    ]
+  },
+  {
+    "objectID": "features/repos.html#migration-to-utils",
+    "href": "features/repos.html#migration-to-utils",
+    "title": "repos",
+    "section": "Migration to utils",
+    "text": "Migration to utils\nReplace the feature identifier and keep runOnStart if you use it:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/utils:1\": {\n      \"installRepos\": true,\n      \"runOnStart\": false\n    }\n  }\n}\nutils enables installRepos and installSetupmjr by default.",
+    "crumbs": [
+      "repos"
+    ]
+  },
+  {
+    "objectID": "features/repos.html#source",
+    "href": "features/repos.html#source",
+    "title": "repos",
+    "section": "Source",
+    "text": "Source\nsrc/repos",
+    "crumbs": [
+      "repos"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html",
+    "href": "features/github-tokens.html",
+    "title": "github-tokens",
+    "section": "",
+    "text": "Manage GitHub authentication tokens (GITHUB_PAT, GITHUB_TOKEN) on each shell startup so that R tools (such as renv) that prioritize GITHUB_TOKEN always have access to the most permissive token available.",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#example-usage",
+    "href": "features/github-tokens.html#example-usage",
+    "title": "github-tokens",
+    "section": "Example Usage",
+    "text": "Example Usage\n{\n  \"image\": \"mcr.microsoft.com/devcontainers/base:ubuntu\",\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#options",
+    "href": "features/github-tokens.html#options",
+    "title": "github-tokens",
+    "section": "Options",
+    "text": "Options\n\n\n\n\n\n\n\n\n\nOption\nType\nDefault\nDescription\n\n\n\n\nelevateGitHubToken\nboolean\ntrue\nIf true and a more permissive token (GH_TOKEN or GITHUB_PAT) is available, override GITHUB_TOKEN to match it. Helps R tools like renv that prioritize GITHUB_TOKEN.\n\n\noverrideGitHubToken\nboolean\nfalse\nIf true, force GITHUB_TOKEN to be set to either GH_TOKEN or GITHUB_PAT (in priority order), regardless of its existing value. Use only if you always want to override GITHUB_TOKEN.",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#notes",
+    "href": "features/github-tokens.html#notes",
+    "title": "github-tokens",
+    "section": "Notes",
+    "text": "Notes\n\nToken priority\nWhen elevateGitHubToken is true, the token used to override GITHUB_TOKEN is chosen in this order:\n\nGITHUB_PAT\nGH_TOKEN\n(no override if neither is available)\n\n\n\nBuild-time vs. session-time token management\nThis feature manages tokens on every shell startup (session-time). For build-time token management during renv package installation, see the renv-cache feature’s overrideTokensAtInstall option.\n\n\nRelated feature\nUse github-tokens together with renv-cache for comprehensive token management:\n{\n  \"features\": {\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/renv-cache:1\": {},\n    \"ghcr.io/MiguelRodo/DevContainerFeatures/github-tokens:1\": {}\n  }\n}",
+    "crumbs": [
+      "github-tokens"
+    ]
+  },
+  {
+    "objectID": "features/github-tokens.html#source",
+    "href": "features/github-tokens.html#source",
+    "title": "github-tokens",
+    "section": "Source",
+    "text": "Source\nsrc/github-tokens",
+    "crumbs": [
+      "github-tokens"
     ]
   }
 ]
