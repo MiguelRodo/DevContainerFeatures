@@ -5,7 +5,7 @@ toc: true
 toc-depth: 3
 ---
 
-Install the `repos` and `setupmjr` utilities. This is the current feature to use for multi-repository tooling instead of the deprecated `repos` feature.
+Install the `repos` and `setupmjr` utilities. This is the current feature to use for multi-repository tooling instead of the deprecated `repos` feature. Tool versions are pinned by default and can be selected explicitly for reproducible builds.
 
 ## Example Usage
 
@@ -34,7 +34,9 @@ To install only `repos`:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `installRepos` | boolean | `true` | Install the `repos` utility. |
+| `reposVersion` | string | `2.7.1` | Version of `repos` to install. |
 | `installSetupmjr` | boolean | `true` | Install the `setupmjr` utility. |
+| `setupmjrVersion` | string | `0.7.5` | Version of `setupmjr` to install. |
 | `runOnStart` | boolean | `false` | Automatically run `repos clone` when the container starts. Only applies when `installRepos` is `true`. |
 
 ## Migration from `repos`

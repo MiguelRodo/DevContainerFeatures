@@ -5,7 +5,9 @@
             "apptainer": {
                 "timezone": "America/New_York"
             },
-            "fit-sne": {},
+            "fit-sne": {
+                "version": "1.2.1"
+            },
             "utils": {}
         }
     },
@@ -207,16 +209,6 @@
             }
         }
     },
-    "build_info_after_official_feature": {
-        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-        "features": {
-            "build-info": {
-                "imageVersion": "1.2.3",
-                "buildDate": "2023-10-27T10:00:00Z"
-            },
-            "ghcr.io/devcontainers/features/hugo:1": {}
-        }
-    },
     "utils_alpine": {
         "image": "mcr.microsoft.com/devcontainers/base:alpine",
         "features": {
@@ -230,6 +222,15 @@
         "features": {
             "utils": {
                 "runOnStart": true
+            }
+        }
+    },
+    "utils_versions": {
+        "image": "mcr.microsoft.com/devcontainers/base:debian",
+        "features": {
+            "utils": {
+                "reposVersion": "2.7.0",
+                "setupmjrVersion": "0.7.4"
             }
         }
     }
