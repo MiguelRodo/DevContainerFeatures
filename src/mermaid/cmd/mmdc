@@ -13,7 +13,7 @@ print_help() {
 Usage: mermaid-mmdc [options] -- [mmdc args]
 
 Options:
-  --username=USER      Run as this user (default: $DEFAULT_USERNAME)
+  --username=USER      Run as this user (root default: $DEFAULT_USERNAME)
   --config=FILE        Puppeteer config file (default: $DEFAULT_CONFIG)
   --help               Show this help message
 
@@ -21,9 +21,9 @@ Examples:
   mermaid-mmdc -i input.mmd -o output.png
   mermaid-mmdc --username=anotheruser -- -i input.mmd -o output.png
 
-If running as root, this script uses 'su' to run mmdc as USER.
-If not root and 'sudo' is available, 'sudo -u USER' will be used.
-Otherwise, it fails.
+Root uses 'su' to run mmdc as USER.
+Non-root runs as the current user unless --username requests another user.
+Switching to another user requires passwordless 'sudo'.
 USAGE
 }
 
