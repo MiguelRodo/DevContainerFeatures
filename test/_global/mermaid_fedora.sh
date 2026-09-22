@@ -18,4 +18,13 @@ check "puppeteer config is readable" test -r /usr/local/share/mermaid-config/pup
 
 check "mmdc version command works" mmdc --version
 
+# Verify the packaged browser actually renders a diagram.
+MERMAID_TEST_DIR=/tmp/mermaid-fedora-render-test
+mkdir -p "$MERMAID_TEST_DIR"
+chown mermaiduser:mermaiduser "$MERMAID_TEST_DIR"
+printf 'flowchart TD\n    A --> B\n' > "$MERMAID_TEST_DIR/input.mmd"
+check "mermaid-mmdc renders SVG" mermaid-mmdc -- -i "$MERMAID_TEST_DIR/input.mmd" -o "$MERMAID_TEST_DIR/output.svg"
+check "rendered SVG is non-empty" test -s "$MERMAID_TEST_DIR/output.svg"
+check "rendered output contains an SVG element" grep -q '<svg' "$MERMAID_TEST_DIR/output.svg"
+
 reportResults
