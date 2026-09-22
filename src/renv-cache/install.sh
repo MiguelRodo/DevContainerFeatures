@@ -274,26 +274,14 @@ process_lockfile_dir() {
     if [ -n "$PKG_EXCLUDE" ]; then
         echo "Recursively stripping skipped packages and purging cache..."
         run_rscript "
+            source('/usr/local/share/renv-cache/lockfile.R')
             skip_list <- trimws(unlist(strsplit('${PKG_EXCLUDE}', ',')))
             lock_path <- '${LOCK_PATH}'
-            lock_data <- renv:::renv_json_read(lock_path)
-
-            if (!is.null(lock_data\\\$Packages)) {
-                changed <- TRUE
-                while (changed) {
-                    changed <- FALSE
-                    for (pkg_name in names(lock_data\\\$Packages)) {
-                        reqs <- lock_data\\\$Packages[[pkg_name]]\\\$Requirements
-                        if (!is.null(reqs) && any(reqs %in% skip_list)) {
-                            if (!(pkg_name %in% skip_list)) {
-                                skip_list <- c(skip_list, pkg_name)
-                                changed <- TRUE
-                            }
-                        }
-                    }
-                }
-                for (pkg in skip_list) lock_data\\\$Packages[[pkg]] <- NULL
-                renv:::renv_json_write(lock_data, file = lock_path)
+            result <- renv_cache_exclude_packages(renv::lockfile_read(lock_path), skip_list)
+            lock_data <- result[['lockfile']]
+            skip_list <- result[['skipped']]
+            if (isTRUE(result[['write_lockfile']])) {
+                renv::lockfile_write(lock_data, file = lock_path)
             }
 
             for (pkg in skip_list) {
@@ -495,6 +483,9 @@ set_tokens_for_install
 copy_and_set_execute_bit copy-lockfile
 copy_and_set_execute_bit restore
 copy_and_set_execute_bit init
+mkdir -p /usr/local/share/renv-cache
+cp scripts/lockfile.R /usr/local/share/renv-cache/lockfile.R
+chmod 644 /usr/local/share/renv-cache/lockfile.R
 
 # 1. Fetch Dynamic Repositories (Downloads renv.lock directly via GitHub API)
 if [ -n "$REPOSITORIES" ]; then
@@ -622,7 +613,7 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
         
         for (lf in lockfiles) {
             tryCatch({
-                json_data <- renv:::renv_json_read(lf)
+                json_data <- renv::lockfile_read(lf)
                 if (!is.null(json_data\\\$Packages)) {
                     all_pkgs <- c(all_pkgs, names(json_data\\\$Packages))
                 }
@@ -704,7 +695,7 @@ if [ "$CREATE_UNIFIED_LOCKFILE" = "true" ]; then
             keep_pkgs <- list()
             add_to_keep <- function(lf) {
                 if (file.exists(lf)) {
-                    lf_data <- tryCatch(renv:::renv_json_read(lf), error = function(e) NULL)
+                    lf_data <- tryCatch(renv::lockfile_read(lf), error = function(e) NULL)
                     if (!is.null(lf_data\\\$Packages)) {
                         for (pkg in names(lf_data\\\$Packages)) {
                             ver <- lf_data\\\$Packages[[pkg]]\\\$Version

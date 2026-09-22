@@ -373,52 +373,17 @@ restore() {
                 message('[INFO] --force-cache-version enabled. Scanning global cache for available packages...')
                 cache_path <- renv::paths\$cache()
                 if (dir.exists(cache_path)) {
-                    lf_data <- tryCatch(renv:::renv_json_read('renv.lock'), error = function(e) NULL)
+                    source('/usr/local/share/renv-cache/lockfile.R')
+                    lf_data <- tryCatch(renv::lockfile_read('renv.lock'), error = function(e) NULL)
                     if (!is.null(lf_data) && !is.null(lf_data\$Packages)) {
-                        cached_pkgs <- list.files(cache_path)
-                        changed <- FALSE
-                        
-                        for (pkg in names(lf_data\$Packages)) {
-                            pkg_info <- lf_data\$Packages[[pkg]]
-                            
-                            # Only apply to standard CRAN/Bioc packages (ignore GitHub/Git/Local)
-                            is_standard <- is.null(pkg_info\$Source) || pkg_info\$Source %in% c('Repository', 'CRAN', 'Bioconductor')
-                            
-                            if (is_standard && pkg %in% cached_pkgs) {
-                                pkg_dir <- file.path(cache_path, pkg)
-                                versions <- list.files(pkg_dir)
-                                
-                                if (length(versions) > 0) {
-                                    req_ver <- pkg_info\$Version
-                                    
-                                    # ONLY retarget if the explicitly requested version is MISSING from the cache
-                                    if (!(req_ver %in% versions)) {
-                                        # Filter for valid semantic versions and find the highest one
-                                        valid_vers <- versions[grepl('^[0-9]+(?:\\\\.[0-9]+)*\\$', versions)]
-                                        if (length(valid_vers) > 0) {
-                                            parsed_vers <- tryCatch(package_version(valid_vers), error = function(e) NULL)
-                                            if (!is.null(parsed_vers)) {
-                                                latest_ver <- as.character(max(parsed_vers))
-                                                
-                                                hashes <- list.files(file.path(pkg_dir, latest_ver))
-                                                if (length(hashes) > 0) {
-                                                    target_hash <- hashes[1] # Grab the specific hash from the cache
-                                                    message('  - Exact v', req_ver, ' missing. Retargeting ', pkg, ' to cached v', latest_ver)
-                                                    lf_data\$Packages[[pkg]]\$Version <- latest_ver
-                                                    lf_data\$Packages[[pkg]]\$Hash <- target_hash
-                                                    changed <- TRUE
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
+                        result <- renv_cache_force_cached_versions(lf_data, cache_path)
+                        lf_data <- result[['lockfile']]
+                        changed <- isTRUE(result[['changed']])
+
                         if (changed) {
                             message('[INFO] Hot-swapping renv.lock to force cache hits for missing packages...')
                             file.copy('renv.lock', 'renv.lock.forcecache.bak', overwrite = TRUE)
-                            renv:::renv_json_write(lf_data, file = 'renv.lock')
+                            renv::lockfile_write(lf_data, file = 'renv.lock')
                             
                             # Guarantee restoration of the original lockfile when the R process ends
                             on.exit({
