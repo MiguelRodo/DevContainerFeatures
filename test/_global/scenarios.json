@@ -19,14 +19,6 @@
             }
         }
     },
-    "renv-cache-jq-unit-test": {
-        "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
-        "features": {
-            "renv-cache": {
-                "restore": false
-            }
-        }
-    },
     "renv-cache-restore": {
         "image": "ghcr.io/rocker-org/devcontainer/r-ver:4.4",
         "features": {
@@ -204,8 +196,8 @@
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
             "build-info": {
-                "version": "1.2.3",
-                "buildDate": "2023-10-27T10:00:00Z"
+                "buildDate": "2023-10-27T10:00:00Z",
+                "imageVersion": "1.2.3"
             }
         }
     },

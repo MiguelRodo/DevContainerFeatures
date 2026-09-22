@@ -6,13 +6,14 @@ DEFAULT_CONFIG="/usr/local/share/mermaid-config/puppeteer-config.json"
 
 USERNAME="$DEFAULT_USERNAME"
 CONFIG_FILE="$DEFAULT_CONFIG"
+EXPLICIT_USERNAME=false
 
 print_help() {
     cat <<USAGE
 Usage: mermaid-mmdc [options] -- [mmdc args]
 
 Options:
-  --username=USER      Run as this user (default: $DEFAULT_USERNAME)
+  --username=USER      Run as this user (root default: $DEFAULT_USERNAME)
   --config=FILE        Puppeteer config file (default: $DEFAULT_CONFIG)
   --help               Show this help message
 
@@ -20,9 +21,9 @@ Examples:
   mermaid-mmdc -i input.mmd -o output.png
   mermaid-mmdc --username=anotheruser -- -i input.mmd -o output.png
 
-If running as root, this script uses 'su' to run mmdc as USER.
-If not root and 'sudo' is available, 'sudo -u USER' will be used.
-Otherwise, it fails.
+Root uses 'su' to run mmdc as USER.
+Non-root runs as the current user unless --username requests another user.
+Switching to another user requires passwordless 'sudo'.
 USAGE
 }
 
@@ -31,6 +32,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --username=*)
             USERNAME="${1#*=}"
+            EXPLICIT_USERNAME=true
             shift
             ;;
         --config=*)
@@ -73,11 +75,14 @@ if [ "$EUID" -eq 0 ]; then
     # Running as root
    su -s /bin/bash "$USERNAME" -c 'exec mmdc -p "$0" "$@"' -- "$CONFIG_FILE" "$@"
 else
-    # Not running as root, check for sudo
-    if command -v sudo &>/dev/null; then
-        sudo -u "$USERNAME" -- mmdc -p "$CONFIG_FILE" "$@"
+    # An ordinary user can render directly; only an explicit user switch needs sudo.
+    if [ "$EXPLICIT_USERNAME" = false ] || [ "$(id -un)" = "$USERNAME" ]; then
+        export PUPPETEER_CACHE_DIR="/home/$USERNAME/.cache/puppeteer"
+        exec mmdc -p "$CONFIG_FILE" "$@"
+    elif command -v sudo >/dev/null 2>&1; then
+        exec sudo -n -u "$USERNAME" -- mmdc -p "$CONFIG_FILE" "$@"
     else
-        echo "Error: Not root and no 'sudo' available to switch user."
+        echo "Error: 'sudo' is required to switch to $USERNAME." >&2
         exit 1
     fi
 fi

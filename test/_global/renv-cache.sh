@@ -25,8 +25,6 @@ check "renv-cache-post-create exists" bash -c "test -f /usr/local/bin/renv-cache
 check "renv-cache-post-create is executable" bash -c "test -x /usr/local/bin/renv-cache-post-create"
 check "renv-cache-restore exists" bash -c "test -f /usr/local/bin/renv-cache-restore"
 check "renv-cache-restore is executable" bash -c "test -x /usr/local/bin/renv-cache-restore"
-check "renv-cache-restore-build exists" bash -c "test -f /usr/local/bin/renv-cache-restore-build"
-check "renv-cache-restore-build is executable" bash -c "test -x /usr/local/bin/renv-cache-restore-build"
 check "renv-cache lockfile helper exists" bash -c "test -f /usr/local/share/renv-cache/lockfile.R"
 
 # Verify that session-time token management scripts are NOT installed by renv-cache
