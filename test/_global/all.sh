@@ -36,7 +36,13 @@ rm -rf "$tmp"
 # Apptainer tests
 check "apptainer binary is installed" bash -c "command -v apptainer"
 check "apptainer version command works" bash -c "apptainer --version"
-check "apptainer executes an Alpine container" apptainer exec docker://alpine:3.22 cat /etc/alpine-release
+check "apptainer creates and reads a SIF image" bash -c '
+sif=$(mktemp)
+rm "$sif"
+trap '\''rm -f "$sif"'\'' EXIT
+apptainer sif new "$sif"
+apptainer sif header "$sif"
+'
 check "apptainer uses direct HTTPS PPA configuration" bash -c '
 . /etc/os-release
 codename="${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}"

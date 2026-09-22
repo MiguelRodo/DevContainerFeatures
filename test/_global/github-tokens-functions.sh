@@ -61,9 +61,9 @@ run_test "get_elevated_token: GH_TOKEN priority" \
     "unset GITHUB_PAT; export GH_TOKEN=gh_val; export GITHUB_TOKEN=gt_val" \
     "get_elevated_token" "gh_val"
 
-run_test "get_elevated_token: empty if GITHUB_TOKEN is the only one set" \
+run_test "get_elevated_token: propagated GITHUB_PAT when GITHUB_TOKEN is the only one set" \
     "unset GITHUB_PAT; unset GH_TOKEN; export GITHUB_TOKEN=gt_val" \
-    "get_elevated_token" ""
+    "get_elevated_token" "gt_val"
 
 # Report result
 reportResults

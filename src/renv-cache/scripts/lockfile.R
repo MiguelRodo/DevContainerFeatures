@@ -53,7 +53,7 @@ renv_cache_force_cached_versions <- function(lock_data, cache_path) {
       next
     }
 
-    parsed_vers <- tryCatch(utils::package_version(valid_vers), error = function(e) NULL)
+    parsed_vers <- tryCatch(base::package_version(valid_vers), error = function(e) NULL)
     if (is.null(parsed_vers)) {
       next
     }
