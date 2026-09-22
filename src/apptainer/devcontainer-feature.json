@@ -1,9 +1,18 @@
 {
     "name": "Install Apptainer",
     "id": "apptainer",
-    "version": "1.1.5",
+    "version": "1.1.6",
     "description": "Install Apptainer, a container system for HPC",
     "options": {
+        "version": {
+            "type": "string",
+            "proposals": [
+                "1.5.3",
+                "latest"
+            ],
+            "default": "1.5.3",
+            "description": "Apptainer release version for the Debian GitHub-release fallback, or 'latest'."
+        },
         "timezone": {
             "type": "string",
             "proposals": [

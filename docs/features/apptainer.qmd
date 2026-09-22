@@ -24,11 +24,13 @@ Install [Apptainer](https://apptainer.org/), a container system widely used in H
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `version` | string | `"1.5.3"` | Apptainer release version for the Debian GitHub-release fallback, or `"latest"`. |
 | `timezone` | string | `"UTC"` | Timezone to configure in the container (e.g., `"UTC"`, `"Europe/London"`, `"America/New_York"`). Required for proper Apptainer mount behavior. |
 
 ## Notes
 
-- Adds the `ppa:apptainer/ppa` repository and installs Apptainer from it.
+- Adds the `ppa:apptainer/ppa` repository and installs Apptainer from it on Ubuntu.
+- Debian falls back to the selected GitHub release only when Apptainer is unavailable from the distribution repositories, and verifies the downloaded package before installation.
 - Configures `tzdata` because Apptainer containers often inherit the host's `/etc/localtime`.
 
 ## Source
