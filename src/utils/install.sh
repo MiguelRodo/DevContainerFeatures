@@ -1,160 +1,117 @@
 #!/usr/bin/env bash
 set -e
 
-# Must be root
 [ "$(id -u)" -eq 0 ] || { echo "Please run as root (or via sudo)." >&2; exit 1; }
 
-# Options
 INSTALL_REPOS=${INSTALLREPOS:-true}
+REPOS_VERSION=${REPOSVERSION:-2.7.1}
 INSTALL_SETUPMJR=${INSTALLSETUPMJR:-true}
+SETUPMJR_VERSION=${SETUPMJRVERSION:-0.7.5}
 RUN_ON_START=${RUNONSTART:-false}
 
-if [ "${INSTALL_REPOS}" = "false" ] && [ "${INSTALL_SETUPMJR}" = "false" ]; then
+if [ "$INSTALL_REPOS" = "false" ] && [ "$INSTALL_SETUPMJR" = "false" ]; then
     echo "Both installRepos and installSetupmjr are false. Nothing to do."
     exit 0
 fi
 
-# ── Detect OS ────────────────────────────────────────────────────────────────
-detect_os() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        echo "$ID"
-    elif [ -f /etc/debian_version ]; then
-        echo "debian"
-    else
-        echo "unknown"
+normalise_version() {
+    local value
+    value=${1#v}
+    if [[ ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: invalid version '$1'; expected X.Y.Z." >&2
+        return 1
     fi
+    printf '%s\n' "$value"
 }
 
-OS_ID=$(detect_os)
-echo "Detected OS: $OS_ID"
+release_arch() {
+    case "$(uname -m)" in
+        x86_64|amd64) echo amd64 ;;
+        arm64|aarch64) echo arm64 ;;
+        *) echo "Error: unsupported architecture: $(uname -m)" >&2; return 1 ;;
+    esac
+}
 
-# ── Install dependencies ───────────────────────────────────────────────────
-echo "Installing dependencies based on package manager..."
-if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
+install_release_binary() (
+    set -e
+    local repo=$1 name=$2 version=$3 arch asset checksums base tmp expected actual
+    arch=$(release_arch)
+    asset="${name}_linux_${arch}"
+    checksums="${name}_${version}_checksums.txt"
+    base="https://github.com/${repo}/releases/download/v${version}"
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+
+    echo "Installing ${name} ${version}..."
+    curl -fsSL "${base}/${asset}" -o "${tmp}/${asset}"
+    curl -fsSL "${base}/${checksums}" -o "${tmp}/${checksums}"
+
+    expected=$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset {print $1; exit}' "${tmp}/${checksums}")
+    if [[ ! "$expected" =~ ^[0-9a-fA-F]{64}$ ]]; then
+        echo "Error: checksum for ${asset} not found in ${checksums}." >&2
+        exit 1
+    fi
+    actual=$(sha256sum "${tmp}/${asset}" | awk '{print $1}')
+    if [ "$(printf '%s' "$expected" | tr '[:upper:]' '[:lower:]')" != "$actual" ]; then
+        echo "Error: checksum verification failed for ${name} ${version}." >&2
+        exit 1
+    fi
+
+    cp "${tmp}/${asset}" "/usr/local/bin/${name}"
+    chmod 0755 "/usr/local/bin/${name}"
+)
+
+if [ "$INSTALL_REPOS" = "true" ]; then
+    REPOS_VERSION=$(normalise_version "$REPOS_VERSION")
+fi
+if [ "$INSTALL_SETUPMJR" = "true" ]; then
+    SETUPMJR_VERSION=$(normalise_version "$SETUPMJR_VERSION")
+fi
+
+# Install runtime dependencies using the image's native package manager.
+if command -v apt-get >/dev/null 2>&1; then
     apt-get update
-    apt-get install -y curl gnupg ca-certificates wget git
+    apt-get install -y ca-certificates curl git jq wget
+    mkdir -p -m 755 /etc/apt/keyrings
+    wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg > /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+    apt-get update
+    apt-get install -y gh
 elif command -v apk >/dev/null 2>&1; then
-    apk add --no-cache bash curl git jq github-cli
-elif command -v yum >/dev/null 2>&1; then
-    yum install -y bash curl git jq gh
+    apk add --no-cache bash ca-certificates curl git jq github-cli gcompat
 elif command -v dnf >/dev/null 2>&1; then
-    dnf install -y bash curl git jq gh
+    dnf install -y bash ca-certificates curl git jq gh
+elif command -v yum >/dev/null 2>&1; then
+    yum install -y bash ca-certificates curl git jq gh
 elif command -v pacman >/dev/null 2>&1; then
-    pacman -Sy --noconfirm bash curl git jq github-cli
+    pacman -Sy --noconfirm bash ca-certificates curl git jq github-cli
 else
-    echo "Warning: Unknown package manager. Assuming dependencies are already installed."
-    echo "Required dependencies: bash, curl, git, jq, gh"
+    echo "Warning: unknown package manager. Required dependencies: bash, ca-certificates, curl, git, jq, gh, sha256sum" >&2
 fi
 
-# ── Setup APT Repositories for Debian/Ubuntu (if needed) ───────────────────
-if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
-    if [ "${INSTALL_REPOS}" = "true" ] || [ "${INSTALL_SETUPMJR}" = "true" ]; then
-        echo "Setting up Miguel Rodo APT repository..."
-        curl -fsSL https://miguelrodo.github.io/apt-miguelrodo/KEY.gpg \
-          | gpg --dearmor -o /usr/share/keyrings/apt-miguelrodo.gpg
+command -v sha256sum >/dev/null 2>&1 || { echo "Error: sha256sum is required." >&2; exit 1; }
 
-        echo "deb [signed-by=/usr/share/keyrings/apt-miguelrodo.gpg] https://miguelrodo.github.io/apt-miguelrodo stable main" \
-          > /etc/apt/sources.list.d/apt-miguelrodo.list
-        
-        echo "Setting up GitHub CLI repository..."
-        mkdir -p -m 755 /etc/apt/keyrings
-        wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
-        chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-
-        apt-get update
-    fi
+if [ "$INSTALL_REPOS" = "true" ]; then
+    install_release_binary MiguelRodo/repos repos "$REPOS_VERSION"
 fi
 
-# ── Install repos ─────────────────────────────────────────────────────────
-if [ "${INSTALL_REPOS}" = "true" ]; then
-    echo "Installing repos..."
-    if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
-        echo "Using APT installation method for repos..."
-        apt-get install -y repos gh jq
-    else
-        echo "Using Local Release Installer for repos..."
-        MISSING_DEPS=()
-        if ! hash bash git curl jq gh 2>/dev/null; then
-            for dep in bash git curl jq gh; do
-                if ! command -v "$dep" >/dev/null 2>&1; then
-                    MISSING_DEPS+=("$dep")
-                fi
-            done
-        fi
-
-        if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
-            echo "Error: Missing required dependencies: ${MISSING_DEPS[*]}" >&2
-            echo "Please install them manually for your system." >&2
-            exit 1
-        fi
-
-        TEMP_DIR=$(mktemp -d)
-        git clone https://github.com/MiguelRodo/repos.git "$TEMP_DIR/repos"
-
-        cd "$TEMP_DIR/repos"
-        bash install-local.sh
-        cd - >/dev/null
-
-        rm -rf "${TEMP_DIR:?}"
-    fi
+if [ "$INSTALL_SETUPMJR" = "true" ]; then
+    install_release_binary MiguelRodo/setupmjr setupmjr "$SETUPMJR_VERSION"
 fi
 
-# ── Install setupmjr ──────────────────────────────────────────────────────
-if [ "${INSTALL_SETUPMJR}" = "true" ]; then
-    echo "Installing setupmjr..."
-    
-    if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
-        echo "Using APT installation method for setupmjr..."
-        apt-get install -y setupmjr
-    else
-        # Fallback to source compilation for non-Debian systems
-        MISSING_DEPS=()
-        if ! hash bash git curl 2>/dev/null; then
-            for dep in bash git curl; do
-                if ! command -v "$dep" >/dev/null 2>&1; then
-                    MISSING_DEPS+=("$dep")
-                fi
-            done
-        fi
-
-        if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
-            echo "Error: Missing required dependencies: ${MISSING_DEPS[*]}" >&2
-            echo "Please install them manually for your system." >&2
-            exit 1
-        fi
-
-        echo "Using Local Release Installer for setupmjr..."
-        TEMP_DIR=$(mktemp -d)
-        git clone https://github.com/MiguelRodo/setupmjr.git "$TEMP_DIR/setupmjr"
-
-        cd "$TEMP_DIR/setupmjr"
-        bash install-local.sh
-        cd - >/dev/null
-
-        rm -rf "${TEMP_DIR:?}"
-    fi
-fi
-
-# ── Cleanup Debian/Ubuntu ─────────────────────────────────────────────────
-if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
-    echo "Cleaning up APT..."
+if command -v apt-get >/dev/null 2>&1; then
     apt-get clean
     rm -rf /var/lib/apt/lists/*
 fi
 
-# ── Configure start script ───────────────────────────────────────────────────
-echo "Configuring post-start script..."
-POST_START_SCRIPT="/usr/local/bin/utils-post-start"
-
+POST_START_SCRIPT=/usr/local/bin/utils-post-start
 cat > "$POST_START_SCRIPT" << 'EOF'
 #!/usr/bin/env bash
 EOF
 
-if [ "${INSTALL_REPOS}" = "true" ] && [ "${RUN_ON_START}" = "true" ]; then
-  cat >> "$POST_START_SCRIPT" << 'EOF'
-# Check if repos.list exists in the workspace
+if [ "$INSTALL_REPOS" = "true" ] && [ "$RUN_ON_START" = "true" ]; then
+    cat >> "$POST_START_SCRIPT" << 'EOF'
 REPOS_LIST="${REPOS_LIST:-repos.list}"
 if [ -f "$REPOS_LIST" ]; then
   repos clone
@@ -166,5 +123,4 @@ EOF
 fi
 
 chmod +x "$POST_START_SCRIPT"
-
 echo "MiguelRodo Utils feature installation complete!"

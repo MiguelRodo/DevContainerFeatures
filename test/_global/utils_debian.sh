@@ -14,6 +14,11 @@ make_fixture_repo() {
     git clone -q --bare "$root/source" "$root/fixture.git"
 }
 
+test_versions() {
+    test "$(repos --version)" = "repos version 2.7.1"
+    test "$(setupmjr --version)" = "setupmjr version 0.7.5"
+}
+
 test_repos_clone() (
     set -e
     local tmp
@@ -51,6 +56,7 @@ test_run_on_start() (
     test "$(cat fixture/probe.txt)" = fixture
 )
 
+check "default versions are pinned" test_versions
 check "repos clones a local repository" test_repos_clone
 check "setupmjr configures bash rc.d" test_setupmjr
 check "runOnStart clones repos.list" test_run_on_start

@@ -1,7 +1,7 @@
 {
     "name": "MiguelRodo Utils",
     "id": "utils",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Installs Miguel Rodo's utilities like 'repos' and 'setupmjr'.",
     "options": {
         "installRepos": {
@@ -9,10 +9,20 @@
             "default": true,
             "description": "Install the 'repos' utility."
         },
+        "reposVersion": {
+            "type": "string",
+            "default": "2.7.1",
+            "description": "Version of 'repos' to install."
+        },
         "installSetupmjr": {
             "type": "boolean",
             "default": true,
             "description": "Install the 'setupmjr' utility."
+        },
+        "setupmjrVersion": {
+            "type": "string",
+            "default": "0.7.5",
+            "description": "Version of 'setupmjr' to install."
         },
         "runOnStart": {
             "type": "boolean",
