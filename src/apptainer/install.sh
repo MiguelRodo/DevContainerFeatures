@@ -2,6 +2,8 @@
 set -e
 
 TIMEZONE="${TIMEZONE:-"UTC"}"
+# Capture the feature option before /etc/os-release overwrites VERSION.
+APPTAINER_VERSION="${VERSION:-"1.5.3"}"
 
 # Ensure we are running as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -45,27 +47,47 @@ case "$OS_ID" in
     debian)
         apt-get update
         apt-get install -y --no-install-recommends \
-            ca-certificates curl tzdata
+            ca-certificates curl jq tzdata
         # Try installing apptainer from distribution repositories first (available in Debian 13+).
         # apt-get update has already been run above, so the cache is current.
         if apt-cache show apptainer >/dev/null 2>&1; then
             apt-get install -y apptainer
         else
             ARCH=$(dpkg --print-architecture)
-            APPTAINER_VERSION=$(curl -s https://api.github.com/repos/apptainer/apptainer/releases/latest \
-                | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
-            if [ -z "$APPTAINER_VERSION" ]; then
-                echo "Error: Could not determine latest Apptainer version from GitHub API."
-                exit 1
+            if [ "$APPTAINER_VERSION" = "latest" ]; then
+                APPTAINER_VERSION=$(curl -fsSL https://api.github.com/repos/apptainer/apptainer/releases/latest \
+                    | jq -r '.tag_name // empty' | sed 's/^v//')
             fi
-            # 🛡️ Sentinel: Validate fetched version format to prevent URL/path injection
+            # 🛡️ Sentinel: Validate the version before using it in URLs or file names.
             if ! echo "${APPTAINER_VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+)?$'; then
-                echo "Error: Invalid Apptainer version '${APPTAINER_VERSION}' fetched from API."
+                echo "Error: Invalid Apptainer version '${APPTAINER_VERSION}'."
                 exit 1
             fi
+
+            DEB_NAME="apptainer_${APPTAINER_VERSION}_${ARCH}.deb"
+            case "${APPTAINER_VERSION}:${ARCH}" in
+                1.5.3:amd64)
+                    # Upstream GitHub release asset digest for the pinned default.
+                    APPTAINER_SHA256="82b0bdddf459087d202383360b8318d526ad6826c748a2f669913cc6aef9ee40"
+                    ;;
+                *)
+                    RELEASE_JSON=$(curl -fsSL \
+                        "https://api.github.com/repos/apptainer/apptainer/releases/tags/v${APPTAINER_VERSION}")
+                    APPTAINER_SHA256=$(printf '%s' "$RELEASE_JSON" \
+                        | jq -r --arg name "$DEB_NAME" '.assets[] | select(.name == $name) | .digest // empty')
+                    APPTAINER_SHA256="${APPTAINER_SHA256#sha256:}"
+                    ;;
+            esac
+            if ! [[ "$APPTAINER_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
+                echo "Error: No valid upstream SHA-256 digest found for ${DEB_NAME}."
+                exit 1
+            fi
+
             echo "Downloading Apptainer ${APPTAINER_VERSION} for ${ARCH}..."
-            curl -L -o /tmp/apptainer.deb \
-                "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_${ARCH}.deb"
+            curl -fL -o /tmp/apptainer.deb \
+                "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/${DEB_NAME}"
+            printf '%s  %s\n' "$APPTAINER_SHA256" /tmp/apptainer.deb | sha256sum -c -
+
             # On Debian trixie+ fuse3 bumped its soname from 3 to 4 (fuse3 >= 3.16), renaming
             # the library package from libfuse3-3 to libfuse3-4.  The upstream Apptainer .deb
             # still declares "Depends: libfuse3-3", which is unresolvable on trixie+.
