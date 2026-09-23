@@ -5,6 +5,30 @@ on:
       - main
   pull_request:
   workflow_dispatch:
+    inputs:
+      test_mode:
+        description: "Full scenarios or one fast scenario per selected feature"
+        type: choice
+        options:
+          - light
+          - full
+        default: light
+        required: true
+      feature:
+        description: "Feature to test, or all maintained features"
+        type: choice
+        options:
+          - all
+          - apptainer
+          - build-info
+          - cmdstan
+          - fit-sne
+          - github-tokens
+          - mermaid
+          - renv-cache
+          - utils
+        default: all
+        required: true
 
 jobs:
   static:
@@ -45,6 +69,9 @@ jobs:
       - name: "Test feature version guard"
         run: bash .github/scripts/check-feature-version-bumps.test.sh
 
+      - name: "Test feature test matrix selection"
+        run: bash .github/scripts/feature-test-matrix.test.sh
+
       - name: "Require feature version bumps"
         if: github.event_name == 'pull_request'
         run: bash .github/scripts/check-feature-version-bumps.sh "${{ github.event.pull_request.base.sha }}" HEAD
@@ -63,14 +90,64 @@ jobs:
           -v "$PWD:/repo" -w /repo
           rhysd/actionlint:1.7.12
 
-  test-global:
+  select-tests:
+    name: "Select feature test lanes"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: "Build feature test matrix"
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          INPUT_TEST_MODE: ${{ inputs.test_mode }}
+          INPUT_FEATURE: ${{ inputs.feature }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == pull_request ]]; then
+            matrix=$(git diff --name-only -z "$PR_BASE_SHA...$PR_HEAD_SHA" | \
+              bash .github/scripts/feature-test-matrix.sh full changed)
+          elif [[ "$EVENT_NAME" == push ]]; then
+            if [[ "$PUSH_BEFORE_SHA" =~ ^0+$ ]]; then
+              matrix=$(printf '.github/workflows/test.yaml\0' | \
+                bash .github/scripts/feature-test-matrix.sh full changed)
+            else
+              matrix=$(git diff --name-only -z "$PUSH_BEFORE_SHA" "$GITHUB_SHA" | \
+                bash .github/scripts/feature-test-matrix.sh full changed)
+            fi
+          else
+            matrix=$(bash .github/scripts/feature-test-matrix.sh \
+              "$INPUT_TEST_MODE" "$INPUT_FEATURE")
+          fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  feature-tests:
+    needs: [static, select-tests]
+    if: ${{ needs.static.result == 'success' && needs.select-tests.result == 'success' }}
+    name: "Feature tests (${{ matrix.feature }})"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.select-tests.outputs.matrix) }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: matrix.feature != 'none'
 
       - name: Free Disk Space
+        if: matrix.feature != 'none' && matrix.mode == 'full'
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
@@ -82,7 +159,40 @@ jobs:
           swap-storage: true
 
       - name: "Install pinned devcontainer CLI"
+        if: matrix.feature != 'none'
         run: npm install -g @devcontainers/cli@0.89.0
 
-      - name: "Testing global scenarios"
-        run: devcontainer features test --global-scenarios-only .
+      - name: "Test selected global scenarios"
+        if: matrix.feature != 'none'
+        env:
+          FILTERS_JSON: ${{ toJson(matrix.filters) }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r filter; do
+            [[ -n "$filter" ]] || continue
+            echo "::group::Global scenarios matching $filter"
+            devcontainer features test --global-scenarios-only . --filter "$filter"
+            echo "::endgroup::"
+          done < <(jq -r '.[]' <<< "$FILTERS_JSON")
+
+  # Keep the existing stable check name for branch protection rules.
+  test-global:
+    needs: [static, select-tests, feature-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: "Require static and selected feature checks"
+        env:
+          STATIC_RESULT: ${{ needs.static.result }}
+          SELECTION_RESULT: ${{ needs.select-tests.result }}
+          FEATURE_RESULT: ${{ needs.feature-tests.result }}
+        run: |
+          set -euo pipefail
+          [[ "$STATIC_RESULT" == success ]] || { echo "Static checks did not pass" >&2; exit 1; }
+          [[ "$SELECTION_RESULT" == success ]] || { echo "Feature test selection failed" >&2; exit 1; }
+          case "$FEATURE_RESULT" in
+            success|skipped) ;;
+            *) echo "Feature tests did not pass: $FEATURE_RESULT" >&2; exit 1 ;;
+          esac
