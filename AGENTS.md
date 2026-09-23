@@ -40,6 +40,8 @@ devcontainer features test --global-scenarios-only . --filter <scenario-name>
 devcontainer features test --global-scenarios-only .
 ```
 
+For fast remote iteration, dispatch `CI - Test Features` on your branch with `test_mode=light` and `feature=<id>` (for example, `gh workflow run test.yaml --ref <branch> -f test_mode=light -f feature=mermaid`). This runs one behaviour-focused scenario for that feature. Pull requests still run all configured global scenarios for each changed feature. Use `test_mode=full` and `feature=all` for a full manual run.
+
 When changing shell code, also run syntax and static checks on the files touched:
 
 ```bash
